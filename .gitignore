@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Claude Code / AI tooling and planning artefacts (local only)
+.claude/
+.mcp.json
+CLAUDE.md
+**/CLAUDE.md
+claude.md
+**/claude.md
+tasks/

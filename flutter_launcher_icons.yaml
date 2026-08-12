@@ -1,0 +1,23 @@
+# Launcher icon generation, kept out of pubspec.yaml so it is run explicitly.
+#
+#   dart run flutter_launcher_icons -f flutter_launcher_icons.yaml
+#
+# Re-run after replacing assets/icons/app-icon.png, then commit the generated
+# files under android/app/src/main/res and ios/Runner/Assets.xcassets.
+
+flutter_launcher_icons:
+  image_path: "assets/icons/app-icon.png"
+
+  android: "ic_launcher"
+  # Android 8+ adaptive icon. The source art has an opaque #FDFCFC background
+  # baked in, so the background layer matches that exactly — a pure white layer
+  # would show the inset foreground as a faint square. Supplying a
+  # transparent-background foreground would remove the constraint entirely.
+  adaptive_icon_background: "#FDFCFC"
+  adaptive_icon_foreground: "assets/icons/app-icon.png"
+  adaptive_icon_foreground_inset: 20
+  min_sdk_android: 21
+
+  ios: true
+  # iOS rejects icons with an alpha channel.
+  remove_alpha_ios: true

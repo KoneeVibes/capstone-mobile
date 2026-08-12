@@ -1,0 +1,70 @@
+import '../constants/app_constants.dart';
+
+/// Form field validators, shaped for `TextFormField.validator`: they return an
+/// error string when invalid and null when valid.
+///
+/// The field label is passed in by the caller so the message reads naturally on
+/// whichever screen uses it, keeping screen wording on the screen.
+abstract final class Validators {
+  const Validators._();
+
+  static String? requiredField(String? value, {required String label}) {
+    if (value == null || value.trim().isEmpty) return '$label is required.';
+    return null;
+  }
+
+  static String? email(String? value, {String label = 'Email'}) {
+    final missing = requiredField(value, label: label);
+    if (missing != null) return missing;
+
+    if (!AppConstants.emailPattern.hasMatch(value!.trim())) {
+      return 'Enter a valid email address.';
+    }
+    return null;
+  }
+
+  static String? phone(String? value, {String label = 'Phone number'}) {
+    final missing = requiredField(value, label: label);
+    if (missing != null) return missing;
+
+    // Strip spaces and dashes so display formatting does not fail validation.
+    final normalised = value!.replaceAll(RegExp(r'[\s-]'), '');
+    if (!AppConstants.phonePattern.hasMatch(normalised)) {
+      return 'Enter a valid Nigerian phone number.';
+    }
+    return null;
+  }
+
+  static String? name(String? value, {required String label}) {
+    final missing = requiredField(value, label: label);
+    if (missing != null) return missing;
+
+    final trimmed = value!.trim();
+    if (trimmed.length < 2) return '$label must be at least 2 characters.';
+    if (!AppConstants.namePattern.hasMatch(trimmed)) {
+      return '$label can only contain letters, spaces, hyphens and apostrophes.';
+    }
+    return null;
+  }
+
+  /// Validates only when a value is present. For fields like middle name that
+  /// are optional but still have to be well formed when filled in.
+  static String? optionalName(String? value, {required String label}) {
+    if (value == null || value.trim().isEmpty) return null;
+    return name(value, label: label);
+  }
+
+  static String? minLength(
+    String? value, {
+    required String label,
+    required int length,
+  }) {
+    final missing = requiredField(value, label: label);
+    if (missing != null) return missing;
+
+    if (value!.trim().length < length) {
+      return '$label must be at least $length characters.';
+    }
+    return null;
+  }
+}

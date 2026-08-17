@@ -29,6 +29,16 @@ dependencies:
   # Date and currency formatting
   intl: ^0.20.3
 
+  # Photo selection. Re-encodes on pick, which keeps an iPhone's native HEIC
+  # from reaching an API that only accepts JPG, JPEG and PNG.
+  image_picker: ^1.2.3
+
+  # Document selection (property deeds, survey plans, certificates).
+  file_picker: ^11.0.3
+
+  # Skeleton loading for content with a known shape.
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -24,6 +24,34 @@ abstract final class AppConstants {
   /// Longest response body written to the debug log, in characters.
   static const int maxLoggedBodyLength = 2000;
 
+  // Uploads.
+
+  /// Largest file the app will attempt to upload, in bytes (10 MB).
+  ///
+  /// Rejecting locally gives the user an immediate, specific message instead of
+  /// a slow round trip ending in a 413.
+  static const int maxUploadBytes = 10 * 1024 * 1024;
+
+  /// Image formats the staff API accepts.
+  static const Set<String> allowedImageExtensions = {'jpg', 'jpeg', 'png'};
+
+  /// Formats accepted where a document is expected.
+  static const Set<String> allowedDocumentExtensions = {
+    'pdf',
+    'doc',
+    'docx',
+    'jpg',
+    'jpeg',
+    'png',
+  };
+
+  /// Longest edge of a picked image, in pixels. Re-encoding at this size keeps
+  /// uploads small and normalises HEIC to JPEG.
+  static const double maxImageDimension = 1024;
+
+  /// JPEG quality applied to picked images, 0-100.
+  static const int pickedImageQuality = 85;
+
   // Validation patterns.
   static final RegExp emailPattern = RegExp(
     r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',

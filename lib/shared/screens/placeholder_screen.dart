@@ -15,11 +15,16 @@ class PlaceholderScreen extends StatelessWidget {
     required this.message,
     super.key,
     this.showAppBar = true,
+    this.action,
   });
 
   final String title;
   final String message;
   final bool showAppBar;
+
+  /// Optional control rendered below the message, so a placeholder can still
+  /// lead somewhere while the real screen is being built.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +54,10 @@ class PlaceholderScreen extends StatelessWidget {
                   style: AppTextStyles.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
+                if (action != null) ...[
+                  const SizedBox(height: AppSizing.space24),
+                  action!,
+                ],
               ],
             ),
           ),

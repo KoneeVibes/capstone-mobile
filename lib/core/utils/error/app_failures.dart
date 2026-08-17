@@ -19,4 +19,36 @@ abstract final class AppFailures {
     type: FailureType.unauthorized,
     message: 'Your session has expired. Please sign in again.',
   );
+
+  /// The picker plugin failed, most often because library access was denied.
+  ///
+  /// A `PlatformException` would otherwise flatten to a generic "Something went
+  /// wrong", which tells the user nothing they can act on.
+  static const AppFailure mediaPickFailed = AppFailure(
+    type: FailureType.unknown,
+    message:
+        "We couldn't open your photos. Check that Property Intel has "
+        'permission, then try again.',
+  );
+
+  static const AppFailure unsupportedFileType = AppFailure(
+    type: FailureType.validation,
+    message: "That file type isn't supported. Choose a JPG or PNG image.",
+  );
+
+  static const AppFailure unsupportedDocumentType = AppFailure(
+    type: FailureType.validation,
+    message: "That file type isn't supported. Choose a PDF, Word or image file.",
+  );
+
+  static const AppFailure fileTooLarge = AppFailure(
+    type: FailureType.validation,
+    message: 'That file is too large. Choose one under 10 MB.',
+  );
+
+  /// The picker returned an entry with no readable path on disk.
+  static const AppFailure fileUnreadable = AppFailure(
+    type: FailureType.unknown,
+    message: "We couldn't read that file. Try choosing it again.",
+  );
 }

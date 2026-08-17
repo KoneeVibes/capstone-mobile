@@ -6,6 +6,11 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Property Intel</string>
+	<!-- Required by image_picker. iOS terminates the app on first pick without
+	     it. The camera key is deliberately omitted: the app never opens the
+	     camera, and unused permission strings invite App Store review queries. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Property Intel needs access to your photos so you can choose a profile picture for a staff member.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

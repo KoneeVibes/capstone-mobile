@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
+import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_state_view.dart';
 import '../utils/error/app_failures.dart';
 import 'app_routes.dart';
@@ -40,18 +42,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.staffHomePath,
         name: AppRoutes.staffHomeName,
-        builder: (context, state) => const PlaceholderScreen(
+        builder: (context, state) => PlaceholderScreen(
           title: 'Property Intel',
           message: 'Staff tools will appear here.',
+          action: AppButton(
+            label: 'Staff',
+            icon: Icons.people_outline,
+            expanded: false,
+            onPressed: () => context.goNamed(AppRoutes.staffMembersName),
+          ),
         ),
         routes: [
           GoRoute(
             path: 'members',
             name: AppRoutes.staffMembersName,
-            builder: (context, state) => const PlaceholderScreen(
-              title: 'Staff',
-              message: 'Staff management arrives with the next feature.',
-            ),
+            builder: (context, state) => const StaffListScreen(),
           ),
         ],
       ),

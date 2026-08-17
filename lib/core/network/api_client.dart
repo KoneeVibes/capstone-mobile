@@ -7,6 +7,41 @@ import '../constants/app_constants.dart';
 import 'api_endpoints.dart';
 import 'api_response.dart';
 
+/// Field names whose values must never be written to a log.
+///
+/// This is not hypothetical: `DELETE /api/v1/staff/{id}` returns the account's
+/// bcrypt password hash in its response body, which would otherwise be printed
+/// to logcat verbatim by the debug logger.
+const Set<String> _secretLogKeys = {
+  'password',
+  'passwordhash',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'authorization',
+  'secret',
+  'apikey',
+};
+
+/// Recursively replaces secret values with `***`, leaving the surrounding
+/// structure intact so the log still shows the response's shape.
+///
+/// Visible for testing.
+@visibleForTesting
+Object? redactSecretsForLog(Object? value) {
+  if (value is Map) {
+    return <String, Object?>{
+      for (final entry in value.entries)
+        '${entry.key}':
+            _secretLogKeys.contains(entry.key.toString().toLowerCase())
+            ? '***'
+            : redactSecretsForLog(entry.value),
+    };
+  }
+  if (value is List) return value.map(redactSecretsForLog).toList();
+  return value;
+}
+
 /// Supplies the bearer token for outgoing requests.
 ///
 /// Returns null while signed out. Auth is not built yet, so the default
@@ -272,7 +307,7 @@ class _LoggingInterceptor extends Interceptor {
     }
 
     try {
-      return jsonEncode(data);
+      return jsonEncode(redactSecretsForLog(data));
     } on Object {
       return data.toString();
     }

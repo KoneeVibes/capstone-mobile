@@ -46,6 +46,18 @@ abstract final class AppFailures {
     message: 'That file is too large. Choose one under 10 MB.',
   );
 
+  /// A document link could not be handed to the browser or a viewer.
+  ///
+  /// Covers a malformed URL and a device with nothing registered for it.
+  /// The two read the same to the user and there is nothing different to do
+  /// about either, so they share one message.
+  static const AppFailure linkNotOpenable = AppFailure(
+    type: FailureType.unknown,
+    message:
+        "We couldn't open that document. Try again, or open it on the "
+        'web app.',
+  );
+
   /// The picker returned an entry with no readable path on disk.
   static const AppFailure fileUnreadable = AppFailure(
     type: FailureType.unknown,

@@ -169,6 +169,48 @@ void main() {
     });
   });
 
+
+  group('api label', () {
+    test('reads a kebab-cased API value as a phrase', () {
+      expect(AppFormatters.apiLabel('due-diligence'), 'Due diligence');
+      expect(
+        AppFormatters.apiLabel('physical-inspection'),
+        'Physical inspection',
+      );
+      expect(
+        AppFormatters.apiLabel('certificate-of-occupancy'),
+        'Certificate of occupancy',
+      );
+      expect(
+        AppFormatters.apiLabel('pending-information'),
+        'Pending information',
+      );
+    });
+
+    test('handles snake case and single words too', () {
+      expect(AppFormatters.apiLabel('under_review'), 'Under review');
+      expect(AppFormatters.apiLabel('building'), 'Building');
+      expect(AppFormatters.apiLabel('website'), 'Website');
+    });
+
+    test('is sentence case, not title case', () {
+      // `Certificate Of Occupancy` would be wrong: these values are phrases,
+      // which is why this exists alongside titleCase rather than replacing it.
+      expect(
+        AppFormatters.apiLabel('right-of-occupancy'),
+        isNot('Right Of Occupancy'),
+      );
+      expect(AppFormatters.apiLabel('DEED-OF-ASSIGNMENT'), 'Deed of assignment');
+    });
+
+    test('handles null, blanks and stray separators', () {
+      expect(AppFormatters.apiLabel(null), '');
+      expect(AppFormatters.apiLabel('   '), '');
+      expect(AppFormatters.apiLabel('--'), '');
+      expect(AppFormatters.apiLabel('  due--diligence  '), 'Due diligence');
+    });
+  });
+
   group('file size', () {
     test('scales through the units', () {
       expect(AppFormatters.fileSize(512), '512 B');

@@ -36,6 +36,9 @@ dependencies:
   # Document selection (property deeds, survey plans, certificates).
   file_picker: ^11.0.3
 
+  # Opening case documents (survey plans, title deeds) outside the app.
+  url_launcher: ^6.3.2
+
   # Skeleton loading for content with a known shape.
   shimmer: ^3.0.0
 

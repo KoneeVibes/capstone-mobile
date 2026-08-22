@@ -23,4 +23,9 @@ abstract final class ApiEndpoints {
   static const String staff = '/staff';
 
   static String staffById(String userId) => '$staff/$userId';
+
+  // Cases. Singular path: the API exposes /case, not /cases.
+  static const String cases = '/case';
+
+  static String caseById(String caseId) => '$cases/$caseId';
 }

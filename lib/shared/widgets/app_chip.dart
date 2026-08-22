@@ -41,34 +41,54 @@ class AppChip extends StatelessWidget {
   }
 }
 
-/// Selectable pill, as used for the role picker in the staff sheets.
+/// How much weight a selected [AppChoiceChip] carries.
+enum AppChoiceChipStyle {
+  /// Brand blue when selected, outlined when not. For a chip that sets a value
+  /// on a record, such as the role picker in the staff sheets.
+  brand,
+
+  /// Greyscale, filled either way. For a chip that narrows what a list shows
+  /// rather than changing anything, such as the cases filter tabs — the brand
+  /// blue would read as an edit.
+  neutral,
+}
+
+/// Selectable pill.
 class AppChoiceChip extends StatelessWidget {
   const AppChoiceChip({
     required this.label,
     required this.isSelected,
     required this.onSelected,
     super.key,
+    this.style = AppChoiceChipStyle.brand,
+    this.enabled = true,
   });
 
   final String label;
   final bool isSelected;
   final VoidCallback onSelected;
+  final AppChoiceChipStyle style;
+
+  /// Set false to show the chip without accepting taps, so a filter bar stays
+  /// in place — and stops shifting the layout — while its list loads.
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
+    final (background, foreground, border) = _palette();
+
     return Material(
-      color: isSelected ? AppColors.primary : AppColors.surface,
+      color: background,
       borderRadius: BorderRadius.circular(AppSizing.radiusSm),
       child: InkWell(
-        onTap: onSelected,
+        onTap: enabled ? onSelected : null,
         borderRadius: BorderRadius.circular(AppSizing.radiusSm),
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizing.radiusSm),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
-              width: AppSizing.borderWidth,
-            ),
+            border: border == null
+                ? null
+                : Border.all(color: border, width: AppSizing.borderWidth),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -78,9 +98,7 @@ class AppChoiceChip extends StatelessWidget {
             child: Text(
               label,
               style: AppTextStyles.chip.copyWith(
-                color: isSelected
-                    ? AppColors.textOnPrimary
-                    : AppColors.textPrimary,
+                color: foreground,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -89,4 +107,28 @@ class AppChoiceChip extends StatelessWidget {
       ),
     );
   }
+
+  /// (background, foreground, border)
+  (Color, Color, Color?) _palette() => switch (style) {
+    AppChoiceChipStyle.brand when isSelected => (
+      AppColors.primary,
+      AppColors.textOnPrimary,
+      AppColors.primary,
+    ),
+    AppChoiceChipStyle.brand => (
+      AppColors.surface,
+      AppColors.textPrimary,
+      AppColors.border,
+    ),
+    AppChoiceChipStyle.neutral when isSelected => (
+      AppColors.surfaceSelected,
+      AppColors.textPrimary,
+      null,
+    ),
+    AppChoiceChipStyle.neutral => (
+      AppColors.surfaceMuted,
+      AppColors.textSecondary,
+      null,
+    ),
+  };
 }

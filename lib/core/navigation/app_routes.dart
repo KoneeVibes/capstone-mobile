@@ -20,6 +20,13 @@ abstract final class AppRoutes {
   static const String staffMembersName = 'staffMembers';
   static const String staffMembersPath = '/staff/members';
 
+  static const String casesName = 'cases';
+  static const String casesPath = '/staff/cases';
+
+  /// Takes a `caseId` path parameter.
+  static const String caseDetailName = 'caseDetail';
+  static const String caseDetailPath = '/staff/cases/:caseId';
+
   // Legal. Screens land with the legal-content task; the paths are fixed now so
   // links from other screens can be written against them.
   static const String privacyPolicyName = 'privacyPolicy';

@@ -18,6 +18,11 @@ abstract final class AppColors {
   static const Color background = Color(0xFFF5F6F8);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceMuted = Color(0xFFF3F4F6);
+
+  /// Fill for a selected neutral control — the active tab in a filter bar.
+  /// Dark enough to read as chosen against [surfaceMuted] beside it.
+  static const Color surfaceSelected = Color(0xFFC9CCD1);
+
   static const Color border = Color(0xFFE5E7EB);
   static const Color divider = Color(0xFFEDEFF2);
 

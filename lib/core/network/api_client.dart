@@ -73,6 +73,12 @@ class ApiClient {
         sendTimeout: AppConstants.sendTimeout,
         responseType: ResponseType.json,
         headers: const {'Accept': 'application/json'},
+        // Repeated plain keys (`filter=a&filter=b`), not dio's default
+        // `multiCompatible`, which sends `filter[]=a&filter[]=b`. Verified
+        // against the live API: it ignores the bracketed form outright and
+        // answers as though no filter were sent, so the default would fail
+        // silently rather than error.
+        listFormat: ListFormat.multi,
         // Only 2xx is a success. Everything else becomes a DioException that
         // still carries the response, so the logging interceptor reports it as
         // a failure and ErrorHandler can read the server's documented message.

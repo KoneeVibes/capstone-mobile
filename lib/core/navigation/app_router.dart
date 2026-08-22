@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/cases/presentation/screens/case_detail_screen.dart';
+import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_state_view.dart';
+import '../sizing/app_sizing.dart';
 import '../utils/error/app_failures.dart';
 import 'app_routes.dart';
 import 'app_session.dart';
@@ -45,11 +48,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PlaceholderScreen(
           title: 'Property Intel',
           message: 'Staff tools will appear here.',
-          action: AppButton(
-            label: 'Staff',
-            icon: Icons.people_outline,
-            expanded: false,
-            onPressed: () => context.goNamed(AppRoutes.staffMembersName),
+          action: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppButton(
+                label: 'Cases',
+                icon: Icons.inbox_outlined,
+                expanded: false,
+                onPressed: () => context.goNamed(AppRoutes.casesName),
+              ),
+              const SizedBox(height: AppSizing.space12),
+              AppButton(
+                label: 'Staff',
+                icon: Icons.people_outline,
+                variant: AppButtonVariant.secondary,
+                expanded: false,
+                onPressed: () => context.goNamed(AppRoutes.staffMembersName),
+              ),
+            ],
           ),
         ),
         routes: [
@@ -57,6 +73,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'members',
             name: AppRoutes.staffMembersName,
             builder: (context, state) => const StaffListScreen(),
+          ),
+          GoRoute(
+            path: 'cases',
+            name: AppRoutes.casesName,
+            builder: (context, state) => const CasesListScreen(),
+            routes: [
+              GoRoute(
+                path: ':caseId',
+                name: AppRoutes.caseDetailName,
+                // Missing rather than bang: an empty id reaches the repository
+                // and comes back as a normal "not found" failure screen, which
+                // is what a mistyped deep link should produce.
+                builder: (context, state) => CaseDetailScreen(
+                  caseId: state.pathParameters['caseId'] ?? '',
+                ),
+              ),
+            ],
           ),
         ],
       ),

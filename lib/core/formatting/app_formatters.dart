@@ -141,6 +141,28 @@ abstract final class AppFormatters {
         .join(' ');
   }
 
+  /// `due-diligence` -> `Due diligence`. For kebab- and snake-cased API values.
+  ///
+  /// Sentence case rather than [titleCase]'s per-word capitals, because these
+  /// values are phrases: `certificate-of-occupancy` has to read as `Certificate
+  /// of occupancy`, not `Certificate Of Occupancy`.
+  static String apiLabel(String? value) {
+    final words = (value ?? '')
+        .trim()
+        .split(RegExp(r'[\s_-]+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '';
+
+    final first = words.first.toLowerCase();
+    return [
+      first.length == 1
+          ? first.toUpperCase()
+          : '${first[0].toUpperCase()}${first.substring(1)}',
+      ...words.skip(1).map((word) => word.toLowerCase()),
+    ].join(' ');
+  }
+
   /// `1.2 MB`
   static String fileSize(int? bytes) {
     if (bytes == null || bytes <= 0) return '0 B';

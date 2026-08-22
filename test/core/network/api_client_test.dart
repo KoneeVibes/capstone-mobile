@@ -278,4 +278,31 @@ void main() {
       expect(meta.hasNextPage, isFalse);
     });
   });
+
+  group('list query parameters', () {
+    test('serialises a list as repeated plain keys', () {
+      // The cases endpoint takes `filter=a&filter=b`. Dio's default,
+      // ListFormat.multiCompatible, sends `filter[]=a&filter[]=b`, which this
+      // API ignores outright — it answers as though no filter were given, so
+      // the wrong format fails silently rather than erroring.
+      final dio = ApiClient.createDio();
+      addTearDown(dio.close);
+
+      final request = RequestOptions(
+        path: '/case',
+        baseUrl: dio.options.baseUrl,
+        listFormat: dio.options.listFormat,
+        queryParameters: const {
+          'filter': ['submitted', 'closed'],
+          'page': 1,
+        },
+      );
+
+      expect(request.uri.query, contains('filter=submitted'));
+      expect(request.uri.query, contains('filter=closed'));
+      expect(request.uri.query, contains('page=1'));
+      expect(request.uri.query, isNot(contains('%5B%5D')));
+      expect(request.uri.query, isNot(contains('[]')));
+    });
+  });
 }

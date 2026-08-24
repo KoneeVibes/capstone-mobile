@@ -48,6 +48,14 @@ abstract final class AppSizing {
   static const double avatarMd = 48;
   static const double avatarLg = 64;
 
+  /// Rendered width of the splash wordmark.
+  ///
+  /// The source art is 482 px wide, so this is about as wide as it can be
+  /// drawn before a 3x screen has to stretch it (200 x 3 = 600 px, a 1.24x
+  /// upscale), while still landing near the design's proportion on a
+  /// 360-411 dp phone. Raise it if a larger export arrives.
+  static const double splashLogoWidth = 200;
+
   // Borders and elevation.
   static const double borderWidth = 1;
   static const double borderWidthFocused = 1.5;

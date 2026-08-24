@@ -6,6 +6,12 @@ abstract final class AppConstants {
 
   static const String appName = 'Property Intel';
 
+  /// How long the splash screen holds before the app routes on.
+  ///
+  /// A branding beat with nothing behind it today. When auth lands it becomes
+  /// the floor on a real wait rather than the whole wait.
+  static const Duration splashDuration = Duration(milliseconds: 1200);
+
   // Networking. The API runs on a cold-starting host, so the first request
   // after an idle period can legitimately take far longer than a warm one.
   static const Duration connectTimeout = Duration(seconds: 30);

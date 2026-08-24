@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FDFCFC</color>
+
+    <!-- The launch window, in every form it takes: the pre-Android-12 window
+         background, the Android 12+ system splash, and the window behind the
+         Flutter UI once it is running. It matches AppColors.surface so the
+         handoff from the native launch screen into SplashScreen is invisible. -->
+    <color name="splash_background">#FFFFFFFF</color>
 </resources>

@@ -7,6 +7,7 @@ import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
+import '../../shared/screens/splash_screen.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_state_view.dart';
 import '../sizing/app_sizing.dart';
@@ -18,13 +19,21 @@ import 'app_session.dart';
 ///
 /// Routes are split into a client branch and a staff branch; [_redirect] picks
 /// the branch from the current role.
+///
+/// The app opens on the splash route, which hands off to [AppRoutes.rootPath]
+/// once it has held its beat; the redirect below takes it from there.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoutes.rootPath,
+    initialLocation: AppRoutes.splashPath,
     debugLogDiagnostics: kDebugMode,
     redirect: (context, state) => _redirect(ref, state),
     errorBuilder: (context, state) => const _RouteNotFoundScreen(),
     routes: [
+      GoRoute(
+        path: AppRoutes.splashPath,
+        name: AppRoutes.splashName,
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: AppRoutes.rootPath,
         name: AppRoutes.rootName,

@@ -5,7 +5,13 @@
 abstract final class AppRoutes {
   const AppRoutes._();
 
-  /// Entry point. Redirects to the branch matching the signed-in role.
+  /// The app's entry point. Holds the brand mark while the app starts, then
+  /// hands off to [rootPath].
+  static const String splashName = 'splash';
+  static const String splashPath = '/splash';
+
+  /// Where the splash hands off. Redirects to the branch matching the
+  /// signed-in role.
   static const String rootName = 'root';
   static const String rootPath = '/';
 

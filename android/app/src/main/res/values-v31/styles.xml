@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 replaced the window-background launch screen with the platform
+     SplashScreen API: android:windowBackground is ignored for the launch, and
+     the launcher icon is drawn centred and masked to a circle over
+     windowSplashScreenBackground. A 4.3:1 wordmark cannot survive that mask, so
+     all this theme does is get the system splash out of the way quietly — the
+     branding itself arrives a moment later, from Flutter.
+
+     The background is the icon's own background rather than splash_background:
+     the adaptive icon has an opaque #FDFCFC layer baked in, so anything else
+     draws its mask as a visible off-white disc. Tying the two together means
+     they cannot drift apart, and #FDFCFC to the white Flutter paints next is
+     one step in 255 — invisible. Once the icon foreground is transparent
+     (see tasks/BACKLOG.md) this can become @color/splash_background.
+
+     A style declared here replaces the values/ one outright rather than merging
+     with it, so windowBackground is repeated for the pre-first-frame window. -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+    </style>
+</resources>

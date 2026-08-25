@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="Property Intel"
+        android:label="Capstone PropertyIntel"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -4,7 +4,7 @@
 abstract final class AppConstants {
   const AppConstants._();
 
-  static const String appName = 'Property Intel';
+  static const String appName = 'Capstone PropertyIntel';
 
   /// How long the splash screen holds before the app routes on.
   ///
@@ -42,14 +42,7 @@ abstract final class AppConstants {
   static const Set<String> allowedImageExtensions = {'jpg', 'jpeg', 'png'};
 
   /// Formats accepted where a document is expected.
-  static const Set<String> allowedDocumentExtensions = {
-    'pdf',
-    'doc',
-    'docx',
-    'jpg',
-    'jpeg',
-    'png',
-  };
+  static const Set<String> allowedDocumentExtensions = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'};
 
   /// Longest edge of a picked image, in pixels. Re-encoding at this size keeps
   /// uploads small and normalises HEIC to JPEG.
@@ -59,9 +52,7 @@ abstract final class AppConstants {
   static const int pickedImageQuality = 85;
 
   // Validation patterns.
-  static final RegExp emailPattern = RegExp(
-    r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',
-  );
+  static final RegExp emailPattern = RegExp(r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$');
 
   /// Nigerian mobile numbers, accepting local (`08034112290`), international
   /// (`+2348034112290`) and spaced (`0701 882 4471`) forms.

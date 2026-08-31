@@ -77,10 +77,12 @@ class _CaseAssignSheetState extends ConsumerState<CaseAssignSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Names the case the sheet is about. There is no case reference to
-        // print, so the applicant and their property identify it instead.
+        // Names the case the sheet is about — its reference where it has one,
+        // and the applicant and property either way, since a record made
+        // before the backend had references carries no code to show.
         Text(
           [
+            widget.value.trackingId ?? '',
             widget.value.applicant.name,
             widget.value.summary,
           ].where((part) => part.isNotEmpty).join(' · '),

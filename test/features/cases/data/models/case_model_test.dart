@@ -11,6 +11,7 @@ void main() {
       final value = CaseModel.fromJson(caseJson);
 
       expect(value.id, '914ae488-1b1c-4eb8-8798-bc511b175d9f');
+      expect(value.trackingId, 'PI-URF8T7C2');
       expect(value.source, 'website');
       expect(value.status, CaseStatus.submitted);
       expect(value.applicant.name, 'Ofofonono Okon Umoren');
@@ -55,10 +56,28 @@ void main() {
       expect(CaseModel.fromJson(json).id, '6a895efd70d2cffda8c6cca8');
     });
 
+    test('reads a record made before trackingId existed', () {
+      // Older cases carry no reference, and the screens fall back to the
+      // property rather than printing an empty heading.
+      final json = Map<String, dynamic>.of(caseJson)..remove('trackingId');
+      expect(CaseModel.fromJson(json).trackingId, isNull);
+    });
+
+    test('decodes every status the API returns', () {
+      for (final status in CaseStatus.values.where((s) => s.isKnown)) {
+        expect(
+          CaseModel.fromJson({...caseJson, 'status': status.apiValue}).status,
+          status,
+          reason: status.apiValue,
+        );
+      }
+    });
+
     test('survives a half-filled record without throwing', () {
       final value = CaseModel.fromJson(const {'id': 'case-1'});
 
       expect(value.id, 'case-1');
+      expect(value.trackingId, isNull);
       expect(value.applicant.name, '');
       expect(value.property.type, '');
       expect(value.inquiryPurpose, isEmpty);
@@ -117,11 +136,12 @@ void main() {
   });
 
   group('CaseModel.assignmentBody', () {
-    test('advances a submitted case to assigned', () {
+    test('advances a payment-validated case to assigned', () {
+      // The one status the app writes, on the one hand-off it performs.
       expect(
         CaseModel.assignmentBody(
           assigneeId: 'staff-1',
-          currentStatus: CaseStatus.submitted,
+          currentStatus: CaseStatus.paymentValidated,
         ),
         {'assigneeId': 'staff-1', 'status': 'assigned'},
       );
@@ -130,12 +150,16 @@ void main() {
     test('sends the assignee alone for a case already under way', () {
       // Re-assigning is a change of hands, not progress. Sending `assigned`
       // here would knock the case backwards through its own lifecycle.
+      // `submitted` is in the list for completeness: the detail screen will not
+      // offer the action there at all.
       for (final status in const [
+        CaseStatus.submitted,
         CaseStatus.assigned,
         CaseStatus.accepted,
         CaseStatus.pendingInformation,
         CaseStatus.underReview,
         CaseStatus.closed,
+        CaseStatus.suspended,
       ]) {
         expect(
           CaseModel.assignmentBody(

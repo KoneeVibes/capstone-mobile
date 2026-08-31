@@ -135,18 +135,42 @@ class _EmptyState extends StatelessWidget {
       );
     }
 
+    // One line per tab, naming what would be here rather than repeating the
+    // tab's own label back at the user.
     final (title, message) = switch (state.filter) {
-      CaseFilter.newCases => (
+      CaseFilter.submitted => (
         'No new cases',
-        'Every case has been picked up by someone.',
+        'Cases arrive here when an applicant submits one, and stay until their '
+            'payment is validated.',
+      ),
+      CaseFilter.paymentValidated => (
+        'Nothing waiting to be assigned',
+        'Cases land here once payment clears, ready to be given to a team '
+            'member.',
       ),
       CaseFilter.assigned => (
         'No cases assigned',
-        'Open a new case to give it to a team member.',
+        'Cases given to a team member wait here until they pick them up.',
+      ),
+      CaseFilter.accepted => (
+        'No cases accepted',
+        'Cases move here once the team member they were given to picks them up.',
+      ),
+      CaseFilter.pendingInformation => (
+        'Nothing waiting on an applicant',
+        'Cases stalled for something from the applicant collect here.',
+      ),
+      CaseFilter.underReview => (
+        'No cases under review',
+        'Cases being worked through show here.',
       ),
       CaseFilter.closed => (
         'No closed cases',
         'Cases stay here once the work on them is finished.',
+      ),
+      CaseFilter.suspended => (
+        'No suspended cases',
+        'Cases halted before they could be finished show here.',
       ),
       // Unreachable: an empty All tab means no cases at all, handled above.
       CaseFilter.all => ('No cases yet', null),

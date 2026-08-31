@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/case.dart';
@@ -10,9 +12,10 @@ import 'cases_datasource.dart';
 /// Network access for cases.
 ///
 /// Throws on failure — `DioException` propagates untouched so
-/// `CasesRepositoryImpl` can convert it in one place. The one exception is
-/// resolving an assignee's name, which is allowed to fail quietly: see
-/// [_assigneesById].
+/// `CasesRepositoryImpl` can convert it in one place. Two reads are allowed to
+/// fail quietly, both secondary and both documented where they are: the closed
+/// cases merged into the list ([_closedCases], on a 404 only) and an assignee's
+/// name ([_assigneesById]).
 class CasesRemoteDataSourceImpl implements CasesDataSource {
   const CasesRemoteDataSourceImpl(this._client);
 
@@ -31,31 +34,49 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// says how many pages there are, so a set larger than [_perPage] is walked
   /// rather than silently truncated at the first page.
   ///
-  /// Every status is named explicitly. Left to itself the endpoint "defaults to
-  /// all active case statuses", which reads as excluding `closed` — and a
-  /// Closed tab that is always empty would look like a working filter with
-  /// nothing in it rather than a bug. Naming them makes the default irrelevant.
+  /// Nothing is named in `filter`. Naming every status the app knew is how this
+  /// list broke once already: the backend added `payment-validated`, those
+  /// cases stopped being requested at all, and the six-status request now
+  /// answers 404 while a case sits there. A status this build does not
+  /// recognise has to arrive and render as an absent pill, not vanish. The
+  /// endpoint's default is documented as "all active case statuses", which
+  /// reads as excluding `closed`, so closed cases are fetched alongside and
+  /// merged in.
   @override
   Future<List<Case>> fetchCases() async {
-    final cases = await _fetchAllPages<Case>(
+    final active = await _fetchAllPages<Case>(
       ApiEndpoints.cases,
       CaseModel.listFromJson,
-      query: {'filter': _everyStatus},
     );
+    final closed = await _closedCases();
+
+    // De-duped by id, so the merge costs nothing if the default turns out to
+    // include closed cases after all — which the wording leaves ambiguous.
+    final ids = active.map((value) => value.id).toSet();
+    final cases = [...active, ...closed.where((value) => ids.add(value.id))];
+
     return _withAssigneeNames(cases);
   }
 
-  /// Every status this build knows, as the API spells them.
+  /// The closed cases, or none when the endpoint says there are none.
   ///
-  /// The cost of naming them is that a status added to the backend before it is
-  /// added to [CaseStatus] would not be requested at all, and those cases would
-  /// go missing rather than showing an unrecognised pill. That is the trade
-  /// taken deliberately: a silently empty Closed tab is certain today, whereas
-  /// a new status is hypothetical and noted in the backlog.
-  static final List<String> _everyStatus = CaseStatus.values
-      .where((status) => status.isKnown)
-      .map((status) => status.apiValue)
-      .toList(growable: false);
+  /// A 404 is that answer — the same "Cases not found" the list endpoint gives
+  /// for any filter that matches nothing — and having no closed cases is the
+  /// ordinary state, not a failure. Anything else propagates: a Closed tab that
+  /// is quietly empty because a request failed is the exact bug this merge
+  /// exists to prevent, and the list screen already offers a retry.
+  Future<List<Case>> _closedCases() async {
+    try {
+      return await _fetchAllPages<Case>(
+        ApiEndpoints.cases,
+        CaseModel.listFromJson,
+        query: {'filter': CaseStatus.closed.apiValue},
+      );
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
 
   @override
   Future<Case> fetchCase(String id) async {
@@ -86,10 +107,10 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     required String caseId,
     required String assigneeId,
   }) async {
-    // Read first, so the body can carry a status only when the case has not
-    // been given to anyone yet. Assigning is what moves a submitted case along;
-    // re-assigning anything further on is a change of hands, and sending a
-    // status there would knock the case backwards.
+    // Read first, so the body can carry a status only for a payment-validated
+    // case. That hand-off is what assigning moves along; re-assigning anything
+    // further on is a change of hands, and sending a status there would knock
+    // the case backwards.
     final current = await _client.get<Case>(
       ApiEndpoints.caseById(caseId),
       decoder: CaseModel.fromData,
@@ -170,11 +191,11 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// Every staff member the app can see, keyed by id — deactivated included,
   /// so a case held by someone since deactivated still shows a name.
   ///
-  /// A failure here is swallowed rather than thrown. This is the one place in
-  /// the feature that catches, and it is deliberate: the staff list is a
-  /// secondary read, and a hiccup fetching it must not blank a cases screen
-  /// that was otherwise loaded successfully. Cases come back unhydrated, which
-  /// costs a name on a row and nothing else.
+  /// A failure here is swallowed rather than thrown, and unlike [_closedCases]
+  /// that holds for any failure, not just a 404: the staff list is decoration
+  /// on a screen that has already loaded, and a hiccup fetching it must not
+  /// blank it. Cases come back unhydrated, which costs a name on a row and
+  /// nothing else.
   Future<Map<String, CaseAssignee>> _assigneesById() async {
     try {
       final staff = await _fetchAllPages<CaseAssigneeModel>(

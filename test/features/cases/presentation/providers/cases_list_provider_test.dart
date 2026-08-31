@@ -19,17 +19,18 @@ class MockCasesRepository extends Mock implements CasesRepository {}
 Case _case(String id, CaseStatus status) => buildCase(
   id: id,
   status: status,
-  assignee: status.isWithSomeone || status.isClosed ? ada : null,
+  assignee: status == CaseStatus.submitted ? null : ada,
 );
 
-/// Something for every tab, including two of the four statuses the Assigned
-/// bucket covers.
+/// One case per tab, plus a second submitted one so a filtered set can be
+/// more than a single row.
 final _allCases = [
   _case('a', CaseStatus.submitted),
-  _case('b', CaseStatus.assigned),
-  _case('c', CaseStatus.underReview),
-  _case('d', CaseStatus.closed),
-  _case('e', CaseStatus.submitted),
+  _case('b', CaseStatus.paymentValidated),
+  _case('c', CaseStatus.assigned),
+  _case('d', CaseStatus.underReview),
+  _case('e', CaseStatus.closed),
+  _case('f', CaseStatus.submitted),
 ];
 
 const _serverFailure = AppFailure(
@@ -63,8 +64,8 @@ void main() {
       final state = await container.read(casesListProvider.future);
 
       expect(state.filter, CaseFilter.all);
-      expect(state.items, hasLength(5));
-      expect(state.visible, hasLength(5));
+      expect(state.items, hasLength(6));
+      expect(state.visible, hasLength(6));
       expect(state.isEmpty, isFalse);
     });
 
@@ -106,34 +107,47 @@ void main() {
       await container.read(casesListProvider.future);
       final notifier = container.read(casesListProvider.notifier);
 
-      notifier.selectFilter(CaseFilter.newCases);
+      notifier.selectFilter(CaseFilter.submitted);
       expect(
         container.read(casesListProvider).value!.visible.map((c) => c.id),
-        ['a', 'e'],
+        ['a', 'f'],
       );
 
       notifier.selectFilter(CaseFilter.closed);
       expect(
         container.read(casesListProvider).value!.visible.map((c) => c.id),
-        ['d'],
+        ['e'],
       );
 
       // One fetch for the initial build, and none for either tab switch.
       verify(repository.fetchCases).called(1);
     });
 
-    test('groups every working status under one tab', () async {
+    test('a tab shows its own status and no neighbouring one', () async {
       stubCases(Ok(_allCases));
 
       final container = makeContainer();
       await container.read(casesListProvider.future);
-      container
-          .read(casesListProvider.notifier)
-          .selectFilter(CaseFilter.assigned);
+      final notifier = container.read(casesListProvider.notifier);
 
+      // `assigned` and `under-review` shared a tab before every status got its
+      // own; this is what stops them sharing one again.
+      notifier.selectFilter(CaseFilter.assigned);
       expect(
         container.read(casesListProvider).value!.visible.map((c) => c.id),
-        ['b', 'c'],
+        ['c'],
+      );
+
+      notifier.selectFilter(CaseFilter.underReview);
+      expect(
+        container.read(casesListProvider).value!.visible.map((c) => c.id),
+        ['d'],
+      );
+
+      notifier.selectFilter(CaseFilter.paymentValidated);
+      expect(
+        container.read(casesListProvider).value!.visible.map((c) => c.id),
+        ['b'],
       );
     });
 
@@ -148,7 +162,7 @@ void main() {
 
       final state = container.read(casesListProvider).value!;
       expect(state.visible, hasLength(1));
-      expect(state.items, hasLength(5));
+      expect(state.items, hasLength(6));
     });
 
     test('ignores a re-select of the current tab', () async {

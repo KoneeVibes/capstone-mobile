@@ -1,12 +1,16 @@
 /// Where a case sits in its lifecycle.
 ///
-/// Owned by the backend and verified against the live API: these are the six
-/// values `GET /api/v1/case`'s `filter` parameter accepts. The app reads a
-/// status freely but writes only one — `assigned`, when it hands an untouched
-/// case to someone. Every other transition happens elsewhere.
+/// Owned by the backend: these are the eight values `GET /api/v1/case` returns.
+/// The app reads a status freely but writes only one — `assigned`, when it
+/// hands a payment-validated case to someone. Every other transition happens
+/// elsewhere.
 enum CaseStatus {
-  /// Raised by an applicant, not yet given to anyone. The New tab.
+  /// Raised by an applicant, with payment not yet validated. The one status
+  /// the app cannot assign from.
   submitted('submitted'),
+
+  /// Payment cleared, waiting for someone to be given it.
+  paymentValidated('payment-validated'),
 
   /// Given to a team member, who has not picked it up yet.
   assigned('assigned'),
@@ -22,6 +26,9 @@ enum CaseStatus {
 
   /// Finished. Still readable, and still re-assignable.
   closed('closed'),
+
+  /// Halted before finishing. Still readable, and still re-assignable.
+  suspended('suspended'),
 
   /// A status the API returned that this build does not know about.
   ///
@@ -46,23 +53,22 @@ enum CaseStatus {
 
   bool get isKnown => this != unknown;
 
-  /// Nobody has been given it yet — the one state the app moves a case out of.
+  /// Whether the case can be handed to someone, or handed on.
   ///
-  /// Also decides whether an assignment writes a status at all: assigning a
-  /// [submitted] case advances it, while assigning any other case is only a
-  /// change of hands and must leave the status alone.
-  bool get isSubmitted => this == submitted;
-
-  /// Whether the case is in someone's hands.
+  /// Everything except [submitted]: a case whose payment has not been validated
+  /// is not the team's to pick up yet. Every later status is fair game,
+  /// [closed] and [suspended] included — re-assigning one is a change of hands,
+  /// not a change of state.
   ///
-  /// Four statuses mean that, which is why the Assigned tab is a bucket rather
-  /// than an equality check. A case waiting on the applicant still belongs to
-  /// whoever is chasing them, so it belongs in the bucket too.
-  bool get isWithSomeone =>
-      this == assigned ||
-      this == accepted ||
-      this == pendingInformation ||
-      this == underReview;
+  /// An [unknown] status is assignable. Refusing there would mean a status
+  /// added server-side silently disables the one action this screen has, which
+  /// is a worse failure than assigning something we cannot name.
+  bool get canBeAssigned => this != submitted;
 
-  bool get isClosed => this == closed;
+  /// Whether assigning also moves the case along its lifecycle.
+  ///
+  /// Only [paymentValidated] does: that is the hand-off assigning actually
+  /// causes. Re-assigning anything further on is a change of hands, and sending
+  /// `assigned` alongside it would knock the case backwards.
+  bool get advancesOnAssign => this == paymentValidated;
 }

@@ -4,14 +4,17 @@ import 'package:propertyintelmobileapp/features/cases/domain/entities/case_assig
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_property.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_status.dart';
 
-/// A case exactly as `GET /api/v1/case` returned it on 22 Aug 2026, including
+/// A case exactly as `GET /api/v1/case` returned it on 31 Aug 2026, including
 /// the fields outside the published schema (`_id`, `__v`).
 ///
 /// Copied from a live response rather than the swagger example, so the decoding
-/// tests are pinned to what the server actually sends.
+/// tests are pinned to what the server actually sends. `statusHistory` is on
+/// the wire too and deliberately left out: nothing decodes it yet, and a
+/// fixture carrying a field no test reads would suggest otherwise.
 const caseJson = <String, dynamic>{
   '_id': '6a895efd70d2cffda8c6cca8',
   'id': '914ae488-1b1c-4eb8-8798-bc511b175d9f',
+  'trackingId': 'PI-URF8T7C2',
   'source': 'website',
   'assigneeId': null,
   'applicantName': 'Ofofonono Okon Umoren',
@@ -67,6 +70,7 @@ Map<String, dynamic> staffJson({
 /// Builds a case for tests that care about behaviour rather than decoding.
 Case buildCase({
   String id = 'case-1',
+  String? trackingId,
   CaseStatus status = CaseStatus.submitted,
   String applicantName = 'Ofofonono Okon Umoren',
   String propertyType = 'building',
@@ -81,6 +85,7 @@ Case buildCase({
   DateTime? createdAt,
 }) => Case(
   id: id,
+  trackingId: trackingId,
   source: source,
   applicant: CaseApplicant(
     name: applicantName,

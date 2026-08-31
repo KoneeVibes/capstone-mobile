@@ -1,24 +1,27 @@
 import 'case.dart';
 import 'case_status.dart';
 
-/// The tabs above the cases list.
+/// The tabs above the cases list: All, then one per status.
 ///
-/// Not a mirror of [CaseStatus], which has six values to these four tabs:
-/// [assigned] is a bucket covering everything somebody already holds
-/// (`assigned`, `accepted`, `pending-information`, `under-review`), because
-/// from the list's point of view they are the same thing. Keeping the rule here
-/// rather than in the screen means the list and its tests agree on what each
-/// tab means.
+/// A tab means exactly one status, so nothing is bucketed and no case appears
+/// under two tabs. A case whose status this build does not recognise shows
+/// under [all] alone — it has no tab of its own, and inventing one would name a
+/// status the app cannot label.
 enum CaseFilter {
-  all,
-  newCases,
-  assigned,
-  closed;
+  all(null),
+  submitted(CaseStatus.submitted),
+  paymentValidated(CaseStatus.paymentValidated),
+  assigned(CaseStatus.assigned),
+  accepted(CaseStatus.accepted),
+  pendingInformation(CaseStatus.pendingInformation),
+  underReview(CaseStatus.underReview),
+  closed(CaseStatus.closed),
+  suspended(CaseStatus.suspended);
 
-  bool matches(Case value) => switch (this) {
-    CaseFilter.all => true,
-    CaseFilter.newCases => value.status.isSubmitted,
-    CaseFilter.assigned => value.status.isWithSomeone,
-    CaseFilter.closed => value.status.isClosed,
-  };
+  const CaseFilter(this.status);
+
+  /// The status this tab shows, or null for [all].
+  final CaseStatus? status;
+
+  bool matches(Case value) => status == null || value.status == status;
 }

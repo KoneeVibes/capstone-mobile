@@ -40,6 +40,13 @@ abstract final class AppColors {
   static const Color info = Color(0xFF2563EB);
   static const Color infoSoft = Color(0xFFEEF0FF);
 
+  /// Teal, for a status that is neither a warning nor a completion — currently
+  /// a case whose payment has cleared. Added because the pairs above were all
+  /// spoken for and two statuses sharing a colour is a status pill that does
+  /// not tell you anything.
+  static const Color accent = Color(0xFF0F766E);
+  static const Color accentSoft = Color(0xFFCCFBF1);
+
   // Destructive. The strong red is the confirm button, the lighter one the
   // trash icon, and the soft tint the icon backdrop.
   static const Color destructive = Color(0xFFE30613);

@@ -37,8 +37,17 @@ void main() {
   /// Stubs the paginated cases endpoint, running the decoder the datasource
   /// supplied so the decoding wiring is exercised rather than bypassed.
   ///
-  /// [pages] maps a page number to the raw `data` array the server returns.
-  void stubCasePages(Map<int, List<Object?>> pages, {int? totalPages}) {
+  /// [pages] maps a page number to the raw `data` array the unfiltered request
+  /// returns; [closedPages] does the same for the `filter=closed` request the
+  /// datasource makes alongside it. Left unset, that second request answers a
+  /// 404 — what the live endpoint does when a filter matches nothing — so
+  /// every test here also proves the 404 guard leaves the list intact.
+  void stubCasePages(
+    Map<int, List<Object?>> pages, {
+    int? totalPages,
+    Map<int, List<Object?>>? closedPages,
+    DioException? closedFailure,
+  }) {
     when(
       () => client.get<List<Case>>(
         any(),
@@ -51,16 +60,23 @@ void main() {
       final page = query['page'] as int;
       final decoder =
           invocation.namedArguments[#decoder] as List<Case> Function(Object?);
+      final isClosedRequest = query.containsKey('filter');
+
+      if (isClosedRequest && closedPages == null) {
+        throw closedFailure ?? _httpFailure(404);
+      }
+
+      final rows = isClosedRequest ? closedPages! : pages;
 
       return ApiResponse<List<Case>>(
         status: 'success',
         message: 'success',
-        data: decoder(pages[page] ?? const []),
+        data: decoder(rows[page] ?? const []),
         meta: PageMeta(
           page: page,
           perPage: 100,
-          total: pages.values.fold(0, (sum, rows) => sum + rows.length),
-          totalPages: totalPages ?? pages.length,
+          total: rows.values.fold(0, (sum, batch) => sum + batch.length),
+          totalPages: totalPages ?? rows.length,
         ),
       );
     });
@@ -152,6 +168,16 @@ void main() {
     });
   }
 
+  /// Every `queryParameters` map the list endpoint was called with, in order.
+  List<Map<String, dynamic>> capturedListQueries() =>
+      verify(
+        () => client.get<List<Case>>(
+          any(),
+          queryParameters: captureAny(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).captured.cast<Map<String, dynamic>>();
+
   /// The body the datasource sent to PATCH.
   Map<String, dynamic> capturedPatchBody() =>
       verify(
@@ -175,42 +201,79 @@ void main() {
       expect(cases.single.applicant.name, 'Ofofonono Okon Umoren');
     });
 
-    test('names every status rather than trusting the default', () async {
-      // The endpoint "defaults to all active case statuses", which reads as
-      // dropping `closed`. A Closed tab that is always empty would look like a
-      // working filter rather than a bug, so nothing is left to the default.
+    test('names no status on the main request', () async {
+      // Naming them is how this list broke: the backend added
+      // `payment-validated`, the six-status request stopped matching anything,
+      // and real cases vanished. Whatever the server sends now has to arrive.
       stubCasePages({
         1: [caseJson],
       });
 
       await source.fetchCases();
 
-      final query =
-          verify(
-                () => client.get<List<Case>>(
-                  any(),
-                  queryParameters: captureAny(named: 'queryParameters'),
-                  decoder: any(named: 'decoder'),
-                ),
-              ).captured.single
-              as Map<String, dynamic>;
-
-      expect(query['filter'], [
-        'submitted',
-        'assigned',
-        'accepted',
-        'pending-information',
-        'under-review',
-        'closed',
-      ]);
-      expect(query['perPage'], 100);
+      final queries = capturedListQueries();
+      expect(queries.first.containsKey('filter'), isFalse);
+      expect(queries.first['perPage'], 100);
     });
 
-    test('asks for every status the app can render', () {
-      // Pins the filter to the enum: a status added to CaseStatus is requested
-      // automatically, and one removed stops being asked for.
-      final requested = CaseStatus.values.where((s) => s.isKnown).length;
-      expect(requested, 6);
+    test('asks for closed cases separately, in case the default drops them', () async {
+      // "Defaults to all active case statuses" reads as excluding `closed`, and
+      // a Closed tab that is always empty would look like a working filter
+      // rather than a bug.
+      stubCasePages(
+        {
+          1: [caseJson],
+        },
+        closedPages: {
+          1: [
+            {...caseJson, 'id': 'case-closed', 'status': 'closed'},
+          ],
+        },
+      );
+
+      final cases = await source.fetchCases();
+
+      expect(capturedListQueries().last['filter'], 'closed');
+      expect(cases.map((c) => c.id), [
+        '914ae488-1b1c-4eb8-8798-bc511b175d9f',
+        'case-closed',
+      ]);
+    });
+
+    test('does not repeat a closed case the default already returned', () async {
+      // The merge has to cost nothing if "active" turns out to include closed.
+      final closed = {...caseJson, 'status': 'closed'};
+      stubCasePages(
+        {
+          1: [closed],
+        },
+        closedPages: {
+          1: [closed],
+        },
+      );
+
+      final cases = await source.fetchCases();
+
+      expect(cases, hasLength(1));
+      expect(cases.single.status, CaseStatus.closed);
+    });
+
+    test('treats a 404 on the closed request as no closed cases', () async {
+      stubCasePages({
+        1: [caseJson],
+      });
+
+      expect(await source.fetchCases(), hasLength(1));
+    });
+
+    test('lets any other failure on the closed request through', () async {
+      // A Closed tab quietly empty because a request failed is the exact bug
+      // the second request exists to prevent, so only a 404 is swallowed.
+      stubCasePages({
+        1: [caseJson],
+      }, closedFailure: _httpFailure(503));
+
+      expect(source.fetchCases(), throwsA(isA<DioException>()));
     });
 
     test('walks every page rather than truncating at the first', () async {
@@ -235,13 +298,14 @@ void main() {
         'case-3',
         'case-4',
       ]);
-      verify(
-        () => client.get<List<Case>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          decoder: any(named: 'decoder'),
-        ),
-      ).called(3);
+      // Counted by page rather than by call: the closed request shares this
+      // endpoint and would otherwise be mistaken for a fourth page.
+      expect(
+        capturedListQueries()
+            .where((query) => !query.containsKey('filter'))
+            .map((query) => query['page']),
+        [1, 2, 3],
+      );
     });
 
     test('stops after one page when meta is missing', () async {
@@ -455,8 +519,10 @@ void main() {
   });
 
   group('assignCase', () {
-    test('advances a submitted case and returns the updated record', () async {
-      stubSingleCase(caseJson);
+    test('advances a payment-validated case and returns the record', () async {
+      // The status the case is read at, not the one the caller believes: the
+      // GET before the PATCH is what decides whether a status is written.
+      stubSingleCase({...caseJson, 'status': 'payment-validated'});
       stubPatch({
         ...caseJson,
         'assigneeId': 'staff-1',
@@ -504,7 +570,7 @@ void main() {
     });
 
     test('returns the record even when the name lookup fails', () async {
-      stubSingleCase(caseJson);
+      stubSingleCase({...caseJson, 'status': 'payment-validated'});
       stubPatch({...caseJson, 'assigneeId': 'staff-1', 'status': 'assigned'});
       stubSingleStaffFailure();
 

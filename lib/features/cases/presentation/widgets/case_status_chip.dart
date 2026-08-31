@@ -29,16 +29,25 @@ class CaseStatusChip extends StatelessWidget {
 
   /// (label, background, foreground)
   ///
-  /// `pending-information` is the one status drawn in the destructive palette.
-  /// It is not an error — it is a legitimate state — but it is the only one
-  /// where the case is stalled until somebody chases the applicant, and it
-  /// should catch the eye on a list of thirty rows.
+  /// `pending-information` and `suspended` are the two statuses drawn in the
+  /// destructive palette. Neither is an error — both are legitimate states —
+  /// but they are the two where nothing is moving until somebody acts, and they
+  /// should catch the eye on a list of thirty rows. `suspended` keeps the muted
+  /// background so it is not mistaken for the louder pending pill.
   ///
   /// Labels are shortened where the API's value is not: the pill sits beside
   /// the applicant's name on a narrow phone, and `Pending information` in full
-  /// would squeeze the name it is meant to annotate.
+  /// would squeeze the name it is meant to annotate. Each label matches its
+  /// filter chip word for word — the two sit on the same screen, and a case
+  /// pilled `Validated` under a tab reading something else would read as two
+  /// different states.
   static (String, Color, Color) _style(CaseStatus status) => switch (status) {
-    CaseStatus.submitted => ('New', AppColors.infoSoft, AppColors.info),
+    CaseStatus.submitted => ('Submitted', AppColors.infoSoft, AppColors.info),
+    CaseStatus.paymentValidated => (
+      'Validated',
+      AppColors.accentSoft,
+      AppColors.accent,
+    ),
     CaseStatus.assigned => (
       'Assigned',
       AppColors.warningSoft,
@@ -63,6 +72,11 @@ class CaseStatusChip extends StatelessWidget {
       'Closed',
       AppColors.surfaceMuted,
       AppColors.textSecondary,
+    ),
+    CaseStatus.suspended => (
+      'Suspended',
+      AppColors.surfaceMuted,
+      AppColors.destructive,
     ),
     // Unreachable: guarded above. Present so the switch stays exhaustive and a
     // new status has to be given colours deliberately.

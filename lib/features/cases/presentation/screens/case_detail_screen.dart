@@ -92,11 +92,8 @@ class CaseDetailScreen extends ConsumerWidget {
                   AppSizing.screenPadding,
                   AppSizing.space16,
                 ),
-                child: AppButton(
-                  label: loaded.isAssigned
-                      ? 'Re-assign case'
-                      : 'Assign to team member',
-                  variant: AppButtonVariant.secondary,
+                child: _AssignAction(
+                  value: loaded,
                   onPressed: () => _assign(context, ref, loaded),
                 ),
               ),
@@ -148,6 +145,44 @@ class _ApplicantHeader extends StatelessWidget {
   }
 }
 
+/// The assign button, and why it is unavailable when it is.
+///
+/// A case can be handed to someone at every point in its life except the
+/// first: until the payment is validated it is not the team's to pick up. The
+/// button greys out rather than disappearing — someone who saw it on the last
+/// case would read its absence as a broken screen, where a disabled button
+/// with a line under it answers the question it raises.
+class _AssignAction extends StatelessWidget {
+  const _AssignAction({required this.value, required this.onPressed});
+
+  final Case value;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final canAssign = value.status.canBeAssigned;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppButton(
+          label: value.isAssigned ? 'Re-assign case' : 'Assign to team member',
+          variant: AppButtonVariant.secondary,
+          onPressed: canAssign ? onPressed : null,
+        ),
+        if (!canAssign) ...[
+          const SizedBox(height: AppSizing.space8),
+          const Text(
+            'This case can be assigned once its payment is validated.',
+            style: AppTextStyles.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// What was asked for, and who holds it.
 class _CaseCard extends StatelessWidget {
   const _CaseCard({required this.value});
@@ -156,10 +191,12 @@ class _CaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The API carries no human-readable case reference, so the property stands
-    // in as the heading: it is what identifies the case to the person reading
-    // it, now that there is no `SLP-101` to print.
-    final heading = value.summary.isEmpty ? 'Case details' : value.summary;
+    // `PI-URF8T7C2` — the API's own reference, and the closest thing to the
+    // `SLP-101` the designs drew. Records made before the field existed do not
+    // carry one, so the property still stands in as the heading there.
+    final heading =
+        value.trackingId ??
+        (value.summary.isEmpty ? 'Case details' : value.summary);
 
     return _Card(
       heading: heading,

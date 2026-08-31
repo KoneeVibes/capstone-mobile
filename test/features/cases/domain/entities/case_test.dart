@@ -10,6 +10,10 @@ void main() {
   group('CaseStatus.fromApi', () {
     test('parses every value the API documents', () {
       expect(CaseStatus.fromApi('submitted'), CaseStatus.submitted);
+      expect(
+        CaseStatus.fromApi('payment-validated'),
+        CaseStatus.paymentValidated,
+      );
       expect(CaseStatus.fromApi('assigned'), CaseStatus.assigned);
       expect(CaseStatus.fromApi('accepted'), CaseStatus.accepted);
       expect(
@@ -18,6 +22,7 @@ void main() {
       );
       expect(CaseStatus.fromApi('under-review'), CaseStatus.underReview);
       expect(CaseStatus.fromApi('closed'), CaseStatus.closed);
+      expect(CaseStatus.fromApi('suspended'), CaseStatus.suspended);
     });
 
     test('is forgiving about case and padding', () {
@@ -30,20 +35,25 @@ void main() {
       expect(CaseStatus.unknown.isKnown, isFalse);
     });
 
-    test('treats all four working statuses as being with someone', () {
-      expect(CaseStatus.assigned.isWithSomeone, isTrue);
-      expect(CaseStatus.accepted.isWithSomeone, isTrue);
-      expect(CaseStatus.pendingInformation.isWithSomeone, isTrue);
-      expect(CaseStatus.underReview.isWithSomeone, isTrue);
-      expect(CaseStatus.submitted.isWithSomeone, isFalse);
-      expect(CaseStatus.closed.isWithSomeone, isFalse);
-    });
-
-    test('only submitted counts as untouched', () {
-      expect(CaseStatus.submitted.isSubmitted, isTrue);
+    test('submitted is the only status that cannot be assigned', () {
+      expect(CaseStatus.submitted.canBeAssigned, isFalse);
       for (final status in CaseStatus.values) {
         if (status == CaseStatus.submitted) continue;
-        expect(status.isSubmitted, isFalse, reason: status.name);
+        expect(status.canBeAssigned, isTrue, reason: status.name);
+      }
+    });
+
+    test('a status this build does not know stays assignable', () {
+      // Deliberate: refusing here would let a status added server-side
+      // silently disable the one action the detail screen has.
+      expect(CaseStatus.unknown.canBeAssigned, isTrue);
+    });
+
+    test('only payment-validated advances when assigned', () {
+      expect(CaseStatus.paymentValidated.advancesOnAssign, isTrue);
+      for (final status in CaseStatus.values) {
+        if (status == CaseStatus.paymentValidated) continue;
+        expect(status.advancesOnAssign, isFalse, reason: status.name);
       }
     });
   });
@@ -206,52 +216,46 @@ void main() {
       }
     });
 
-    test('newCases admits only submitted cases', () {
-      expect(CaseFilter.newCases.matches(buildCase()), isTrue);
-      expect(
-        CaseFilter.newCases.matches(buildCase(status: CaseStatus.assigned)),
-        isFalse,
-      );
-    });
+    test('every other tab admits its own status and nothing else', () {
+      for (final filter in CaseFilter.values) {
+        final status = filter.status;
+        if (status == null) continue;
 
-    test('assigned is a bucket covering all four working statuses', () {
-      for (final status in const [
-        CaseStatus.assigned,
-        CaseStatus.accepted,
-        CaseStatus.pendingInformation,
-        CaseStatus.underReview,
-      ]) {
         expect(
-          CaseFilter.assigned.matches(buildCase(status: status, assignee: ada)),
+          filter.matches(buildCase(status: status)),
           isTrue,
-          reason: status.name,
+          reason: filter.name,
         );
-      }
 
-      expect(CaseFilter.assigned.matches(buildCase()), isFalse);
-      expect(
-        CaseFilter.assigned.matches(buildCase(status: CaseStatus.closed)),
-        isFalse,
-      );
+        for (final other in CaseStatus.values) {
+          if (other == status) continue;
+          expect(
+            filter.matches(buildCase(status: other)),
+            isFalse,
+            reason: '${filter.name} must not admit ${other.name}',
+          );
+        }
+      }
     });
 
-    test('closed admits only closed cases', () {
-      expect(
-        CaseFilter.closed.matches(buildCase(status: CaseStatus.closed)),
-        isTrue,
-      );
-      expect(
-        CaseFilter.closed.matches(buildCase(status: CaseStatus.underReview)),
-        isFalse,
-      );
+    test('there is a tab for every status the app knows', () {
+      final tabbed = CaseFilter.values
+          .map((filter) => filter.status)
+          .nonNulls
+          .toSet();
+      final known = CaseStatus.values.where((status) => status.isKnown).toSet();
+      expect(tabbed, known);
     });
 
     test('an unknown status falls out of every tab but All', () {
       final value = buildCase(status: CaseStatus.unknown);
-      expect(CaseFilter.newCases.matches(value), isFalse);
-      expect(CaseFilter.assigned.matches(value), isFalse);
-      expect(CaseFilter.closed.matches(value), isFalse);
-      expect(CaseFilter.all.matches(value), isTrue);
+      for (final filter in CaseFilter.values) {
+        expect(
+          filter.matches(value),
+          filter == CaseFilter.all,
+          reason: filter.name,
+        );
+      }
     });
   });
 }

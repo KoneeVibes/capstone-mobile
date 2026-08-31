@@ -14,6 +14,7 @@ import '../../domain/entities/case_status.dart';
 class CaseModel extends Case {
   const CaseModel({
     required super.id,
+    super.trackingId,
     required super.applicant,
     required super.property,
     required super.status,
@@ -29,6 +30,7 @@ class CaseModel extends Case {
     // `id` is the application UUID used in paths; `_id` is the store's own key
     // and is only a fallback.
     id: _string(json['id']) ?? _string(json['_id']) ?? '',
+    trackingId: _string(json['trackingId']),
     source: _string(json['source']),
     applicant: CaseApplicant(
       name: _string(json['applicantName']) ?? '',
@@ -72,11 +74,12 @@ class CaseModel extends Case {
 
   /// The `PATCH /case/{id}` body for an assignment.
   ///
-  /// The status is sent only when the case has not been given to anyone yet,
-  /// because that is the one transition assigning actually causes. Re-assigning
-  /// an `under-review` case is a change of hands, not progress, and sending
+  /// The status is sent only for a `payment-validated` case, because that is
+  /// the one transition assigning actually causes. Re-assigning an
+  /// `under-review` case is a change of hands, not progress, and sending
   /// `assigned` alongside it would knock the case backwards through its own
-  /// lifecycle.
+  /// lifecycle. A `submitted` case never reaches here — it cannot be assigned
+  /// until its payment has been validated.
   ///
   /// Visible for testing.
   static Map<String, dynamic> assignmentBody({
@@ -84,7 +87,7 @@ class CaseModel extends Case {
     required CaseStatus currentStatus,
   }) => <String, dynamic>{
     'assigneeId': assigneeId,
-    if (currentStatus.isSubmitted) 'status': CaseStatus.assigned.apiValue,
+    if (currentStatus.advancesOnAssign) 'status': CaseStatus.assigned.apiValue,
   };
 
   /// Reads a value as a non-blank string, collapsing `""` and non-strings to

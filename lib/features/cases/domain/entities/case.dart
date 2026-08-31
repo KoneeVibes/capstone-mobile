@@ -14,6 +14,7 @@ import 'case_status.dart';
 class Case extends Equatable {
   const Case({
     required this.id,
+    this.trackingId,
     required this.applicant,
     required this.property,
     required this.status,
@@ -26,6 +27,12 @@ class Case extends Equatable {
   });
 
   final String id;
+
+  /// The human-readable reference, e.g. `PI-URF8T7C2`.
+  ///
+  /// Null on older records, which predate the field, so nothing may rely on
+  /// it being there: [id] is still what every path and write uses.
+  final String? trackingId;
 
   /// Where the request came in from, e.g. `website`.
   final String? source;
@@ -73,6 +80,7 @@ class Case extends Equatable {
   /// not a general `copyWith`, which could not express clearing the field.
   Case withAssignee(CaseAssignee? assignee) => Case(
     id: id,
+    trackingId: trackingId,
     applicant: applicant,
     property: property,
     status: status,
@@ -87,6 +95,7 @@ class Case extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    trackingId,
     source,
     applicant,
     property,

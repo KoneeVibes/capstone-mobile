@@ -17,6 +17,7 @@ class CaseListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(AppSizing.radiusLg);
+    final reference = value.trackingId;
 
     return Material(
       color: AppColors.surface,
@@ -37,6 +38,18 @@ class CaseListTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Above the name, where a reference belongs: it labels the
+                    // card rather than describing the person. Absent on records
+                    // made before the backend had the field.
+                    if (reference != null) ...[
+                      Text(
+                        reference,
+                        style: AppTextStyles.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSizing.space4),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

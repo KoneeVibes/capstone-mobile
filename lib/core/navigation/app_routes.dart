@@ -19,9 +19,16 @@ abstract final class AppRoutes {
   static const String clientHomeName = 'clientHome';
   static const String clientHomePath = '/client';
 
-  // Staff branch.
+  // Staff branch. `/staff` redirects to the dashboard tab.
   static const String staffHomeName = 'staffHome';
   static const String staffHomePath = '/staff';
+
+  static const String dashboardName = 'dashboard';
+  static const String dashboardPath = '/staff/dashboard';
+
+  /// Takes a `trackingId` path parameter.
+  static const String trackingProgressName = 'trackingProgress';
+  static const String trackingProgressPath = '/staff/dashboard/track/:trackingId';
 
   static const String staffMembersName = 'staffMembers';
   static const String staffMembersPath = '/staff/members';

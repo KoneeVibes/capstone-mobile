@@ -1,4 +1,5 @@
 import '../constants/app_constants.dart';
+import '../formatting/app_formatters.dart';
 
 /// Form field validators, shaped for `TextFormField.validator`: they return an
 /// error string when invalid and null when valid.
@@ -19,6 +20,19 @@ abstract final class Validators {
 
     if (!AppConstants.emailPattern.hasMatch(value!.trim())) {
       return 'Enter a valid email address.';
+    }
+    return null;
+  }
+
+  /// Validates after [AppFormatters.trackingId], so `urf8t7c2` passes.
+  static String? trackingId(String? value, {String label = 'Tracking ID'}) {
+    final missing = requiredField(value, label: label);
+    if (missing != null) return missing;
+
+    if (!AppConstants.trackingIdPattern.hasMatch(
+      AppFormatters.trackingId(value),
+    )) {
+      return 'Enter the full tracking ID, e.g. PI-URF8T7C2.';
     }
     return null;
   }

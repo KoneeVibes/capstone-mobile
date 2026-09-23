@@ -163,6 +163,15 @@ abstract final class AppFormatters {
     ].join(' ');
   }
 
+  /// ` pi-urf8t7c2 ` or `urf8t7c2` -> `PI-URF8T7C2`. The API matches
+  /// case-sensitively, so input is upper-cased and a bare code gets `PI-`.
+  static String trackingId(String? value) {
+    final code = (value ?? '').replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    return _bareTrackingCode.hasMatch(code) ? 'PI-$code' : code;
+  }
+
+  static final RegExp _bareTrackingCode = RegExp(r'^[A-Z0-9]{8}$');
+
   /// `1.2 MB`
   static String fileSize(int? bytes) {
     if (bytes == null || bytes <= 0) return '0 B';

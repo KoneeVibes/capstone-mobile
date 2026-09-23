@@ -30,6 +30,7 @@ class AppTextField extends StatelessWidget {
     this.suffixIcon,
     this.focusNode,
     this.onFieldSubmitted,
+    this.errorText,
   });
 
   final String label;
@@ -52,6 +53,9 @@ class AppTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final FocusNode? focusNode;
   final ValueChanged<String>? onFieldSubmitted;
+
+  /// An error set by the caller rather than a validator, e.g. a failed lookup.
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +87,7 @@ class AppTextField extends StatelessWidget {
             hintText: hint,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
+            errorText: errorText,
             counterText: '',
           ),
         ),

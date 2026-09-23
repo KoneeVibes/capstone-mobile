@@ -89,6 +89,14 @@ abstract final class AppTextStyles {
     height: 1.2,
   );
 
+  /// Bottom navigation labels.
+  static const TextStyle navLabel = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    height: 1.2,
+  );
+
   static const TextStyle button = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,

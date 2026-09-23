@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_pagination.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_assignee.dart';
 import '../../domain/entities/case_status.dart';
@@ -21,17 +22,11 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
 
   final ApiClient _client;
 
-  /// Rows per request while walking a list endpoint.
-  ///
-  /// High enough that one request almost always covers the whole set, which is
-  /// what lets the list filter and count client side.
-  static const int _perPage = 100;
-
   /// Every case, across every page and every status.
   ///
   /// The list is fetched whole rather than a page at a time because the tabs
   /// filter in memory and the `2 of 5 cases` footer needs both numbers. `meta`
-  /// says how many pages there are, so a set larger than [_perPage] is walked
+  /// says how many pages there are, so a set larger than one page is walked
   /// rather than silently truncated at the first page.
   ///
   /// Nothing is named in `filter`. Naming every status the app knew is how this
@@ -44,7 +39,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// merged in.
   @override
   Future<List<Case>> fetchCases() async {
-    final active = await _fetchAllPages<Case>(
+    final active = await _client.getAllPages<Case>(
       ApiEndpoints.cases,
       CaseModel.listFromJson,
     );
@@ -67,7 +62,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// exists to prevent, and the list screen already offers a retry.
   Future<List<Case>> _closedCases() async {
     try {
-      return await _fetchAllPages<Case>(
+      return await _client.getAllPages<Case>(
         ApiEndpoints.cases,
         CaseModel.listFromJson,
         query: {'filter': CaseStatus.closed.apiValue},
@@ -95,7 +90,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// that lookup reads the unfiltered list.
   @override
   Future<List<CaseAssignee>> fetchAssignees() async {
-    final staff = await _fetchAllPages<CaseAssigneeModel>(
+    final staff = await _client.getAllPages<CaseAssigneeModel>(
       ApiEndpoints.staff,
       CaseAssigneeModel.listFromJson,
     );
@@ -126,35 +121,6 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     );
 
     return _withAssigneeName(response.data);
-  }
-
-  /// Walks a paginated list endpoint to the end.
-  ///
-  /// Page one reports `meta.totalPages`; anything beyond it is fetched in turn.
-  /// Sequential rather than concurrent so a large set cannot open a request per
-  /// page all at once. In practice one page covers everything and the loop
-  /// never runs a second time.
-  Future<List<T>> _fetchAllPages<T>(
-    String path,
-    List<T> Function(Object? data) decoder, {
-    Map<String, dynamic> query = const {},
-  }) async {
-    final items = <T>[];
-    var page = 1;
-    var totalPages = 1;
-
-    do {
-      final response = await _client.get<List<T>>(
-        path,
-        queryParameters: {...query, 'page': page, 'perPage': _perPage},
-        decoder: decoder,
-      );
-      items.addAll(response.data);
-      totalPages = response.meta?.totalPages ?? 1;
-      page++;
-    } while (page <= totalPages);
-
-    return items;
   }
 
   /// Joins names onto a list of cases, in one staff request rather than one
@@ -198,7 +164,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// nothing else.
   Future<Map<String, CaseAssignee>> _assigneesById() async {
     try {
-      final staff = await _fetchAllPages<CaseAssigneeModel>(
+      final staff = await _client.getAllPages<CaseAssigneeModel>(
         ApiEndpoints.staff,
         CaseAssigneeModel.listFromJson,
       );

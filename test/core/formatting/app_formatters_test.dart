@@ -226,4 +226,20 @@ void main() {
       expect(AppFormatters.fileSize(-5), '0 B');
     });
   });
+
+  group('trackingId', () {
+    test('upper-cases and strips whitespace', () {
+      expect(AppFormatters.trackingId(' pi-urf8t7c2 '), 'PI-URF8T7C2');
+      expect(AppFormatters.trackingId('PI-URF8 T7C2'), 'PI-URF8T7C2');
+    });
+
+    test('adds PI- to a bare eight-character code', () {
+      expect(AppFormatters.trackingId('urf8t7c2'), 'PI-URF8T7C2');
+    });
+
+    test('leaves anything else for the validator to reject', () {
+      expect(AppFormatters.trackingId('8k4m2q'), '8K4M2Q');
+      expect(AppFormatters.trackingId(null), '');
+    });
+  });
 }

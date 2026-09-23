@@ -5,15 +5,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
-import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_state_view.dart';
-import '../sizing/app_sizing.dart';
 import '../utils/error/app_failures.dart';
 import 'app_routes.dart';
 import 'app_session.dart';
+import 'app_shell.dart';
 
 /// The app's router.
 ///
@@ -54,49 +55,59 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.staffHomePath,
         name: AppRoutes.staffHomeName,
-        builder: (context, state) => PlaceholderScreen(
-          title: 'Property Intel',
-          message: 'Staff tools will appear here.',
-          action: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppButton(
-                label: 'Cases',
-                icon: Icons.inbox_outlined,
-                expanded: false,
-                onPressed: () => context.goNamed(AppRoutes.casesName),
-              ),
-              const SizedBox(height: AppSizing.space12),
-              AppButton(
-                label: 'Staff',
-                icon: Icons.people_outline,
-                variant: AppButtonVariant.secondary,
-                expanded: false,
-                onPressed: () => context.goNamed(AppRoutes.staffMembersName),
+        redirect: (context, state) => AppRoutes.dashboardPath,
+      ),
+      // Branch order must match AppShell's items.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboardPath,
+                name: AppRoutes.dashboardName,
+                builder: (context, state) => const DashboardScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'track/:trackingId',
+                    name: AppRoutes.trackingProgressName,
+                    builder: (context, state) => TrackingProgressScreen(
+                      trackingId: state.pathParameters['trackingId'] ?? '',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-        routes: [
-          GoRoute(
-            path: 'members',
-            name: AppRoutes.staffMembersName,
-            builder: (context, state) => const StaffListScreen(),
-          ),
-          GoRoute(
-            path: 'cases',
-            name: AppRoutes.casesName,
-            builder: (context, state) => const CasesListScreen(),
+          StatefulShellBranch(
             routes: [
               GoRoute(
-                path: ':caseId',
-                name: AppRoutes.caseDetailName,
-                // Missing rather than bang: an empty id reaches the repository
-                // and comes back as a normal "not found" failure screen, which
-                // is what a mistyped deep link should produce.
-                builder: (context, state) => CaseDetailScreen(
-                  caseId: state.pathParameters['caseId'] ?? '',
-                ),
+                path: AppRoutes.casesPath,
+                name: AppRoutes.casesName,
+                builder: (context, state) => const CasesListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':caseId',
+                    name: AppRoutes.caseDetailName,
+                    // Missing rather than bang: an empty id reaches the
+                    // repository and comes back as a normal "not found"
+                    // failure screen, which is what a mistyped deep link
+                    // should produce.
+                    builder: (context, state) => CaseDetailScreen(
+                      caseId: state.pathParameters['caseId'] ?? '',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.staffMembersPath,
+                name: AppRoutes.staffMembersName,
+                builder: (context, state) => const StaffListScreen(),
               ),
             ],
           ),
@@ -118,7 +129,7 @@ String? _redirect(Ref ref, GoRouterState state) {
   if (role == null) return null;
 
   if (state.matchedLocation == AppRoutes.rootPath) {
-    return role.isStaff ? AppRoutes.staffHomePath : AppRoutes.clientHomePath;
+    return role.isStaff ? AppRoutes.dashboardPath : AppRoutes.clientHomePath;
   }
 
   return null;

@@ -21,6 +21,10 @@ abstract final class AppConstants {
   /// Page size for paginated list endpoints.
   static const int defaultPageSize = 20;
 
+  /// Page size when a list endpoint is walked whole. High enough that one
+  /// request almost always covers the set.
+  static const int listWalkPageSize = 100;
+
   /// How close to the bottom of a list we start loading the next page.
   static const double infiniteScrollThreshold = 400;
 
@@ -57,6 +61,9 @@ abstract final class AppConstants {
   /// Nigerian mobile numbers, accepting local (`08034112290`), international
   /// (`+2348034112290`) and spaced (`0701 882 4471`) forms.
   static final RegExp phonePattern = RegExp(r'^(?:\+?234|0)[789]\d{9}$');
+
+  /// A case tracking ID, e.g. `PI-URF8T7C2`. Matches every ID on the live API.
+  static final RegExp trackingIdPattern = RegExp(r'^PI-[A-Z0-9]{8}$');
 
   /// Letters, spaces, hyphens and apostrophes only.
   static final RegExp namePattern = RegExp(r"^[a-zA-Z][a-zA-Z\s'-]*$");

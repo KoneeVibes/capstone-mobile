@@ -48,6 +48,12 @@ abstract final class AppSizing {
   static const double avatarMd = 48;
   static const double avatarLg = 64;
 
+  static const double bottomNavHeight = 64;
+
+  // Case tracking.
+  static const double bannerIllustrationSize = 56;
+  static const double timelineConnectorWidth = 2;
+
   /// Rendered width of the splash wordmark.
   ///
   /// The source art is 482 px wide, so this is about as wide as it can be

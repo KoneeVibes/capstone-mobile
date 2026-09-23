@@ -28,4 +28,7 @@ abstract final class ApiEndpoints {
   static const String cases = '/case';
 
   static String caseById(String caseId) => '$cases/$caseId';
+
+  static String trackCase(String trackingId) =>
+      '$cases/track/${Uri.encodeComponent(trackingId)}';
 }

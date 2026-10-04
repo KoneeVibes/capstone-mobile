@@ -7,10 +7,14 @@ import '../../core/theme/app_text_styles.dart';
 /// Labelled text input: label above, bordered field below.
 ///
 /// The label is passed by the calling screen, keeping wording where it is read.
+/// With [showLabel] off the label moves inside the field as its hint, so the
+/// field still announces what it is.
 class AppTextField extends StatelessWidget {
   const AppTextField({
     required this.label,
     super.key,
+    this.showLabel = true,
+    this.autofillHints,
     this.hint,
     this.controller,
     this.initialValue,
@@ -34,6 +38,8 @@ class AppTextField extends StatelessWidget {
   });
 
   final String label;
+  final bool showLabel;
+  final Iterable<String>? autofillHints;
   final String? hint;
   final TextEditingController? controller;
   final String? initialValue;
@@ -62,9 +68,12 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.label),
-        const SizedBox(height: AppSizing.space8),
+        if (showLabel) ...[
+          Text(label, style: AppTextStyles.label),
+          const SizedBox(height: AppSizing.space8),
+        ],
         TextFormField(
+          autofillHints: autofillHints,
           controller: controller,
           initialValue: initialValue,
           validator: validator,
@@ -84,7 +93,7 @@ class AppTextField extends StatelessWidget {
           style: AppTextStyles.bodyLarge,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: hint ?? (showLabel ? null : label),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             errorText: errorText,

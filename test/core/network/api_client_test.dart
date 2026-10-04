@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -305,4 +308,90 @@ void main() {
       expect(request.uri.query, isNot(contains('[]')));
     });
   });
+
+  group('raw envelope', () {
+    test('keeps the whole body, for payloads that sit beside data', () async {
+      // `POST /auth/signin` answers `{status, token}` with no `data` node.
+      stubResponse({'status': 'success', 'token': 'jwt'});
+
+      final response = await client.post<Object?>('/auth/signin');
+
+      expect(response.data, isNull);
+      expect(response.body['token'], 'jwt');
+    });
+  });
+
+  group('unauthorized handling', () {
+    /// A real Dio with the app's interceptors, answering every request with
+    /// [statusCode] from a fake transport.
+    Dio dioAnswering(
+      int statusCode, {
+      String? token,
+      required void Function() onUnauthorized,
+    }) {
+      final dio = ApiClient.createDio(
+        tokenSupplier: () async => token,
+        onUnauthorized: onUnauthorized,
+      );
+      dio.httpClientAdapter = _FixedAdapter(statusCode);
+      addTearDown(dio.close);
+      return dio;
+    }
+
+    test('reports a 401 on a request that carried a token', () async {
+      var calls = 0;
+      final dio = dioAnswering(401, token: 'jwt', onUnauthorized: () => calls++);
+
+      await expectLater(
+        ApiClient(dio).get<Object?>('/case'),
+        throwsA(isA<DioException>()),
+      );
+      expect(calls, 1);
+    });
+
+    test('leaves a 401 without a token alone — a wrong password', () async {
+      var calls = 0;
+      final dio = dioAnswering(401, onUnauthorized: () => calls++);
+
+      await expectLater(
+        ApiClient(dio).post<Object?>('/auth/signin'),
+        throwsA(isA<DioException>()),
+      );
+      expect(calls, 0);
+    });
+
+    test('ignores other failures on an authenticated request', () async {
+      var calls = 0;
+      final dio = dioAnswering(403, token: 'jwt', onUnauthorized: () => calls++);
+
+      await expectLater(
+        ApiClient(dio).get<Object?>('/staff'),
+        throwsA(isA<DioException>()),
+      );
+      expect(calls, 0);
+    });
+  });
+}
+
+/// Answers every request with [statusCode] and a fail envelope.
+class _FixedAdapter implements HttpClientAdapter {
+  _FixedAdapter(this.statusCode);
+
+  final int statusCode;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => ResponseBody.fromString(
+    jsonEncode({'status': 'fail', 'message': 'Nope'}),
+    statusCode,
+    headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    },
+  );
+
+  @override
+  void close({bool force = false}) {}
 }

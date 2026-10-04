@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failure.dart';
 import 'package:propertyintelmobileapp/core/utils/error/async_value_x.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
@@ -214,4 +215,35 @@ void main() {
       expect(container.read(casesListProvider).failure, _serverFailure);
     });
   });
+
+  group('across sign-ins', () {
+    test('a different user starts from a fresh list', () async {
+      stubCases(Ok(_allCases));
+      final container = ProviderContainer(
+        overrides: [
+          casesRepositoryProvider.overrideWithValue(repository),
+          sessionProvider.overrideWith((ref) => ref.watch(_signedIn)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final sub = container.listen(casesListProvider, (_, _) {});
+      addTearDown(sub.close);
+
+      await container.read(casesListProvider.future);
+      container.read(_signedIn.notifier).become('client-b');
+      await container.read(casesListProvider.future);
+
+      verify(repository.fetchCases).called(2);
+    });
+  });
 }
+
+/// A signed-in user the test can swap, standing in for auth.
+class _SignedIn extends Notifier<SessionUser?> {
+  @override
+  SessionUser? build() => const SessionUser(id: 'client-a', role: AppRole.client);
+
+  void become(String id) => state = SessionUser(id: id, role: AppRole.client);
+}
+
+final _signedIn = NotifierProvider<_SignedIn, SessionUser?>(_SignedIn.new);

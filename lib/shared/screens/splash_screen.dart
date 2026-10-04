@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/navigation/app_routes.dart';
+import '../../core/navigation/app_session.dart';
 import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -17,30 +19,28 @@ import '../../core/theme/app_colors.dart';
 /// Android 12 replaced the window-background launch screen with an API that
 /// masks the launcher icon to a circle — which a 4.3:1 wordmark cannot survive.
 ///
-/// TODO(auth): the timer is a branding beat with nothing behind it. When
-/// authentication lands, await the session restore here and treat
-/// [AppConstants.splashDuration] as a floor rather than the whole wait, so a
-/// slow start holds the screen and a fast one still does not flash past.
-class SplashScreen extends StatefulWidget {
+/// Holds until the stored session has been read, and for at least
+/// [AppConstants.splashDuration] so a fast start does not flash past.
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  Timer? _timer;
-
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(AppConstants.splashDuration, _openNext);
+    unawaited(_holdThenOpen());
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  Future<void> _holdThenOpen() async {
+    await Future.wait([
+      Future<void>.delayed(AppConstants.splashDuration),
+      ref.read(sessionRestoreProvider.future),
+    ]);
+    _openNext();
   }
 
   /// Hands off to the root route, which redirects to the branch matching the

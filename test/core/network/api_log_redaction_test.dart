@@ -53,6 +53,33 @@ void main() {
       expect(redacted.values.every((v) => v == '***'), isTrue);
     });
 
+    test('masks keys that merely contain a secret word', () {
+      // A live reset logged `confirmPassword` in clear before this.
+      final redacted =
+          redactSecretsForLog({
+                'confirmPassword': 'p',
+                'user': {'newPassword': 'p'},
+                'email': 'a@b.co',
+              })!
+              as Map;
+
+      expect(redacted['confirmPassword'], '***');
+      expect((redacted['user'] as Map)['newPassword'], '***');
+      expect(redacted['email'], 'a@b.co');
+    });
+
+    test('masks the bearer token in request headers', () {
+      final redacted =
+          redactSecretsForLog({
+                'Accept': 'application/json',
+                'Authorization': 'Bearer eyJ...',
+              })!
+              as Map;
+
+      expect(redacted['Authorization'], '***');
+      expect(redacted['Accept'], 'application/json');
+    });
+
     test('walks into lists, as the staff list response requires', () {
       final redacted =
           redactSecretsForLog({

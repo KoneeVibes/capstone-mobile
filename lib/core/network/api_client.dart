@@ -7,17 +7,15 @@ import '../constants/app_constants.dart';
 import 'api_endpoints.dart';
 import 'api_response.dart';
 
-/// Field names whose values must never be written to a log.
+/// Fragments that mark a field name as secret, matched anywhere in the
+/// lower-cased key — `confirmPassword`, `newPassword`, `accessToken`.
 ///
-/// This is not hypothetical: `DELETE /api/v1/staff/{id}` returns the account's
-/// bcrypt password hash in its response body, which would otherwise be printed
-/// to logcat verbatim by the debug logger.
+/// This is not hypothetical: `DELETE /api/v1/staff/{id}` returned the
+/// account's bcrypt password hash, and an exact-match list let
+/// `confirmPassword` through on a live reset (4 Oct 2026).
 const Set<String> _secretLogKeys = {
   'password',
-  'passwordhash',
   'token',
-  'accesstoken',
-  'refreshtoken',
   'authorization',
   'secret',
   'apikey',
@@ -33,7 +31,7 @@ Object? redactSecretsForLog(Object? value) {
     return <String, Object?>{
       for (final entry in value.entries)
         '${entry.key}':
-            _secretLogKeys.contains(entry.key.toString().toLowerCase())
+            _secretLogKeys.any(entry.key.toString().toLowerCase().contains)
             ? '***'
             : redactSecretsForLog(entry.value),
     };
@@ -42,12 +40,13 @@ Object? redactSecretsForLog(Object? value) {
   return value;
 }
 
-/// Supplies the bearer token for outgoing requests.
-///
-/// Returns null while signed out. Auth is not built yet, so the default
-/// implementation always returns null; swapping in secure storage later needs
-/// no change to [ApiClient].
+/// Supplies the bearer token for outgoing requests. Returns null while signed
+/// out.
 typedef TokenSupplier = Future<String?> Function();
+
+/// Called when a request that carried a token comes back 401: the session is
+/// over (expired or signed out elsewhere).
+typedef UnauthorizedHandler = void Function();
 
 /// Thin wrapper over Dio that unwraps the API's `{status, message, data, meta}`
 /// envelope and leaves error mapping to `ErrorHandler`.
@@ -64,7 +63,10 @@ class ApiClient {
   Dio get dio => _dio;
 
   /// Builds a configured Dio instance.
-  static Dio createDio({TokenSupplier? tokenSupplier}) {
+  static Dio createDio({
+    TokenSupplier? tokenSupplier,
+    UnauthorizedHandler? onUnauthorized,
+  }) {
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
@@ -87,7 +89,7 @@ class ApiClient {
       ),
     );
 
-    dio.interceptors.add(_AuthInterceptor(tokenSupplier));
+    dio.interceptors.add(_AuthInterceptor(tokenSupplier, onUnauthorized));
     if (kDebugMode) dio.interceptors.add(_LoggingInterceptor());
 
     return dio;
@@ -222,11 +224,21 @@ class ApiClient {
   }
 }
 
-/// Attaches the bearer token when one is available.
+/// Attaches the bearer token when one is available, and reports a 401 on a
+/// request that carried one. A 401 without a token — a wrong password on
+/// sign-in — is an ordinary failure and is left alone.
 class _AuthInterceptor extends Interceptor {
-  _AuthInterceptor(this._tokenSupplier);
+  _AuthInterceptor(this._tokenSupplier, this._onUnauthorized);
 
   final TokenSupplier? _tokenSupplier;
+  final UnauthorizedHandler? _onUnauthorized;
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final hadToken = err.requestOptions.headers.containsKey('Authorization');
+    if (hadToken && err.response?.statusCode == 401) _onUnauthorized?.call();
+    handler.next(err);
+  }
 
   @override
   Future<void> onRequest(
@@ -251,7 +263,7 @@ class _LoggingInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('┌─ REQUEST ${options.method} ${options.uri}');
-      debugPrint('│ headers: ${options.headers}');
+      debugPrint('│ headers: ${redactSecretsForLog(options.headers)}');
       if (options.queryParameters.isNotEmpty) {
         debugPrint('│ query: ${options.queryParameters}');
       }

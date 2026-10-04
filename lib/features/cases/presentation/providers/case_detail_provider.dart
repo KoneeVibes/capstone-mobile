@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_session.dart';
 import '../../domain/entities/case.dart';
 import 'cases_providers.dart';
 
@@ -19,6 +20,7 @@ class CaseDetailNotifier extends AsyncNotifier<Case> {
 
   @override
   Future<Case> build() async {
+    ref.watch(sessionProvider);
     final result = await ref.read(casesRepositoryProvider).fetchCase(caseId);
     // Throws the AppFailure, which Riverpod stores as AsyncValue.error. The UI
     // reads it back through AsyncValueFailureX.failure, so it can only ever be

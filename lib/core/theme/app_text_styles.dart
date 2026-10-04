@@ -104,6 +104,15 @@ abstract final class AppTextStyles {
     height: 1.2,
   );
 
+  /// Inline text actions: "Forgot password?", "Register now".
+  static const TextStyle link = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+    color: AppColors.primaryBright,
+  );
+
   static const TextStyle hint = TextStyle(
     fontFamily: fontFamily,
     fontSize: 15,

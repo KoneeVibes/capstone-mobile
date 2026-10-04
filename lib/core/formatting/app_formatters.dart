@@ -191,6 +191,14 @@ abstract final class AppFormatters {
     return '$rounded ${units[unit]}';
   }
 
+  /// `09:59` — a countdown, rounded up so it never reads `00:00` early.
+  static String countdown(Duration remaining) {
+    if (remaining <= Duration.zero) return '00:00';
+    final seconds = (remaining.inMilliseconds / 1000).ceil();
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    return '$minutes:${(seconds % 60).toString().padLeft(2, '0')}';
+  }
+
   static String _plural(int count, String word) =>
       count == 1 ? word : '${word}s';
 }

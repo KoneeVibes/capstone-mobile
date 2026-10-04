@@ -19,6 +19,13 @@ abstract final class ApiEndpoints {
   /// Dio's `baseUrl`. Paths below are relative to it.
   static const String baseUrl = '$host$_version';
 
+  // Auth.
+  static const String signIn = '/auth/signin';
+  static const String signUp = '/auth/signup';
+  static const String verifyOtp = '/auth/verify-otp';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String signOut = '/auth/signout';
+
   // Staff.
   static const String staff = '/staff';
 

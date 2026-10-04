@@ -62,6 +62,10 @@ abstract final class AppSizing {
   /// 360-411 dp phone. Raise it if a larger export arrives.
   static const double splashLogoWidth = 200;
 
+  /// Share of the screen height the photo panel takes on onboarding and login.
+  static const double onboardingHeroFraction = 0.55;
+  static const double loginHeroFraction = 0.42;
+
   // Borders and elevation.
   static const double borderWidth = 1;
   static const double borderWidthFocused = 1.5;

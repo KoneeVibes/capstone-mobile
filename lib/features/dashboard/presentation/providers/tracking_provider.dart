@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/navigation/app_session.dart';
 import '../../../../core/utils/validators.dart';
 import '../../domain/entities/recent_search.dart';
 import '../../domain/entities/tracked_case.dart';
@@ -17,7 +18,10 @@ class TrackingNotifier extends AsyncNotifier<TrackedCase?> {
   int _generation = 0;
 
   @override
-  FutureOr<TrackedCase?> build() => null;
+  FutureOr<TrackedCase?> build() {
+    ref.watch(sessionProvider);
+    return null;
+  }
 
   Future<void> track(String input) async {
     if (Validators.trackingId(input) != null || state.isLoading) return;

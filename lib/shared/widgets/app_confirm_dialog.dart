@@ -8,14 +8,14 @@ import 'app_button.dart';
 /// Asks the user to confirm an action, resolving to true when they accept.
 ///
 /// Dismissing by tapping outside resolves to false, so a stray tap can never
-/// trigger a destructive action.
+/// trigger a destructive action. Pass a null [icon] for a text-only dialog.
 Future<bool> showAppConfirmDialog({
   required BuildContext context,
   required String title,
   required String message,
   required String confirmLabel,
   required String cancelLabel,
-  IconData icon = Icons.delete_outline,
+  IconData? icon = Icons.delete_outline,
   bool isDestructive = true,
 }) async {
   final result = await showDialog<bool>(
@@ -47,7 +47,7 @@ class _AppConfirmDialog extends StatelessWidget {
   final String message;
   final String confirmLabel;
   final String cancelLabel;
-  final IconData icon;
+  final IconData? icon;
   final bool isDestructive;
 
   @override
@@ -59,24 +59,26 @@ class _AppConfirmDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: AppSizing.stateIconBox,
-              width: AppSizing.stateIconBox,
-              decoration: BoxDecoration(
-                color: isDestructive
-                    ? AppColors.destructiveSoft
-                    : AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(AppSizing.radiusLg),
+            if (icon != null) ...[
+              Container(
+                height: AppSizing.stateIconBox,
+                width: AppSizing.stateIconBox,
+                decoration: BoxDecoration(
+                  color: isDestructive
+                      ? AppColors.destructiveSoft
+                      : AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(AppSizing.radiusLg),
+                ),
+                child: Icon(
+                  icon,
+                  size: AppSizing.iconXl,
+                  color: isDestructive
+                      ? AppColors.destructiveIcon
+                      : AppColors.primary,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: AppSizing.iconXl,
-                color: isDestructive
-                    ? AppColors.destructiveIcon
-                    : AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: AppSizing.space20),
+              const SizedBox(height: AppSizing.space20),
+            ],
             Text(
               title,
               style: AppTextStyles.titleMedium,

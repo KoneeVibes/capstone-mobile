@@ -3,20 +3,98 @@ import 'package:propertyintelmobileapp/core/navigation/app_redirect.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_routes.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 
+String? _redirect(
+  String location, {
+  AppRole? role,
+  bool hasSeenOnboarding = true,
+}) => redirectFor(
+  role: role,
+  hasSeenOnboarding: hasSeenOnboarding,
+  location: location,
+);
+
 void main() {
-  group('redirectFor', () {
+  group('signed out, first launch', () {
+    test('sends everything to onboarding', () {
+      for (final location in [
+        AppRoutes.rootPath,
+        AppRoutes.loginPath,
+        AppRoutes.registerPath,
+        AppRoutes.dashboardPath,
+      ]) {
+        expect(
+          _redirect(location, hasSeenOnboarding: false),
+          AppRoutes.onboardingPath,
+          reason: location,
+        );
+      }
+    });
+
+    test('stays on onboarding', () {
+      expect(
+        _redirect(AppRoutes.onboardingPath, hasSeenOnboarding: false),
+        isNull,
+      );
+    });
+  });
+
+  group('signed out, onboarding seen', () {
+    test('sends the root and both shells to login', () {
+      for (final location in [
+        AppRoutes.rootPath,
+        AppRoutes.dashboardPath,
+        '/client/cases/case-1',
+      ]) {
+        expect(_redirect(location), AppRoutes.loginPath, reason: location);
+      }
+    });
+
+    test('moves on from onboarding to login', () {
+      expect(_redirect(AppRoutes.onboardingPath), AppRoutes.loginPath);
+    });
+
+    test('leaves every sign-in screen reachable', () {
+      for (final location in [
+        AppRoutes.loginPath,
+        AppRoutes.registerPath,
+        AppRoutes.registerVerifyPath,
+        AppRoutes.forgotPasswordPath,
+        AppRoutes.forgotPasswordVerifyPath,
+        AppRoutes.resetPasswordPath,
+        AppRoutes.passwordChangedPath,
+      ]) {
+        expect(_redirect(location), isNull, reason: location);
+      }
+    });
+  });
+
+  group('signed in', () {
     test('sends staff from the root to the dashboard', () {
       expect(
-        redirectFor(role: AppRole.staff, location: AppRoutes.rootPath),
+        _redirect(AppRoutes.rootPath, role: AppRole.staff),
         AppRoutes.dashboardPath,
       );
     });
 
     test('sends a client from the root to their home tab', () {
       expect(
-        redirectFor(role: AppRole.client, location: AppRoutes.rootPath),
+        _redirect(AppRoutes.rootPath, role: AppRole.client),
         AppRoutes.clientHomePath,
       );
+    });
+
+    test('moves a user off the sign-in screens once signed in', () {
+      for (final location in [
+        AppRoutes.loginPath,
+        AppRoutes.registerVerifyPath,
+        AppRoutes.onboardingPath,
+      ]) {
+        expect(
+          _redirect(location, role: AppRole.client),
+          AppRoutes.clientHomePath,
+          reason: location,
+        );
+      }
     });
 
     test('keeps staff out of the client shell', () {
@@ -26,7 +104,7 @@ void main() {
         '/client/cases/case-1',
       ]) {
         expect(
-          redirectFor(role: AppRole.staff, location: location),
+          _redirect(location, role: AppRole.staff),
           AppRoutes.dashboardPath,
           reason: location,
         );
@@ -40,7 +118,7 @@ void main() {
         '/staff/cases/case-1',
       ]) {
         expect(
-          redirectFor(role: AppRole.client, location: location),
+          _redirect(location, role: AppRole.client),
           AppRoutes.clientHomePath,
           reason: location,
         );
@@ -48,40 +126,31 @@ void main() {
     });
 
     test('leaves each role alone inside its own shell', () {
-      expect(
-        redirectFor(role: AppRole.staff, location: '/staff/cases/case-1'),
-        isNull,
-      );
-      expect(
-        redirectFor(role: AppRole.client, location: '/client/cases/case-1'),
-        isNull,
-      );
+      expect(_redirect('/staff/cases/case-1', role: AppRole.staff), isNull);
+      expect(_redirect('/client/cases/case-1', role: AppRole.client), isNull);
     });
 
     test('matches whole path segments, not prefixes', () {
-      expect(redirectFor(role: AppRole.client, location: '/staffing'), isNull);
-    });
-
-    test('leaves shared routes to everyone', () {
-      for (final role in AppRole.values) {
-        expect(redirectFor(role: role, location: AppRoutes.splashPath), isNull);
-        expect(redirectFor(role: role, location: AppRoutes.termsPath), isNull);
-      }
-    });
-
-    test('does nothing while signed out', () {
-      expect(redirectFor(role: null, location: AppRoutes.rootPath), isNull);
+      expect(_redirect('/staffing', role: AppRole.client), isNull);
+      expect(_redirect('/login-help', role: AppRole.client), isNull);
     });
   });
 
-  group('devRoleFrom', () {
-    test('reads client, ignoring case and whitespace', () {
-      expect(devRoleFrom(' Client '), AppRole.client);
-    });
-
-    test('defaults to staff when unset or unrecognised', () {
-      expect(devRoleFrom(''), AppRole.staff);
-      expect(devRoleFrom('admin'), AppRole.staff);
-    });
+  test('leaves the splash and the legal pages to everyone', () {
+    for (final role in [null, ...AppRole.values]) {
+      for (final seen in [true, false]) {
+        for (final location in [
+          AppRoutes.splashPath,
+          AppRoutes.termsPath,
+          AppRoutes.privacyPolicyPath,
+        ]) {
+          expect(
+            _redirect(location, role: role, hasSeenOnboarding: seen),
+            isNull,
+            reason: '$location as $role',
+          );
+        }
+      }
+    }
   });
 }

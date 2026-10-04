@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'features/auth/presentation/providers/auth_overrides.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,5 +15,9 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const ProviderScope(child: PropertyIntelApp()));
+  // Auth supplies the session, token and 401 handling to core here, so
+  // nothing else has to import it.
+  runApp(
+    ProviderScope(overrides: authOverrides, child: const PropertyIntelApp()),
+  );
 }

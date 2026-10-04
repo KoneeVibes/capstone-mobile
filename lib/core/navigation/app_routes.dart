@@ -15,6 +15,31 @@ abstract final class AppRoutes {
   static const String rootName = 'root';
   static const String rootPath = '/';
 
+  // Signed out. Everything under these is reachable without a session.
+  static const String onboardingName = 'onboarding';
+  static const String onboardingPath = '/onboarding';
+
+  static const String loginName = 'login';
+  static const String loginPath = '/login';
+
+  static const String registerName = 'register';
+  static const String registerPath = '/register';
+
+  static const String registerVerifyName = 'registerVerify';
+  static const String registerVerifyPath = '/register/verify';
+
+  static const String forgotPasswordName = 'forgotPassword';
+  static const String forgotPasswordPath = '/forgot-password';
+
+  static const String forgotPasswordVerifyName = 'forgotPasswordVerify';
+  static const String forgotPasswordVerifyPath = '/forgot-password/verify';
+
+  static const String resetPasswordName = 'resetPassword';
+  static const String resetPasswordPath = '/forgot-password/reset';
+
+  static const String passwordChangedName = 'passwordChanged';
+  static const String passwordChangedPath = '/forgot-password/done';
+
   // Client branch. `/client` redirects to the home tab.
   static const String clientRootName = 'clientRoot';
   static const String clientRootPath = '/client';

@@ -6,10 +6,7 @@ abstract final class AppConstants {
 
   static const String appName = 'Capstone PropertyIntel';
 
-  /// How long the splash screen holds before the app routes on.
-  ///
-  /// A branding beat with nothing behind it today. When auth lands it becomes
-  /// the floor on a real wait rather than the whole wait.
+  /// The least time the splash holds, even when the session restores faster.
   static const Duration splashDuration = Duration(milliseconds: 1200);
 
   // Networking. The API runs on a cold-starting host, so the first request
@@ -30,6 +27,19 @@ abstract final class AppConstants {
 
   /// Debounce applied to search fields before a query is issued.
   static const Duration searchDebounce = Duration(milliseconds: 350);
+
+  // Auth.
+
+  /// Digits in a sign-up or password-reset code.
+  static const int otpLength = 6;
+
+  /// How long the backend refuses a new code for the same email.
+  static const Duration otpResendCooldown = Duration(minutes: 10);
+
+  static const int minPasswordLength = 8;
+
+  /// Sent as `organization` on every client sign-up.
+  static const String signUpOrganization = 'PropertyIntel Partners';
 
   /// Longest response body written to the debug log, in characters.
   static const int maxLoggedBodyLength = 2000;

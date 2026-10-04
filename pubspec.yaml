@@ -42,12 +42,24 @@ dependencies:
   # Skeleton loading for content with a known shape.
   shimmer: ^3.0.0
 
+  # The session token, in the Keychain / Keystore.
+  flutter_secure_storage: ^10.3.4
+
+  # Non-secret flags that outlive a restart (onboarding seen).
+  shared_preferences: ^2.5.5
+
+  # A replaceable "now", so countdowns are testable with fake_async.
+  clock: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+
+  # Drives timers (the OTP resend countdown) in tests.
+  fake_async: ^1.3.3
 
 flutter:
 

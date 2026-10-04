@@ -242,4 +242,20 @@ void main() {
       expect(AppFormatters.trackingId(null), '');
     });
   });
+
+  group('countdown', () {
+    test('reads as minutes and seconds', () {
+      expect(AppFormatters.countdown(const Duration(minutes: 10)), '10:00');
+      expect(AppFormatters.countdown(const Duration(seconds: 65)), '01:05');
+    });
+
+    test('rounds a part-second up, so it never shows 00:00 early', () {
+      expect(AppFormatters.countdown(const Duration(milliseconds: 400)), '00:01');
+    });
+
+    test('stops at zero', () {
+      expect(AppFormatters.countdown(Duration.zero), '00:00');
+      expect(AppFormatters.countdown(const Duration(seconds: -3)), '00:00');
+    });
+  });
 }

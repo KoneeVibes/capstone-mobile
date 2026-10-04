@@ -81,4 +81,27 @@ abstract final class Validators {
     }
     return null;
   }
+
+  /// Like [phone], but passes an empty field.
+  static String? optionalPhone(String? value, {String label = 'Phone number'}) {
+    if (value == null || value.trim().isEmpty) return null;
+    return phone(value, label: label);
+  }
+
+  /// Untrimmed: a password's spaces are part of it.
+  static String? password(String? value, {String label = 'Password'}) {
+    if (value == null || value.isEmpty) return '$label is required.';
+    if (value.length < AppConstants.minPasswordLength) {
+      return '$label must be at least ${AppConstants.minPasswordLength} '
+          'characters.';
+    }
+    return null;
+  }
+
+  /// The confirmation field: must repeat [original] exactly.
+  static String? confirmation(String? value, {required String original}) {
+    if (value == null || value.isEmpty) return 'Please repeat your password.';
+    if (value != original) return "Passwords don't match.";
+    return null;
+  }
 }

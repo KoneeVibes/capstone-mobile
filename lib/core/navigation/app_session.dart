@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Which side of the product the signed-in user sees.
@@ -14,19 +14,34 @@ enum AppRole {
   bool get isClient => this == AppRole.client;
 }
 
-/// The current role, or null when signed out.
-///
-/// TEMPORARY: authentication is not built yet, so this reports the role named
-/// by `--dart-define=APP_ROLE=client|staff` (staff when unset), which makes
-/// both shells reachable before sign-in exists.
-///
-/// TODO(auth): derive this from the session token. The router and the cases
-/// feature already read it and need no change.
-final sessionProvider = Provider<AppRole?>(
-  (ref) => devRoleFrom(const String.fromEnvironment('APP_ROLE')),
-);
+/// Who is signed in, as far as the router and the features need to know.
+class SessionUser extends Equatable {
+  const SessionUser({required this.id, required this.role});
 
-/// Reads the `APP_ROLE` define. Anything but `client` keeps the staff default.
-@visibleForTesting
-AppRole devRoleFrom(String value) =>
-    value.trim().toLowerCase() == 'client' ? AppRole.client : AppRole.staff;
+  final String id;
+  final AppRole role;
+
+  bool get isStaff => role.isStaff;
+
+  bool get isClient => role.isClient;
+
+  @override
+  List<Object?> get props => [id, role];
+}
+
+// The providers below are the seam between core and the auth feature. Core
+// declares them with signed-out defaults; `authOverrides` (features/auth)
+// supplies the real values at the composition root, so neither the router nor
+// any feature has to import auth.
+
+/// The signed-in user, or null when signed out.
+///
+/// Providers that hold one user's data watch this, so the next user to sign
+/// in starts from nothing.
+final sessionProvider = Provider<SessionUser?>((ref) => null);
+
+/// Whether onboarding has been seen on this install.
+final hasSeenOnboardingProvider = Provider<bool>((ref) => false);
+
+/// Completes once the stored session has been read. The splash waits on it.
+final sessionRestoreProvider = FutureProvider<void>((ref) async {});

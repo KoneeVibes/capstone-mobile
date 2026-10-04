@@ -10,6 +10,8 @@ abstract final class AppAssets {
   static const String logo = '$_images/logo.png';
   static const String splashLogo = '$_images/splash-screen.png';
   static const String searchPropertyIllustration = '$_images/search-property.png';
+  static const String loginIllustration = '$_images/login-illustration.png';
+  static const String onboardingIllustration = '$_images/onboarding-illustration.png';
   static const String appIcon = '$_icons/app-icon.png';
 
   static const String privacyPolicy = '$_legal/privacy_policy.md';

@@ -22,4 +22,41 @@ void main() {
       expect(Validators.trackingId('PI-URF8T7C!'), message);
     });
   });
+
+  group('password', () {
+    test('requires at least eight characters', () {
+      expect(Validators.password(null), 'Password is required.');
+      expect(
+        Validators.password('short12'),
+        'Password must be at least 8 characters.',
+      );
+      expect(Validators.password('Password1'), isNull);
+    });
+
+    test('counts spaces, which are part of a password', () {
+      expect(Validators.password('        '), isNull);
+    });
+  });
+
+  group('confirmation', () {
+    test('must repeat the original exactly', () {
+      expect(
+        Validators.confirmation('', original: 'Password1'),
+        'Please repeat your password.',
+      );
+      expect(
+        Validators.confirmation('password1', original: 'Password1'),
+        "Passwords don't match.",
+      );
+      expect(Validators.confirmation('Password1', original: 'Password1'), isNull);
+    });
+  });
+
+  group('optionalPhone', () {
+    test('passes an empty field and checks a filled one', () {
+      expect(Validators.optionalPhone(''), isNull);
+      expect(Validators.optionalPhone('0803 411 2290'), isNull);
+      expect(Validators.optionalPhone('12345'), isNotNull);
+    });
+  });
 }

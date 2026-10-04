@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/navigation/app_session.dart';
 import '../../../../core/network/api_response.dart';
 import '../../../../core/utils/error/app_failure.dart';
 import '../../domain/entities/staff.dart';
@@ -53,7 +54,10 @@ class StaffListState extends Equatable {
 /// The paginated staff list.
 class StaffListNotifier extends AsyncNotifier<StaffListState> {
   @override
-  Future<StaffListState> build() => _loadFirstPage();
+  Future<StaffListState> build() {
+    ref.watch(sessionProvider);
+    return _loadFirstPage();
+  }
 
   Future<StaffListState> _loadFirstPage() async {
     final result = await ref

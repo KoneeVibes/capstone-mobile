@@ -20,6 +20,21 @@ abstract final class AppFailures {
     message: 'Your session has expired. Please sign in again.',
   );
 
+  /// The token named an account type this build cannot route.
+  static const AppFailure unsupportedAccount = AppFailure(
+    type: FailureType.forbidden,
+    message: "This account can't use the mobile app yet.",
+  );
+
+  /// `verify-otp` refused the code: wrong (400), or expired or used (409).
+  /// The server's wording differs between the two and "OTP not found" reads
+  /// as a fault, not a typo.
+  static const AppFailure invalidOtp = AppFailure(
+    type: FailureType.conflict,
+    statusCode: 409,
+    message: 'Wrong code, please try again.',
+  );
+
   /// The picker plugin failed, most often because library access was denied.
   ///
   /// A `PlatformException` would otherwise flatten to a generic "Something went

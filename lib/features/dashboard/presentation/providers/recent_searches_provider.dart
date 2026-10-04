@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_session.dart';
 import '../../domain/entities/recent_search.dart';
 
 /// Successful lookups this session, newest first.
@@ -9,7 +10,10 @@ class RecentSearchesNotifier extends Notifier<List<RecentSearch>> {
   static const int maxEntries = 5;
 
   @override
-  List<RecentSearch> build() => const [];
+  List<RecentSearch> build() {
+    ref.watch(sessionProvider);
+    return const [];
+  }
 
   void record(RecentSearch search) => state = [
     search,

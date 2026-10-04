@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/onboarding_screen.dart';
+import '../../features/auth/presentation/screens/password_changed_screen.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../features/auth/presentation/screens/verify_code_screen.dart';
+import '../../features/auth/presentation/widgets/sign_out_button.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -19,19 +27,28 @@ import 'app_shell.dart';
 
 /// The app's router.
 ///
-/// Routes are split into a client shell and a staff shell; [redirectFor] keeps
-/// each role inside its own.
+/// Signed-out routes sit at the top level; signed-in ones are split into a
+/// client shell and a staff shell. [redirectFor] keeps everyone where they
+/// belong.
 ///
 /// The app opens on the splash route, which hands off to [AppRoutes.rootPath]
 /// once it has held its beat; the redirect takes it from there.
 final appRouterProvider = Provider<GoRouter>((ref) {
+  // Re-runs the redirect the moment someone signs in or out, or finishes
+  // onboarding.
+  final refresh = ValueNotifier<int>(0);
+  ref
+    ..listen(sessionProvider, (_, _) => refresh.value++)
+    ..listen(hasSeenOnboardingProvider, (_, _) => refresh.value++)
+    ..onDispose(refresh.dispose);
+
   return GoRouter(
     initialLocation: AppRoutes.splashPath,
     debugLogDiagnostics: kDebugMode,
-    // TODO(auth): pass a `refreshListenable` so a sign-in or sign-out
-    // re-evaluates this immediately.
+    refreshListenable: refresh,
     redirect: (context, state) => redirectFor(
-      role: ref.read(sessionProvider),
+      role: ref.read(sessionProvider)?.role,
+      hasSeenOnboarding: ref.read(hasSeenOnboardingProvider),
       location: state.matchedLocation,
     ),
     errorBuilder: (context, state) => const _RouteNotFoundScreen(),
@@ -40,6 +57,52 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.splashPath,
         name: AppRoutes.splashName,
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingPath,
+        name: AppRoutes.onboardingName,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.loginPath,
+        name: AppRoutes.loginName,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.registerPath,
+        name: AppRoutes.registerName,
+        builder: (context, state) => const RegisterScreen(),
+        routes: [
+          GoRoute(
+            path: 'verify',
+            name: AppRoutes.registerVerifyName,
+            builder: (context, state) =>
+                const VerifyCodeScreen(purpose: OtpPurpose.signUp),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPasswordPath,
+        name: AppRoutes.forgotPasswordName,
+        builder: (context, state) => const ForgotPasswordScreen(),
+        routes: [
+          GoRoute(
+            path: 'verify',
+            name: AppRoutes.forgotPasswordVerifyName,
+            builder: (context, state) =>
+                const VerifyCodeScreen(purpose: OtpPurpose.passwordReset),
+          ),
+          GoRoute(
+            path: 'reset',
+            name: AppRoutes.resetPasswordName,
+            builder: (context, state) => const ResetPasswordScreen(),
+          ),
+          GoRoute(
+            path: 'done',
+            name: AppRoutes.passwordChangedName,
+            builder: (context, state) => const PasswordChangedScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.rootPath,
@@ -196,7 +259,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Both roles' Profile tab until the profile screen is designed.
+/// Both roles' Profile tab until the profile screen is designed. Carries the
+/// only way to sign out meanwhile.
 class _ProfilePlaceholder extends StatelessWidget {
   const _ProfilePlaceholder();
 
@@ -205,6 +269,7 @@ class _ProfilePlaceholder extends StatelessWidget {
     return const PlaceholderScreen(
       title: 'Profile',
       message: 'Your account details will appear here.',
+      action: SignOutButton(),
     );
   }
 }

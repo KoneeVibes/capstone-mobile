@@ -46,6 +46,7 @@ class ApiResponse<T> extends Equatable {
     required this.message,
     required this.data,
     this.meta,
+    this.body = const {},
   });
 
   /// Builds an envelope from a decoded JSON body.
@@ -62,6 +63,7 @@ class ApiResponse<T> extends Equatable {
       message: json['message'] as String? ?? '',
       data: decoder != null ? decoder(json['data']) : json['data'] as T,
       meta: rawMeta is Map<String, dynamic> ? PageMeta.fromJson(rawMeta) : null,
+      body: json,
     );
   }
 
@@ -74,6 +76,11 @@ class ApiResponse<T> extends Equatable {
 
   /// Present on paginated list responses only.
   final PageMeta? meta;
+
+  /// The whole decoded envelope, for the endpoints that put their payload
+  /// beside `data` rather than in it — `POST /auth/signin` returns `token` at
+  /// the top level. Not part of equality.
+  final Map<String, dynamic> body;
 
   bool get isSuccess => status.toLowerCase() == 'success';
 

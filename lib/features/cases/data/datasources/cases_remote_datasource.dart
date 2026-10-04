@@ -17,10 +17,14 @@ import 'cases_datasource.dart';
 /// fail quietly, both secondary and both documented where they are: the closed
 /// cases merged into the list ([_closedCases], on a 404 only) and an assignee's
 /// name ([_assigneesById]).
+///
+/// [resolveAssignees] is off for clients: `GET /staff` is staff-only, and who
+/// holds a case is not theirs to see.
 class CasesRemoteDataSourceImpl implements CasesDataSource {
-  const CasesRemoteDataSourceImpl(this._client);
+  const CasesRemoteDataSourceImpl(this._client, {this.resolveAssignees = true});
 
   final ApiClient _client;
+  final bool resolveAssignees;
 
   /// Every case, across every page and every status.
   ///
@@ -50,7 +54,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     final ids = active.map((value) => value.id).toSet();
     final cases = [...active, ...closed.where((value) => ids.add(value.id))];
 
-    return _withAssigneeNames(cases);
+    return resolveAssignees ? _withAssigneeNames(cases) : cases;
   }
 
   /// The closed cases, or none when the endpoint says there are none.
@@ -79,7 +83,7 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
       ApiEndpoints.caseById(id),
       decoder: CaseModel.fromData,
     );
-    return _withAssigneeName(response.data);
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
   }
 
   /// The staff a case may be given to.

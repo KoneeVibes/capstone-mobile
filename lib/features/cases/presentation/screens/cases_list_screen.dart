@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/navigation/app_session.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
@@ -14,8 +14,14 @@ import '../widgets/case_list_skeleton.dart';
 import '../widgets/case_list_tile.dart';
 
 /// Every case, filtered by the tab bar, opening onto the detail screen.
+///
+/// Mounted in both shells; the server scopes the list to what the signed-in
+/// user may see.
 class CasesListScreen extends ConsumerWidget {
-  const CasesListScreen({super.key});
+  const CasesListScreen({required this.detailRouteName, super.key});
+
+  /// The detail route inside the shell this list lives in.
+  final String detailRouteName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +54,8 @@ class CasesListScreen extends ConsumerWidget {
                   failure: failure,
                   onRetry: notifier.refresh,
                 ),
-                data: (state) => _CasesList(state: state),
+                data: (state) =>
+                    _CasesList(state: state, detailRouteName: detailRouteName),
               ),
             ),
           ],
@@ -59,14 +66,16 @@ class CasesListScreen extends ConsumerWidget {
 }
 
 class _CasesList extends ConsumerWidget {
-  const _CasesList({required this.state});
+  const _CasesList({required this.state, required this.detailRouteName});
 
   final CasesListState state;
+  final String detailRouteName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final refresh = ref.read(casesListProvider.notifier).refresh;
     final visible = state.visible;
+    final isStaff = ref.watch(sessionProvider)?.isStaff ?? false;
 
     if (visible.isEmpty) {
       return RefreshIndicator(
@@ -76,7 +85,9 @@ class _CasesList extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: _EmptyState(state: state),
+              child: isStaff
+                  ? _EmptyState(state: state)
+                  : _ClientEmptyState(state: state),
             ),
           ),
         ),
@@ -105,7 +116,7 @@ class _CasesList extends ConsumerWidget {
           return CaseListTile(
             value: value,
             onTap: () => context.pushNamed(
-              AppRoutes.caseDetailName,
+              detailRouteName,
               pathParameters: {'caseId': value.id},
             ),
           );
@@ -180,6 +191,31 @@ class _EmptyState extends StatelessWidget {
       icon: Icons.filter_list_off_outlined,
       title: title,
       message: message,
+    );
+  }
+}
+
+/// The client's empty state. The staff copy talks about assigning work, which
+/// is not a client's concern.
+class _ClientEmptyState extends StatelessWidget {
+  const _ClientEmptyState({required this.state});
+
+  final CasesListState state;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isEmpty) {
+      return const AppStateView.empty(
+        icon: Icons.inbox_outlined,
+        title: 'No cases yet',
+        message: 'Property searches you request will appear here.',
+      );
+    }
+
+    return const AppStateView.empty(
+      icon: Icons.filter_list_off_outlined,
+      title: 'Nothing at this stage',
+      message: 'None of your cases are at this stage right now.',
     );
   }
 }

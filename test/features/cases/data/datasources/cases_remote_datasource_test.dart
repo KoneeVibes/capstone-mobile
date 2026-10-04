@@ -492,6 +492,48 @@ void main() {
     });
   });
 
+  group('for a client', () {
+    // `GET /staff` is staff-only, so a client's datasource never asks.
+    setUp(() {
+      source = CasesRemoteDataSourceImpl(client, resolveAssignees: false);
+    });
+
+    test('lists assigned cases without touching the staff list', () async {
+      stubCasePages({
+        1: [
+          {...caseJson, 'assigneeId': 'staff-1', 'status': 'assigned'},
+        ],
+      });
+
+      final cases = await source.fetchCases();
+
+      expect(cases.single.isAssigned, isTrue);
+      expect(cases.single.assignee, isNull);
+      verifyNever(
+        () => client.get<List<CaseAssigneeModel>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      );
+    });
+
+    test('opens an assigned case without looking up the holder', () async {
+      stubSingleCase({
+        ...caseJson,
+        'assigneeId': 'staff-1',
+        'status': 'assigned',
+      });
+
+      final value = await source.fetchCase('case-1');
+
+      expect(value.isAssigned, isTrue);
+      verifyNever(
+        () => client.get<CaseAssignee>(any(), decoder: any(named: 'decoder')),
+      );
+    });
+  });
+
   group('fetchAssignees', () {
     test('offers active staff only', () async {
       // Staff delete is a soft delete, so deactivated people keep coming back

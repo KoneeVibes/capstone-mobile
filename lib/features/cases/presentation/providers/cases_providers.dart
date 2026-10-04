@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_session.dart';
 import '../../../../core/network/api_provider.dart';
 import '../../data/datasources/cases_datasource.dart';
 import '../../data/datasources/cases_remote_datasource.dart';
@@ -13,7 +14,10 @@ import '../../domain/repositories/cases_repository.dart';
 /// without touching the datasource.
 
 final casesDataSourceProvider = Provider<CasesDataSource>(
-  (ref) => CasesRemoteDataSourceImpl(ref.watch(apiClientProvider)),
+  (ref) => CasesRemoteDataSourceImpl(
+    ref.watch(apiClientProvider),
+    resolveAssignees: ref.watch(sessionProvider)?.isStaff ?? false,
+  ),
 );
 
 final casesRepositoryProvider = Provider<CasesRepository>(

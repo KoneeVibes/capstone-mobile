@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/navigation/app_session.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -19,7 +20,8 @@ import '../widgets/case_assign_sheet.dart';
 import '../widgets/case_detail_skeleton.dart';
 import '../widgets/case_status_chip.dart';
 
-/// One case in full, with the action that assigns or re-assigns it.
+/// One case in full, with the action that assigns or re-assigns it (staff
+/// only).
 class CaseDetailScreen extends ConsumerWidget {
   const CaseDetailScreen({required this.caseId, super.key});
 
@@ -45,6 +47,8 @@ class CaseDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(caseDetailProvider(caseId));
     final value = detail.value;
+    // Assigning is staff work; clients see the case read-only.
+    final isStaff = ref.watch(sessionProvider)?.isStaff ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,18 +89,19 @@ class CaseDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizing.screenPadding,
-                  0,
-                  AppSizing.screenPadding,
-                  AppSizing.space16,
+              if (isStaff)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizing.screenPadding,
+                    0,
+                    AppSizing.screenPadding,
+                    AppSizing.space16,
+                  ),
+                  child: _AssignAction(
+                    value: loaded,
+                    onPressed: () => _assign(context, ref, loaded),
+                  ),
                 ),
-                child: _AssignAction(
-                  value: loaded,
-                  onPressed: () => _assign(context, ref, loaded),
-                ),
-              ),
             ],
           ),
         ),

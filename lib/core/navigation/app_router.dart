@@ -12,22 +12,28 @@ import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
 import '../../shared/widgets/app_state_view.dart';
 import '../utils/error/app_failures.dart';
+import 'app_redirect.dart';
 import 'app_routes.dart';
 import 'app_session.dart';
 import 'app_shell.dart';
 
 /// The app's router.
 ///
-/// Routes are split into a client branch and a staff branch; [_redirect] picks
-/// the branch from the current role.
+/// Routes are split into a client shell and a staff shell; [redirectFor] keeps
+/// each role inside its own.
 ///
 /// The app opens on the splash route, which hands off to [AppRoutes.rootPath]
-/// once it has held its beat; the redirect below takes it from there.
+/// once it has held its beat; the redirect takes it from there.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splashPath,
     debugLogDiagnostics: kDebugMode,
-    redirect: (context, state) => _redirect(ref, state),
+    // TODO(auth): pass a `refreshListenable` so a sign-in or sign-out
+    // re-evaluates this immediately.
+    redirect: (context, state) => redirectFor(
+      role: ref.read(sessionProvider),
+      location: state.matchedLocation,
+    ),
     errorBuilder: (context, state) => const _RouteNotFoundScreen(),
     routes: [
       GoRoute(
@@ -45,22 +51,84 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: AppRoutes.clientHomePath,
-        name: AppRoutes.clientHomeName,
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Dashboard',
-          message: 'Your requests and reports will appear here.',
-        ),
+        path: AppRoutes.clientRootPath,
+        name: AppRoutes.clientRootName,
+        redirect: (context, state) => AppRoutes.clientHomePath,
       ),
       GoRoute(
         path: AppRoutes.staffHomePath,
         name: AppRoutes.staffHomeName,
         redirect: (context, state) => AppRoutes.dashboardPath,
       ),
-      // Branch order must match AppShell's items.
+      // Branch order must match AppShell.clientTabs.
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) => AppShell(
+          navigationShell: navigationShell,
+          tabs: AppShell.clientTabs,
+        ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.clientHomePath,
+                name: AppRoutes.clientHomeName,
+                builder: (context, state) => const PlaceholderScreen(
+                  title: 'Home',
+                  message: 'Your cases and recent searches will appear here.',
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.clientSearchPath,
+                name: AppRoutes.clientSearchName,
+                builder: (context, state) => const PlaceholderScreen(
+                  title: 'Search',
+                  message:
+                      'Look up a tracking ID or start a new property search.',
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.clientCasesPath,
+                name: AppRoutes.clientCasesName,
+                builder: (context, state) => const CasesListScreen(
+                  detailRouteName: AppRoutes.clientCaseDetailName,
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':caseId',
+                    name: AppRoutes.clientCaseDetailName,
+                    builder: (context, state) => CaseDetailScreen(
+                      caseId: state.pathParameters['caseId'] ?? '',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.clientProfilePath,
+                name: AppRoutes.clientProfileName,
+                builder: (context, state) => const _ProfilePlaceholder(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Branch order must match AppShell.staffTabs.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => AppShell(
+          navigationShell: navigationShell,
+          tabs: AppShell.staffTabs,
+        ),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -85,7 +153,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.casesPath,
                 name: AppRoutes.casesName,
-                builder: (context, state) => const CasesListScreen(),
+                builder: (context, state) => const CasesListScreen(
+                  detailRouteName: AppRoutes.caseDetailName,
+                ),
                 routes: [
                   GoRoute(
                     path: ':caseId',
@@ -111,28 +181,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.staffProfilePath,
+                name: AppRoutes.staffProfileName,
+                builder: (context, state) => const _ProfilePlaceholder(),
+              ),
+            ],
+          ),
         ],
       ),
     ],
   );
 });
 
-/// Sends the user to the branch that matches their role.
-///
-/// TODO(auth): once authentication exists, also bounce unauthenticated users
-/// away from protected routes and pass a `refreshListenable` to [GoRouter] so a
-/// sign-in or sign-out re-evaluates this immediately.
-String? _redirect(Ref ref, GoRouterState state) {
-  final role = ref.read(sessionProvider);
+/// Both roles' Profile tab until the profile screen is designed.
+class _ProfilePlaceholder extends StatelessWidget {
+  const _ProfilePlaceholder();
 
-  // Signed out: stay where we are. Returning the current location would loop.
-  if (role == null) return null;
-
-  if (state.matchedLocation == AppRoutes.rootPath) {
-    return role.isStaff ? AppRoutes.dashboardPath : AppRoutes.clientHomePath;
+  @override
+  Widget build(BuildContext context) {
+    return const PlaceholderScreen(
+      title: 'Profile',
+      message: 'Your account details will appear here.',
+    );
   }
-
-  return null;
 }
 
 class _RouteNotFoundScreen extends StatelessWidget {

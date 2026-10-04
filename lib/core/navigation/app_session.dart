@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Which side of the product the signed-in user sees.
@@ -15,10 +16,17 @@ enum AppRole {
 
 /// The current role, or null when signed out.
 ///
-/// TEMPORARY: authentication is not built yet, so this reports [AppRole.staff]
-/// unconditionally to make the staff branch reachable while the first feature
-/// is developed and tested.
+/// TEMPORARY: authentication is not built yet, so this reports the role named
+/// by `--dart-define=APP_ROLE=client|staff` (staff when unset), which makes
+/// both shells reachable before sign-in exists.
 ///
-/// When auth lands, move this to `features/auth` and derive it from the session:
-/// the router already reads it and needs no change.
-final sessionProvider = Provider<AppRole?>((ref) => AppRole.staff);
+/// TODO(auth): derive this from the session token. The router and the cases
+/// feature already read it and need no change.
+final sessionProvider = Provider<AppRole?>(
+  (ref) => devRoleFrom(const String.fromEnvironment('APP_ROLE')),
+);
+
+/// Reads the `APP_ROLE` define. Anything but `client` keeps the staff default.
+@visibleForTesting
+AppRole devRoleFrom(String value) =>
+    value.trim().toLowerCase() == 'client' ? AppRole.client : AppRole.staff;

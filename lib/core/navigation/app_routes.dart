@@ -15,9 +15,25 @@ abstract final class AppRoutes {
   static const String rootName = 'root';
   static const String rootPath = '/';
 
-  // Client branch.
+  // Client branch. `/client` redirects to the home tab.
+  static const String clientRootName = 'clientRoot';
+  static const String clientRootPath = '/client';
+
   static const String clientHomeName = 'clientHome';
-  static const String clientHomePath = '/client';
+  static const String clientHomePath = '/client/home';
+
+  static const String clientSearchName = 'clientSearch';
+  static const String clientSearchPath = '/client/search';
+
+  static const String clientCasesName = 'clientCases';
+  static const String clientCasesPath = '/client/cases';
+
+  /// Takes a `caseId` path parameter.
+  static const String clientCaseDetailName = 'clientCaseDetail';
+  static const String clientCaseDetailPath = '/client/cases/:caseId';
+
+  static const String clientProfileName = 'clientProfile';
+  static const String clientProfilePath = '/client/profile';
 
   // Staff branch. `/staff` redirects to the dashboard tab.
   static const String staffHomeName = 'staffHome';
@@ -39,6 +55,9 @@ abstract final class AppRoutes {
   /// Takes a `caseId` path parameter.
   static const String caseDetailName = 'caseDetail';
   static const String caseDetailPath = '/staff/cases/:caseId';
+
+  static const String staffProfileName = 'staffProfile';
+  static const String staffProfilePath = '/staff/profile';
 
   // Legal. Screens land with the legal-content task; the paths are fixed now so
   // links from other screens can be written against them.

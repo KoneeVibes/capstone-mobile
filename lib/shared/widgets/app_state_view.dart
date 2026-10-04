@@ -16,6 +16,8 @@ import 'app_button.dart';
 /// pass `onRetry: failure.isRetryable ? load : null` when the action really is
 /// a retry of the failed request.
 class AppStateView extends StatelessWidget {
+  /// A centred spinner. For content with a known shape, use an `AppShimmer`
+  /// skeleton instead.
   const AppStateView.loading({super.key})
     : _isLoading = true,
       _icon = null,
@@ -25,6 +27,8 @@ class AppStateView extends StatelessWidget {
       _onRetry = null,
       _retryLabel = null;
 
+  /// Nothing to show. Word [title] and [message] for why there is nothing —
+  /// an empty inbox and an empty filter are different situations.
   const AppStateView.empty({
     required IconData icon,
     required String title,
@@ -38,6 +42,8 @@ class AppStateView extends StatelessWidget {
        _onRetry = null,
        _retryLabel = null;
 
+  /// A failure, shown through `failure.message` only. The button appears
+  /// when [onRetry] is given.
   const AppStateView.failure({
     required AppFailure failure,
     super.key,

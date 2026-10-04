@@ -4,6 +4,7 @@ import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
+/// The three looks an [AppButton] can take.
 enum AppButtonVariant {
   /// Filled call to action.
   primary,
@@ -21,6 +22,7 @@ enum AppButtonVariant {
 /// laid out at the same size and swallows taps, so a form cannot be submitted
 /// twice.
 class AppButton extends StatelessWidget {
+  /// Creates a button. [label] comes from the calling screen.
   const AppButton({
     required this.label,
     required this.onPressed,
@@ -31,10 +33,19 @@ class AppButton extends StatelessWidget {
     this.expanded = true,
   });
 
+  /// The button's text.
   final String label;
+
+  /// Called on tap. Null disables the button.
   final VoidCallback? onPressed;
+
+  /// Primary, secondary or destructive.
   final AppButtonVariant variant;
+
+  /// Shows a spinner in place of the label and ignores taps.
   final bool isLoading;
+
+  /// Optional leading icon.
   final IconData? icon;
 
   /// Stretch to the available width. Turn off inside a Row.

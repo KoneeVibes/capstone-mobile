@@ -31,7 +31,10 @@ Future<T?> showAppBottomSheet<T>({
 }
 
 /// Sheet chrome: grabber, title row with a close button, then content.
+///
+/// Normally reached through [showAppBottomSheet] rather than built directly.
 class AppBottomSheet extends StatelessWidget {
+  /// Creates the sheet chrome around [child].
   const AppBottomSheet({
     required this.title,
     required this.child,
@@ -39,8 +42,13 @@ class AppBottomSheet extends StatelessWidget {
     this.showClose = true,
   });
 
+  /// The heading, supplied by the calling screen.
   final String title;
+
+  /// The sheet's content, usually a form.
   final Widget child;
+
+  /// Shows the close button. Off for sheets that must not be dismissed.
   final bool showClose;
 
   @override

@@ -12,6 +12,8 @@ import '../../core/theme/app_text_styles.dart';
 /// backspace and the system's one-time-code autofill all behave normally; the
 /// boxes only draw its text. [onCompleted] fires once every box is filled.
 class AppOtpField extends StatefulWidget {
+  /// Creates the field. Clear [controller] to empty the boxes after a wrong
+  /// code.
   const AppOtpField({
     required this.controller,
     required this.onCompleted,
@@ -22,13 +24,22 @@ class AppOtpField extends StatefulWidget {
     this.autofocus = true,
   });
 
+  /// Holds the digits typed so far.
   final TextEditingController controller;
+
+  /// Called once per distinct full code.
   final ValueChanged<String> onCompleted;
+
+  /// How many boxes; the backend's codes are six digits.
   final int length;
 
   /// Outlines every box in red.
   final bool hasError;
+
+  /// False while the code is being checked.
   final bool enabled;
+
+  /// Opens the keyboard when the screen appears.
   final bool autofocus;
 
   @override

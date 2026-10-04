@@ -22,6 +22,7 @@ import '../../core/theme/app_colors.dart';
 /// Holds until the stored session has been read, and for at least
 /// [AppConstants.splashDuration] so a fast start does not flash past.
 class SplashScreen extends ConsumerStatefulWidget {
+  /// Creates the splash. Mounted only by the `/splash` route.
   const SplashScreen({super.key});
 
   @override

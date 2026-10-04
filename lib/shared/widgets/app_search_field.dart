@@ -9,6 +9,8 @@ import '../../core/theme/app_text_styles.dart';
 /// Set [enabled] to false to show the field without accepting input — used
 /// where the UI is in place but the backing query is not yet available.
 class AppSearchField extends StatelessWidget {
+  /// Creates a search field. Debounce [onChanged] with
+  /// `AppConstants.searchDebounce` before querying.
   const AppSearchField({
     required this.hint,
     super.key,
@@ -19,11 +21,22 @@ class AppSearchField extends StatelessWidget {
     this.autofocus = false,
   });
 
+  /// Placeholder text, supplied by the calling screen.
   final String hint;
+
+  /// Needed for the clear button to know when there is text.
   final TextEditingController? controller;
+
+  /// Called on every keystroke.
   final ValueChanged<String>? onChanged;
+
+  /// Shows a clear button while there is text; called when it is tapped.
   final VoidCallback? onClear;
+
+  /// False shows the field without accepting input.
   final bool enabled;
+
+  /// Focuses the field, and opens the keyboard, when it first builds.
   final bool autofocus;
 
   @override

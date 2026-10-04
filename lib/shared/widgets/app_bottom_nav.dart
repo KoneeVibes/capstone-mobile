@@ -4,20 +4,31 @@ import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
+/// One tab in an [AppBottomNav].
 class AppBottomNavItem {
+  /// Creates a tab. [selectedIcon] is usually the filled form of [icon].
   const AppBottomNavItem({
     required this.label,
     required this.icon,
     required this.selectedIcon,
   });
 
+  /// The text under the icon, supplied by the shell that owns the tabs.
   final String label;
+
+  /// Shown while the tab is not selected.
   final IconData icon;
+
+  /// Shown while the tab is selected.
   final IconData selectedIcon;
 }
 
 /// Flat bottom bar: the selected tab is a filled icon and a blue label.
+///
+/// Stateless — the caller owns which tab is open, normally a go_router
+/// `StatefulNavigationShell` (see `AppShell`).
 class AppBottomNav extends StatelessWidget {
+  /// Creates the bar. [currentIndex] must be a valid index into [items].
   const AppBottomNav({
     required this.items,
     required this.currentIndex,
@@ -25,8 +36,13 @@ class AppBottomNav extends StatelessWidget {
     super.key,
   });
 
+  /// The tabs, left to right.
   final List<AppBottomNavItem> items;
+
+  /// The selected tab.
   final int currentIndex;
+
+  /// Called with the tapped tab's index, including the one already open.
   final ValueChanged<int> onSelected;
 
   @override

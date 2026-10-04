@@ -13,8 +13,11 @@ import '../../core/theme/app_colors.dart';
 /// card, a detail header. Indeterminate work with no shape to preview (a button
 /// submitting, a pull-to-refresh) keeps a spinner.
 class AppShimmer extends StatelessWidget {
+  /// Animates [child]. Put it inside a card, around [AppShimmerBox]es only —
+  /// wrapping the card itself greys out its background too.
   const AppShimmer({required this.child, super.key});
 
+  /// The skeleton, laid out like the real content.
   final Widget child;
 
   @override
@@ -34,6 +37,8 @@ class AppShimmer extends StatelessWidget {
 /// Colour is irrelevant — [AppShimmer] paints over it — but it must be opaque
 /// for the gradient to show.
 class AppShimmerBox extends StatelessWidget {
+  /// Creates a block the size of the content it stands in for — a text line
+  /// by default.
   const AppShimmerBox({
     super.key,
     this.width,
@@ -44,8 +49,14 @@ class AppShimmerBox extends StatelessWidget {
 
   /// Null stretches to the available width.
   final double? width;
+
+  /// Match the line height of the text being previewed.
   final double height;
+
+  /// Corner radius; ignored for a circle.
   final double radius;
+
+  /// Rectangle, or circle for round avatars.
   final BoxShape shape;
 
   /// A square block, for avatar placeholders.

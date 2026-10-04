@@ -9,6 +9,7 @@ import '../../core/theme/app_text_styles.dart';
 /// Colours are supplied by the caller: mapping a domain value to a colour is a
 /// feature concern, not a shared-widget one.
 class AppChip extends StatelessWidget {
+  /// Creates a pill, grey unless the caller passes a status colour pair.
   const AppChip({
     required this.label,
     super.key,
@@ -16,8 +17,13 @@ class AppChip extends StatelessWidget {
     this.foregroundColor = AppColors.textSecondary,
   });
 
+  /// The text, truncated to one line.
   final String label;
+
+  /// Fill colour — usually one of the `*Soft` colours.
   final Color backgroundColor;
+
+  /// Text colour — usually the matching strong colour.
   final Color foregroundColor;
 
   @override
@@ -55,6 +61,7 @@ enum AppChoiceChipStyle {
 
 /// Selectable pill.
 class AppChoiceChip extends StatelessWidget {
+  /// Creates a chip. The caller owns selection; this only reports taps.
   const AppChoiceChip({
     required this.label,
     required this.isSelected,
@@ -64,9 +71,16 @@ class AppChoiceChip extends StatelessWidget {
     this.enabled = true,
   });
 
+  /// The chip's text.
   final String label;
+
+  /// Draws the chip in its selected state.
   final bool isSelected;
+
+  /// Called on tap, whether or not the chip is already selected.
   final VoidCallback onSelected;
+
+  /// Brand or neutral; see [AppChoiceChipStyle].
   final AppChoiceChipStyle style;
 
   /// Set false to show the chip without accepting taps, so a filter bar stays

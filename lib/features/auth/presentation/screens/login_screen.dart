@@ -35,11 +35,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Arrived here because the server ended the session: say so.
+    // Arrived here because a session ended: say why.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (ref.read(sessionExpiredNoticeProvider.notifier).consume()) {
-        context.showFailure(AppFailures.sessionExpired);
+      switch (ref.read(sessionEndNoticeProvider.notifier).consume()) {
+        case SessionEndNotice.expired:
+          context.showFailure(AppFailures.sessionExpired);
+        case SessionEndNotice.signedOut:
+          context.showMessage("You've been logged out.");
+        case null:
+          break;
       }
     });
   }
@@ -79,7 +84,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     AuthHero(
                       asset: AppAssets.loginIllustration,
-                      height: constraints.maxHeight * AppSizing.loginHeroFraction,
+                      height:
+                          constraints.maxHeight * AppSizing.loginHeroFraction,
                     ),
                     Padding(
                       padding: const EdgeInsets.all(AppSizing.space24),

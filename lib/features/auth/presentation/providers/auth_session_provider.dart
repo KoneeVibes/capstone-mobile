@@ -58,6 +58,9 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSession?> {
     } finally {
       _signingOut = false;
     }
+    ref
+        .read(sessionEndNoticeProvider.notifier)
+        .raise(SessionEndNotice.signedOut);
     state = const AsyncData(null);
   }
 
@@ -66,7 +69,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSession?> {
   Future<void> expire() async {
     if (_signingOut || state.value == null) return;
     state = const AsyncData(null);
-    ref.read(sessionExpiredNoticeProvider.notifier).raise();
+    ref.read(sessionEndNoticeProvider.notifier).raise(SessionEndNotice.expired);
     await ref.read(authRepositoryProvider).clearSession();
   }
 }
@@ -76,23 +79,26 @@ final authSessionProvider =
       AuthSessionNotifier.new,
     );
 
-/// Raised when a session ends on a 401, so the login screen can say why the
-/// user is there. Consumed once.
-class SessionExpiredNoticeNotifier extends Notifier<bool> {
+/// Why the last session ended: a 401, or the user logging out.
+enum SessionEndNotice { expired, signedOut }
+
+/// Raised when a session ends, so the login screen can say why the user is
+/// there. Consumed once.
+class SessionEndNoticeNotifier extends Notifier<SessionEndNotice?> {
   @override
-  bool build() => false;
+  SessionEndNotice? build() => null;
 
-  void raise() => state = true;
+  void raise(SessionEndNotice notice) => state = notice;
 
-  /// Whether a notice was pending; clears it either way.
-  bool consume() {
+  /// The pending notice, if any; clears it either way.
+  SessionEndNotice? consume() {
     final pending = state;
-    state = false;
+    state = null;
     return pending;
   }
 }
 
-final sessionExpiredNoticeProvider =
-    NotifierProvider<SessionExpiredNoticeNotifier, bool>(
-      SessionExpiredNoticeNotifier.new,
+final sessionEndNoticeProvider =
+    NotifierProvider<SessionEndNoticeNotifier, SessionEndNotice?>(
+      SessionEndNoticeNotifier.new,
     );

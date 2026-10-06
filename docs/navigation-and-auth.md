@@ -91,7 +91,9 @@ SecureStore ◀── AuthRepository ◀── AuthSessionNotifier ──▶ ses
   requests failed together, and leaves a notice that the login screen shows
   ("Your session has expired").
 - **Sign-out** tells the server (best effort), then forgets the token whatever
-  the server says. The sign-out call's own 401 is not mistaken for an expiry.
+  the server says. The sign-out call's own 401 is not mistaken for an expiry;
+  the login screen confirms with "You've been logged out." Both notices are one
+  `sessionEndNoticeProvider` value, consumed once.
 - **Per-user data** resets on any session change; see
   [State management](state-management.md#one-users-data-watches-the-session).
 
@@ -112,6 +114,12 @@ new-password screen → `POST /auth/verify-otp` (`otpType: password-reset`, only
 **only together with the new password**, so the code screen just collects it. A
 rejected code sends the user back to the code screen with "Wrong code, please
 try again".
+
+**New passwords** (sign-up and reset) need at least 8 characters, a number and
+a special character (anything not a letter, digit or space) —
+`Validators.password`. Whether the backend enforces the same rule is
+unconfirmed. Sign-in only asks for a value, so a password set before the rule
+still works.
 
 Staff accounts are created by a super-admin or admin (`POST /staff`) and never
 register. No

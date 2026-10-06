@@ -26,7 +26,8 @@ test/                  mirrors lib/
 docs/                  you are here
 ```
 
-Current features: `auth`, `dashboard` (tracking lookup), `cases`, `staff`.
+Current features: `auth`, `dashboard` (tracking lookup, client Home),
+`property_search` (file a search, see its price), `cases`, `staff`.
 
 ## The dependency rule
 

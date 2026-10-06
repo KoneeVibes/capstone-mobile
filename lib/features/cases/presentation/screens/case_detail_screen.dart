@@ -12,6 +12,7 @@ import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_state_view.dart';
+import '../../../../shared/widgets/payment_coming_soon_sheet.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_applicant.dart';
 import '../../domain/entities/case_property.dart';
@@ -48,8 +49,9 @@ class CaseDetailScreen extends ConsumerWidget {
     final detail = ref.watch(caseDetailProvider(caseId));
     final value = detail.value;
     // Assigning is staff work (StaffPermissions); clients see it read-only.
-    final canAssign =
-        ref.watch(sessionProvider)?.permissions.canAssignCases ?? false;
+    final session = ref.watch(sessionProvider);
+    final canAssign = session?.permissions.canAssignCases ?? false;
+    final canPay = session?.canPayForCases ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -101,6 +103,30 @@ class CaseDetailScreen extends ConsumerWidget {
                   child: _AssignAction(
                     value: loaded,
                     onPressed: () => _assign(context, ref, loaded),
+                  ),
+                )
+              else if (canPay && loaded.status.isAwaitingPayment)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizing.screenPadding,
+                    0,
+                    AppSizing.screenPadding,
+                    AppSizing.space16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppButton(
+                        label: 'Pay now',
+                        onPressed: () => showPaymentComingSoonSheet(context),
+                      ),
+                      const SizedBox(height: AppSizing.space8),
+                      const Text(
+                        'Work on this search starts once it is paid.',
+                        style: AppTextStyles.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -236,7 +262,8 @@ class _CaseCard extends StatelessWidget {
       if (purpose.isNotEmpty) ('Purpose', purpose),
       if (address.isNotEmpty) ('Address', address),
       if (titles.isNotEmpty) ('Title type', titles),
-      if (value.source != null) ('Source', AppFormatters.apiLabel(value.source)),
+      if (value.source != null)
+        ('Source', AppFormatters.apiLabel(value.source)),
       if (submitted.isNotEmpty) ('Submitted', submitted),
       ('Assignment', _assignment(value)),
     ];

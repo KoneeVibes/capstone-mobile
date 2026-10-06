@@ -4,15 +4,25 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../domain/entities/case.dart';
 import 'case_status_chip.dart';
 
 /// One case card in the list.
 class CaseListTile extends StatelessWidget {
-  const CaseListTile({required this.value, required this.onTap, super.key});
+  const CaseListTile({
+    required this.value,
+    required this.onTap,
+    super.key,
+    this.onPayNow,
+  });
 
   final Case value;
   final VoidCallback onTap;
+
+  /// Set for the client's own unpaid cases; replaces the assignment line with
+  /// a call to pay.
+  final VoidCallback? onPayNow;
 
   @override
   Widget build(BuildContext context) {
@@ -78,14 +88,33 @@ class CaseListTile extends StatelessWidget {
                     const SizedBox(height: AppSizing.space12),
                     const Divider(),
                     const SizedBox(height: AppSizing.space12),
-                    Text(
-                      _assignment(value),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
+                    if (onPayNow case final payNow?)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Awaiting payment',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          AppButton(
+                            label: 'Pay now',
+                            expanded: false,
+                            onPressed: payNow,
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        _assignment(value),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ],
                 ),
               ),

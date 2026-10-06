@@ -7,6 +7,7 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_state_view.dart';
+import '../../../../shared/widgets/payment_coming_soon_sheet.dart';
 import '../../domain/entities/case_filter.dart';
 import '../providers/cases_list_provider.dart';
 import '../widgets/case_filter_bar.dart';
@@ -75,7 +76,9 @@ class _CasesList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final refresh = ref.read(casesListProvider.notifier).refresh;
     final visible = state.visible;
-    final isStaff = ref.watch(sessionProvider)?.isStaff ?? false;
+    final session = ref.watch(sessionProvider);
+    final isStaff = session?.isStaff ?? false;
+    final canPay = session?.canPayForCases ?? false;
 
     if (visible.isEmpty) {
       return RefreshIndicator(
@@ -109,7 +112,10 @@ class _CasesList extends ConsumerWidget {
         separatorBuilder: (_, _) => const SizedBox(height: AppSizing.space12),
         itemBuilder: (context, index) {
           if (index == visible.length) {
-            return _CountFooter(shown: visible.length, total: state.items.length);
+            return _CountFooter(
+              shown: visible.length,
+              total: state.items.length,
+            );
           }
 
           final value = visible[index];
@@ -119,6 +125,9 @@ class _CasesList extends ConsumerWidget {
               detailRouteName,
               pathParameters: {'caseId': value.id},
             ),
+            onPayNow: canPay && value.status.isAwaitingPayment
+                ? () => showPaymentComingSoonSheet(context)
+                : null,
           );
         },
       ),

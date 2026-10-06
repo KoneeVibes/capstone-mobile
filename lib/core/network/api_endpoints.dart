@@ -38,4 +38,10 @@ abstract final class ApiEndpoints {
 
   static String trackCase(String trackingId) =>
       '$cases/track/${Uri.encodeComponent(trackingId)}';
+
+  // Property search: the priced locations a case can be filed for, and the
+  // invoice a new case creates.
+  static const String locations = '/misc/location';
+
+  static String invoiceById(String invoiceId) => '/invoice/$invoiceId';
 }

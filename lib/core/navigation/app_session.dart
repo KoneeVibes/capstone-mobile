@@ -19,10 +19,19 @@ enum AppRole {
 
 /// Who is signed in, as far as the router and the features need to know.
 class SessionUser extends Equatable {
-  const SessionUser({required this.id, required this.role, this.staffRole});
+  const SessionUser({
+    required this.id,
+    required this.role,
+    this.staffRole,
+    this.email,
+  });
 
   final String id;
   final AppRole role;
+
+  /// As typed at sign-in; the token does not carry it. Null for a session
+  /// stored before the app kept it.
+  final String? email;
 
   /// From `GET /staff/{id}`, not the token. Null for clients, and for a staff
   /// session restored from a build that did not store it yet.
@@ -35,8 +44,11 @@ class SessionUser extends Equatable {
   StaffPermissions get permissions =>
       isStaff ? StaffPermissions(staffRole) : StaffPermissions.none;
 
+  /// Paying is the applicant's step; staff never pay for a case.
+  bool get canPayForCases => isClient;
+
   @override
-  List<Object?> get props => [id, role, staffRole];
+  List<Object?> get props => [id, role, staffRole, email];
 }
 
 // The providers below are the seam between core and the auth feature. Core

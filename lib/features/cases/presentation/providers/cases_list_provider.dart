@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/navigation/app_session.dart';
+import '../../../../core/session/cases_changed.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_filter.dart';
 import 'cases_providers.dart';
@@ -46,6 +47,8 @@ class CasesListNotifier extends AsyncNotifier<CasesListState> {
   Future<CasesListState> build() {
     // One user's cases: the next user to sign in starts from nothing.
     ref.watch(sessionProvider);
+    // A case filed from the search flow appears without a pull to refresh.
+    ref.watch(casesChangedProvider);
     return _load();
   }
 

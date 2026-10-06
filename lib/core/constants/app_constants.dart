@@ -56,7 +56,22 @@ abstract final class AppConstants {
   static const Set<String> allowedImageExtensions = {'jpg', 'jpeg', 'png'};
 
   /// Formats accepted where a document is expected.
-  static const Set<String> allowedDocumentExtensions = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'};
+  static const Set<String> allowedDocumentExtensions = {
+    'pdf',
+    'doc',
+    'docx',
+    'jpg',
+    'jpeg',
+    'png',
+  };
+
+  /// What `POST /case` accepts for the survey plan and title documents.
+  static const Set<String> caseDocumentExtensions = {
+    'pdf',
+    'jpg',
+    'jpeg',
+    'png',
+  };
 
   /// Longest edge of a picked image, in pixels. Re-encoding at this size keeps
   /// uploads small and normalises HEIC to JPEG.

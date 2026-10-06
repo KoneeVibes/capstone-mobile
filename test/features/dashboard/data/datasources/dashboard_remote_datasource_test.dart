@@ -5,7 +5,9 @@ import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/models/case_address_model.dart';
+import 'package:propertyintelmobileapp/features/dashboard/data/models/case_status_row_model.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/models/staff_name_model.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/case_overview.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracked_case.dart';
 
 import '../../dashboard_fixtures.dart';
@@ -176,5 +178,92 @@ void main() {
     ).thenThrow(_httpFailure(404));
 
     expect(() => source.trackCase('PI-8K4M2QAA'), throwsA(isA<DioException>()));
+  });
+
+  group('fetchOverview', () {
+    /// Answers the unfiltered and `filter=closed` requests separately; a null
+    /// side answers 404, as the live list does when nothing matches.
+    void stubRows({List<Object?>? active, List<Object?>? closed}) {
+      when(
+        () => client.get<List<CaseStatusRowModel>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).thenAnswer((invocation) async {
+        final query =
+            invocation.namedArguments[#queryParameters] as Map<String, dynamic>;
+        final rows = query.containsKey('filter') ? closed : active;
+        if (rows == null) throw _httpFailure(404);
+        final decoder =
+            invocation.namedArguments[#decoder]
+                as List<CaseStatusRowModel> Function(Object?);
+        return _page(decoder(rows));
+      });
+    }
+
+    test('counts each status into its card', () async {
+      stubRows(
+        active: [
+          {'id': 'a', 'status': 'submitted'},
+          {'id': 'b', 'status': 'pending-information'},
+          {'id': 'c', 'status': 'assigned'},
+          {'id': 'd', 'status': 'under-review'},
+          {'id': 'e', 'status': 'suspended'},
+        ],
+        closed: [
+          {'id': 'f', 'status': 'closed'},
+        ],
+      );
+
+      expect(
+        await source.fetchOverview(),
+        const CaseOverview(
+          total: 6,
+          reportsReady: 1,
+          inProgress: 2,
+          needsInput: 2,
+        ),
+      );
+    });
+
+    test('counts a case both requests return once', () async {
+      stubRows(
+        active: [
+          {'id': 'a', 'status': 'closed'},
+        ],
+        closed: [
+          {'id': 'a', 'status': 'closed'},
+        ],
+      );
+
+      expect((await source.fetchOverview()).total, 1);
+    });
+
+    test('reads 404s as a client with no cases yet', () async {
+      stubRows();
+
+      expect(
+        await source.fetchOverview(),
+        const CaseOverview(
+          total: 0,
+          reportsReady: 0,
+          inProgress: 0,
+          needsInput: 0,
+        ),
+      );
+    });
+
+    test('lets any other failure propagate', () async {
+      when(
+        () => client.get<List<CaseStatusRowModel>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).thenThrow(_httpFailure(500));
+
+      expect(source.fetchOverview, throwsA(isA<DioException>()));
+    });
   });
 }

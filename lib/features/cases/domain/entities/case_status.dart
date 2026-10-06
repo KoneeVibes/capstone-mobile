@@ -65,6 +65,9 @@ enum CaseStatus {
   /// is a worse failure than assigning something we cannot name.
   bool get canBeAssigned => this != submitted;
 
+  /// Filed but not paid for: `payment-validated` is the step after.
+  bool get isAwaitingPayment => this == submitted;
+
   /// Whether assigning also moves the case along its lifecycle.
   ///
   /// Only [paymentValidated] does: that is the hand-off assigning actually

@@ -50,6 +50,20 @@ abstract final class AppRoutes {
   static const String clientSearchName = 'clientSearch';
   static const String clientSearchPath = '/client/search';
 
+  /// Takes a `trackingId` path parameter.
+  static const String clientTrackingProgressName = 'clientTrackingProgress';
+  static const String clientTrackingProgressPath =
+      '/client/search/track/:trackingId';
+
+  static const String clientSearchPropertyName = 'clientSearchProperty';
+  static const String clientSearchPropertyPath = '/client/search/property';
+
+  /// Takes an `invoiceId` path parameter and a `trackingId` query parameter.
+  /// A sibling of the form, not under it, so replacing the form leaves no
+  /// filled-in copy behind.
+  static const String clientSearchQuoteName = 'clientSearchQuote';
+  static const String clientSearchQuotePath = '/client/search/quote/:invoiceId';
+
   static const String clientCasesName = 'clientCases';
   static const String clientCasesPath = '/client/cases';
 
@@ -69,7 +83,17 @@ abstract final class AppRoutes {
 
   /// Takes a `trackingId` path parameter.
   static const String trackingProgressName = 'trackingProgress';
-  static const String trackingProgressPath = '/staff/dashboard/track/:trackingId';
+  static const String trackingProgressPath =
+      '/staff/dashboard/track/:trackingId';
+
+  static const String staffSearchPropertyName = 'staffSearchProperty';
+  static const String staffSearchPropertyPath =
+      '/staff/dashboard/search-property';
+
+  /// As [clientSearchQuoteName].
+  static const String staffSearchQuoteName = 'staffSearchQuote';
+  static const String staffSearchQuotePath =
+      '/staff/dashboard/quote/:invoiceId';
 
   static const String staffMembersName = 'staffMembers';
   static const String staffMembersPath = '/staff/members';

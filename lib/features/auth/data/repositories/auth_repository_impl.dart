@@ -15,11 +15,8 @@ import '../models/auth_session_model.dart';
 
 /// Converts the datasources' exceptions into [Result] values.
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(
-    this._remote,
-    this._local, {
-    DateTime Function()? clock,
-  }) : _now = clock ?? DateTime.now;
+  AuthRepositoryImpl(this._remote, this._local, {DateTime Function()? clock})
+    : _now = clock ?? DateTime.now;
 
   final AuthRemoteDataSource _remote;
   final AuthLocalDataSource _local;
@@ -33,11 +30,16 @@ class AuthRepositoryImpl implements AuthRepository {
     final token = await _remote.signIn(email: email, password: password);
     // Decoded before it is stored, so a token this build cannot route never
     // outlives the attempt.
-    AuthSession session = AuthSessionModel.fromToken(token);
+    // The token carries no email; the one typed here prefills forms later.
+    AuthSession session = AuthSessionModel.fromToken(token).withEmail(email);
     // Staff without a role cannot be placed, so a failure here fails the
     // sign-in.
     if (session.isStaff) session = session.withStaffRole(await _role(session));
-    await _local.saveSession(token: token, staffRole: session.staffRole);
+    await _local.saveSession(
+      token: token,
+      staffRole: session.staffRole,
+      email: session.email,
+    );
     return session;
   });
 
@@ -100,11 +102,12 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await _local.readToken();
       if (token == null || token.isEmpty) return null;
 
-      final session = AuthSessionModel.fromToken(token);
-      if (session.isExpiredAt(_now())) {
+      final decoded = AuthSessionModel.fromToken(token);
+      if (decoded.isExpiredAt(_now())) {
         await _local.deleteSession();
         return null;
       }
+      final session = decoded.withEmail(await _local.readEmail());
       if (!session.isStaff) return session;
       return session.withStaffRole(await _local.readStaffRole());
     } on Object {
@@ -160,8 +163,9 @@ class AuthRepositoryImpl implements AuthRepository {
   static Future<Result<void>> _guardOtp(Future<void> Function() action) async {
     final result = await _guard(action);
     return switch (result) {
-      Err(:final failure) when _isRejectedCode(failure) =>
-        const Err(AppFailures.invalidOtp),
+      Err(:final failure) when _isRejectedCode(failure) => const Err(
+        AppFailures.invalidOtp,
+      ),
       _ => result,
     };
   }

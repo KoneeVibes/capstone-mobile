@@ -266,6 +266,20 @@ void main() {
       expect(await source.fetchCases(), hasLength(1));
     });
 
+    test('reads a 404 on the main request as no cases at all', () async {
+      // Live, 6 Oct 2026: a client who has filed nothing gets 404 "Cases not
+      // found" from the unfiltered list.
+      when(
+        () => client.get<List<Case>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).thenThrow(_httpFailure(404));
+
+      expect(await source.fetchCases(), isEmpty);
+    });
+
     test('lets any other failure on the closed request through', () async {
       // A Closed tab quietly empty because a request failed is the exact bug
       // the second request exists to prevent, so only a 404 is swallowed.

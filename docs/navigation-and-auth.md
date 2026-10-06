@@ -18,14 +18,16 @@
   /forgot-password/done          password changed
 
 /staff  → /staff/dashboard       staff shell
-  Dashboard  /staff/dashboard    (+ track/:trackingId)
+  Dashboard  /staff/dashboard    (+ track/:trackingId, search-property,
+                                    quote/:invoiceId?trackingId=)
   Cases      /staff/cases        (+ :caseId)
   Staff      /staff/members
   Profile    /staff/profile
 
 /client → /client/home           client shell
-  Home       /client/home
-  Search     /client/search
+  Home       /client/home        (banner and recent searches go to Search)
+  Search     /client/search      (+ track/:trackingId, property,
+                                    quote/:invoiceId?trackingId=)
   Cases      /client/cases       (+ :caseId)
   Profile    /client/profile
 
@@ -38,7 +40,11 @@ history. `AppShell` draws the bottom bar from `AppShell.staffTabs` or
 fails if the counts differ. A branch can be hidden (`hiddenBranches`) without
 changing that order: the Staff tab is dropped for roles that cannot list staff.
 Both shells mount the same Cases screens; the screen reads the session to hide
-staff-only actions.
+staff-only actions. The tracking lookup and the property search are mounted the
+same way — staff Dashboard and client Search — with route names passed in.
+The quote is a sibling of the form, not its child: the form replaces itself
+with the quote once the case exists, so back never returns to a filled-in form
+that would file it twice.
 Why two shells: [ADR 0005](adr/0005-one-app-two-role-shells.md).
 
 ## The redirect
@@ -74,7 +80,11 @@ SecureStore ◀── AuthRepository ◀── AuthSessionNotifier ──▶ ses
   refused with `AppFailures.unsupportedAccount` and never stored.
 - **The token is decoded on the device, never verified.** The device has no key,
   and the server checks every request. There is no `/me` endpoint, so the app
-  knows only the user's id and type.
+  knows the user's id and type from the token, and keeps the email typed at
+  sign-in alongside it (`SessionUser.email`). The property search locks a
+  client's applicant email to it, because a client's cases are listed by
+  `applicantEmail`. A session stored before this has no email until the next
+  sign-in.
 - **Staff role.** For a staff token, sign-in also reads `GET /staff/{id}` for
   the role and fails if it cannot (a 403 reads as `regular`). The role is
   stored with the token, and `SessionUser.permissions` (`StaffPermissions`,

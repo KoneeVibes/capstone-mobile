@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -11,17 +10,28 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/entities/recent_search.dart';
-import '../providers/recent_searches_provider.dart';
 import '../providers/tracking_provider.dart';
-import '../widgets/recent_search_tile.dart';
+import '../widgets/recent_searches_section.dart';
 import '../widgets/tracking_back_button.dart';
 import '../widgets/tracking_banner.dart';
 import '../widgets/tracking_panel.dart';
 import '../widgets/tracking_result_card.dart';
 
-/// Look up a case by tracking ID.
+/// Look up a case by tracking ID, or start a new property search.
+///
+/// Both roles use it — the staff Dashboard tab and the client Search tab — so
+/// the routes it opens come in from the router.
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    required this.progressRouteName,
+    required this.searchPropertyRouteName,
+    super.key,
+  });
+
+  /// Takes a `trackingId` path parameter.
+  final String progressRouteName;
+
+  final String searchPropertyRouteName;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -58,6 +68,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  void _searchProperty() => context.pushNamed(widget.searchPropertyRouteName);
+
   void _reset() {
     FocusScope.of(context).unfocus();
     _controller.clear();
@@ -84,7 +96,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppSizing.screenPadding),
             children: [
-              const TrackingBanner(),
+              TrackingBanner(onTap: _searchProperty),
               const SizedBox(height: AppSizing.space12),
               TrackingPanel(
                 child: Column(
@@ -120,6 +132,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         onPressed: value.text.trim().isEmpty ? null : _search,
                       ),
                     ),
+                    if (isIdle) ...[
+                      const SizedBox(height: AppSizing.space12),
+                      AppButton(
+                        label: 'Search property',
+                        variant: AppButtonVariant.secondary,
+                        onPressed: _searchProperty,
+                      ),
+                    ],
                     if (isLoading) ...[
                       const SizedBox(height: AppSizing.space24),
                       const TrackingResultSkeleton(),
@@ -131,7 +151,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       AppButton(
                         label: 'Track Progress',
                         onPressed: () => context.pushNamed(
-                          AppRoutes.trackingProgressName,
+                          widget.progressRouteName,
                           pathParameters: {'trackingId': result.trackingId},
                         ),
                       ),
@@ -141,7 +161,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               if (isIdle) ...[
                 const SizedBox(height: AppSizing.space24),
-                _RecentSearches(onSelected: _searchAgain),
+                RecentSearchesSection(onSelected: _searchAgain),
               ],
             ],
           ),
@@ -173,58 +193,6 @@ class _Intro extends StatelessWidget {
         Divider(),
         SizedBox(height: AppSizing.space16),
       ],
-    );
-  }
-}
-
-class _RecentSearches extends ConsumerWidget {
-  const _RecentSearches({required this.onSelected});
-
-  final ValueChanged<RecentSearch> onSelected;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searches = ref.watch(recentSearchesProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Your recent searches', style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSizing.space12),
-        if (searches.isEmpty)
-          const _NoRecentSearches()
-        else
-          for (final search in searches) ...[
-            RecentSearchTile(value: search, onTap: () => onSelected(search)),
-            const SizedBox(height: AppSizing.space12),
-          ],
-      ],
-    );
-  }
-}
-
-class _NoRecentSearches extends StatelessWidget {
-  const _NoRecentSearches();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TrackingPanel(
-      child: Row(
-        children: [
-          Icon(
-            Icons.history,
-            size: AppSizing.iconMd,
-            color: AppColors.textTertiary,
-          ),
-          SizedBox(width: AppSizing.space12),
-          Expanded(
-            child: Text(
-              'Your recent searches will show up here.',
-              style: AppTextStyles.bodyMedium,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

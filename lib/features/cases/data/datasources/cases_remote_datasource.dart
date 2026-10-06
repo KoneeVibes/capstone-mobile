@@ -44,9 +44,9 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// merged in.
   @override
   Future<List<Case>> fetchCases() async {
-    final active = await _client.getAllPages<Case>(
-      ApiEndpoints.cases,
-      CaseModel.listFromJson,
+    final active = await _noneOn404(
+      () =>
+          _client.getAllPages<Case>(ApiEndpoints.cases, CaseModel.listFromJson),
     );
     final closed = await _closedCases();
 
@@ -65,13 +65,22 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// ordinary state, not a failure. Anything else propagates: a Closed tab that
   /// is quietly empty because a request failed is the exact bug this merge
   /// exists to prevent, and the list screen already offers a retry.
-  Future<List<Case>> _closedCases() async {
+  Future<List<Case>> _closedCases() => _noneOn404(
+    () => _client.getAllPages<Case>(
+      ApiEndpoints.cases,
+      CaseModel.listFromJson,
+      query: {'filter': CaseStatus.closed.apiValue},
+    ),
+  );
+
+  /// The list endpoint's "Cases not found" 404 is an empty answer, not a
+  /// failure — the unfiltered request gives it too, to a client who has filed
+  /// nothing yet (verified 6 Oct 2026).
+  static Future<List<Case>> _noneOn404(
+    Future<List<Case>> Function() request,
+  ) async {
     try {
-      return await _client.getAllPages<Case>(
-        ApiEndpoints.cases,
-        CaseModel.listFromJson,
-        query: {'filter': CaseStatus.closed.apiValue},
-      );
+      return await request();
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return const [];
       rethrow;

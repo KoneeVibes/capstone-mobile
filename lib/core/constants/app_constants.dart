@@ -66,7 +66,9 @@ abstract final class AppConstants {
   static const int pickedImageQuality = 85;
 
   // Validation patterns.
-  static final RegExp emailPattern = RegExp(r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$');
+  static final RegExp emailPattern = RegExp(
+    r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',
+  );
 
   /// Nigerian mobile numbers, accepting local (`08034112290`), international
   /// (`+2348034112290`) and spaced (`0701 882 4471`) forms.
@@ -77,4 +79,9 @@ abstract final class AppConstants {
 
   /// Letters, spaces, hyphens and apostrophes only.
   static final RegExp namePattern = RegExp(r"^[a-zA-Z][a-zA-Z\s'-]*$");
+
+  /// Password strength: a digit, and a character that is neither a letter, a
+  /// digit nor whitespace.
+  static final RegExp passwordDigitPattern = RegExp(r'\d');
+  static final RegExp passwordSpecialPattern = RegExp(r'[^a-zA-Z\d\s]');
 }

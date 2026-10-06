@@ -88,15 +88,27 @@ abstract final class Validators {
     return phone(value, label: label);
   }
 
-  /// Untrimmed: a password's spaces are part of it.
+  /// A new password: length, a number and a special character. Untrimmed: a
+  /// password's spaces are part of it. Sign-in only checks presence, so older
+  /// passwords still work.
   static String? password(String? value, {String label = 'Password'}) {
     if (value == null || value.isEmpty) return '$label is required.';
-    if (value.length < AppConstants.minPasswordLength) {
-      return '$label must be at least ${AppConstants.minPasswordLength} '
-          'characters.';
-    }
-    return null;
+
+    final missing = [
+      if (value.length < AppConstants.minPasswordLength)
+        'at least ${AppConstants.minPasswordLength} characters',
+      if (!AppConstants.passwordDigitPattern.hasMatch(value)) 'a number',
+      if (!AppConstants.passwordSpecialPattern.hasMatch(value))
+        'a special character',
+    ];
+    if (missing.isEmpty) return null;
+    return '$label needs ${_joined(missing)}.';
   }
+
+  /// `a`, `a and b`, `a, b and c`.
+  static String _joined(List<String> parts) => parts.length == 1
+      ? parts.single
+      : '${parts.take(parts.length - 1).join(', ')} and ${parts.last}';
 
   /// The confirmation field: must repeat [original] exactly.
   static String? confirmation(String? value, {required String original}) {

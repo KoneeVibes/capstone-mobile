@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/session/staff_role.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_chip.dart';
 import '../../domain/entities/staff.dart';
-import '../../domain/entities/staff_role.dart';
 
-/// One staff member card in the list.
+/// One staff member card in the list. A null action is hidden — the signed-in
+/// role may not take it.
 class StaffListTile extends StatelessWidget {
   const StaffListTile({
     required this.staff,
-    required this.onEdit,
-    required this.onRemove,
+    this.onEdit,
+    this.onRemove,
     super.key,
   });
 
   final Staff staff;
-  final VoidCallback onEdit;
-  final VoidCallback onRemove;
+  final VoidCallback? onEdit;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -94,24 +95,29 @@ class StaffListTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSizing.space8),
-          Column(
-            children: [
-              _TileAction(
-                icon: Icons.edit_outlined,
-                color: AppColors.textPrimary,
-                tooltip: 'Edit ${staff.shortName}',
-                onPressed: onEdit,
-              ),
-              const SizedBox(height: AppSizing.space8),
-              _TileAction(
-                icon: Icons.delete_outline,
-                color: AppColors.destructiveIcon,
-                tooltip: 'Remove ${staff.shortName}',
-                onPressed: onRemove,
-              ),
-            ],
-          ),
+          if (onEdit != null || onRemove != null) ...[
+            const SizedBox(width: AppSizing.space8),
+            Column(
+              children: [
+                if (onEdit case final onEdit?)
+                  _TileAction(
+                    icon: Icons.edit_outlined,
+                    color: AppColors.textPrimary,
+                    tooltip: 'Edit ${staff.shortName}',
+                    onPressed: onEdit,
+                  ),
+                if (onEdit != null && onRemove != null)
+                  const SizedBox(height: AppSizing.space8),
+                if (onRemove case final onRemove?)
+                  _TileAction(
+                    icon: Icons.delete_outline,
+                    color: AppColors.destructiveIcon,
+                    tooltip: 'Remove ${staff.shortName}',
+                    onPressed: onRemove,
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -119,6 +125,7 @@ class StaffListTile extends StatelessWidget {
 
   /// (background, foreground) for the role pill.
   static (Color, Color) _roleColours(StaffRole role) => switch (role) {
+    StaffRole.superAdmin => (AppColors.primary, AppColors.textOnPrimary),
     StaffRole.admin => (AppColors.primarySoft, AppColors.primary),
     StaffRole.manager => (AppColors.warningSoft, AppColors.warning),
     StaffRole.regular => (AppColors.successSoft, AppColors.success),

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
-import 'staff_role.dart';
+import '../../../../core/session/staff_role.dart';
 import 'staff_status.dart';
 
 /// A staff member.

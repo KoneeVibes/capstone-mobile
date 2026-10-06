@@ -40,3 +40,13 @@ const signUpDraft = SignUpDraft(
   email: 'ada@example.com',
   password: 'SecurePassword123!',
 );
+
+/// A staff token for [id]. Staff roles are not in the token; they come from
+/// `GET /staff/{id}`.
+String staffToken({String id = 'staff-1', DateTime? expiresAt}) => tokenWith({
+  'id': id,
+  'type': 'staff',
+  'iat': 0,
+  'exp':
+      (expiresAt ?? DateTime.utc(2030)).millisecondsSinceEpoch ~/ 1000,
+});

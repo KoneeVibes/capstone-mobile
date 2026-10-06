@@ -32,4 +32,6 @@ be refreshed.
   Profile screen needs a `/me` endpoint or equivalent.
 - The staff sub-role (admin, manager, regular) is not in the token, so the UI
   cannot yet hide actions a regular staff member is not allowed to take.
+  *Superseded by [0011](0011-staff-role-from-own-record.md): the role is read
+  from `GET /staff/{id}` at sign-in.*
 - Users sign in again at least once a day.

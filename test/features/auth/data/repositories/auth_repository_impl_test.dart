@@ -1,12 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failures.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:propertyintelmobileapp/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:propertyintelmobileapp/features/auth/data/models/auth_session_model.dart';
 import 'package:propertyintelmobileapp/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:propertyintelmobileapp/features/auth/domain/entities/auth_session.dart';
 
 import '../../auth_fixtures.dart';
 
@@ -33,14 +36,23 @@ void main() {
   late AuthRepositoryImpl repository;
   final now = DateTime.utc(2026, 10, 4, 12);
 
-  setUpAll(() => registerFallbackValue(signUpDraft));
+  setUpAll(() {
+    registerFallbackValue(signUpDraft);
+    registerFallbackValue(StaffRole.regular);
+  });
 
   setUp(() {
     remote = MockRemote();
     local = MockLocal();
     repository = AuthRepositoryImpl(remote, local, clock: () => now);
-    when(() => local.saveToken(any())).thenAnswer((_) async {});
-    when(() => local.deleteToken()).thenAnswer((_) async {});
+    when(
+      () => local.saveSession(
+        token: any(named: 'token'),
+        staffRole: any(named: 'staffRole'),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => local.saveStaffRole(any())).thenAnswer((_) async {});
+    when(() => local.deleteSession()).thenAnswer((_) async {});
     when(() => local.hasSeenOnboarding()).thenAnswer((_) async => true);
   });
 
@@ -54,7 +66,7 @@ void main() {
       final result = await repository.signIn(email: 'a@b.co', password: 'pw');
 
       expect(result.valueOrNull?.userId, 'user-9');
-      verify(() => local.saveToken(token)).called(1);
+      verify(() => local.saveSession(token: token)).called(1);
     });
 
     test("shows the server's wording for a wrong password", () async {
@@ -68,7 +80,12 @@ void main() {
       final result = await repository.signIn(email: 'a@b.co', password: 'x');
 
       expect(result.failureOrNull?.message, 'Incorrect password');
-      verifyNever(() => local.saveToken(any()));
+      verifyNever(
+        () => local.saveSession(
+          token: any(named: 'token'),
+          staffRole: any(named: 'staffRole'),
+        ),
+      );
     });
 
     test('never stores a token for an account type it cannot route', () async {
@@ -84,7 +101,12 @@ void main() {
       final result = await repository.signIn(email: 'a@b.co', password: 'pw');
 
       expect(result.failureOrNull, AppFailures.unsupportedAccount);
-      verifyNever(() => local.saveToken(any()));
+      verifyNever(
+        () => local.saveSession(
+          token: any(named: 'token'),
+          staffRole: any(named: 'staffRole'),
+        ),
+      );
     });
   });
 
@@ -144,6 +166,126 @@ void main() {
     });
   });
 
+  group('staff role', () {
+    void signInAs(String token) => when(
+      () => remote.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer((_) async => token);
+
+    test('a staff sign-in reads the role with the new token and stores '
+        'both', () async {
+      final token = staffToken(id: 'staff-9');
+      signInAs(token);
+      when(
+        () => remote.fetchStaffRole(userId: 'staff-9', token: token),
+      ).thenAnswer((_) async => StaffRole.manager);
+
+      final result = await repository.signIn(email: 'a@b.co', password: 'pw');
+
+      expect(result.valueOrNull?.staffRole, StaffRole.manager);
+      verify(
+        () => local.saveSession(token: token, staffRole: StaffRole.manager),
+      ).called(1);
+    });
+
+    test('a 403 on their own record reads as regular', () async {
+      signInAs(staffToken());
+      when(
+        () => remote.fetchStaffRole(
+          userId: any(named: 'userId'),
+          token: any(named: 'token'),
+        ),
+      ).thenThrow(_http(403, 'Forbidden'));
+
+      final result = await repository.signIn(email: 'a@b.co', password: 'pw');
+
+      expect(result.valueOrNull?.staffRole, StaffRole.regular);
+    });
+
+    test('any other failure fails the sign-in and stores nothing', () async {
+      signInAs(staffToken());
+      when(
+        () => remote.fetchStaffRole(
+          userId: any(named: 'userId'),
+          token: any(named: 'token'),
+        ),
+      ).thenThrow(_http(500, 'Server error'));
+
+      final result = await repository.signIn(email: 'a@b.co', password: 'pw');
+
+      expect(result, isA<Err<AuthSession>>());
+      verifyNever(
+        () => local.saveSession(
+          token: any(named: 'token'),
+          staffRole: any(named: 'staffRole'),
+        ),
+      );
+    });
+
+    test('a client sign-in never asks for a role', () async {
+      signInAs(clientToken());
+
+      final result = await repository.signIn(email: 'a@b.co', password: 'pw');
+
+      expect(result.valueOrNull?.staffRole, isNull);
+      verifyNever(
+        () => remote.fetchStaffRole(
+          userId: any(named: 'userId'),
+          token: any(named: 'token'),
+        ),
+      );
+    });
+
+    test('a restored staff session carries the stored role, with no '
+        'request', () async {
+      when(() => local.readToken()).thenAnswer((_) async => staffToken());
+      when(
+        () => local.readStaffRole(),
+      ).thenAnswer((_) async => StaffRole.admin);
+
+      final session = await repository.restoreSession();
+
+      expect(session?.staffRole, StaffRole.admin);
+      verifyNever(
+        () => remote.fetchStaffRole(
+          userId: any(named: 'userId'),
+          token: any(named: 'token'),
+        ),
+      );
+    });
+
+    test('refreshing stores and returns the current role', () async {
+      final session = AuthSessionModel.fromToken(
+        staffToken(),
+      ).withStaffRole(StaffRole.regular);
+      when(
+        () => remote.fetchStaffRole(userId: 'staff-1', token: session.token),
+      ).thenAnswer((_) async => StaffRole.admin);
+
+      final result = await repository.refreshStaffRole(session);
+
+      expect(result.valueOrNull?.staffRole, StaffRole.admin);
+      verify(() => local.saveStaffRole(StaffRole.admin)).called(1);
+    });
+
+    test('a failed refresh stores nothing', () async {
+      final session = AuthSessionModel.fromToken(staffToken());
+      when(
+        () => remote.fetchStaffRole(
+          userId: any(named: 'userId'),
+          token: any(named: 'token'),
+        ),
+      ).thenThrow(_http(500, 'Server error'));
+
+      final result = await repository.refreshStaffRole(session);
+
+      expect(result, isA<Err<AuthSession>>());
+      verifyNever(() => local.saveStaffRole(any()));
+    });
+  });
+
   group('restoreSession', () {
     test('returns a stored, unexpired session', () async {
       when(() => local.readToken()).thenAnswer((_) async => clientToken());
@@ -159,7 +301,7 @@ void main() {
       );
 
       expect(await repository.restoreSession(), isNull);
-      verify(() => local.deleteToken()).called(1);
+      verify(() => local.deleteSession()).called(1);
     });
 
     test('drops a token left over from a previous install', () async {
@@ -167,7 +309,7 @@ void main() {
       when(() => local.hasSeenOnboarding()).thenAnswer((_) async => false);
 
       expect(await repository.restoreSession(), isNull);
-      verify(() => local.deleteToken()).called(1);
+      verify(() => local.deleteSession()).called(1);
       verifyNever(() => local.readToken());
     });
 
@@ -175,7 +317,7 @@ void main() {
       when(() => local.readToken()).thenAnswer((_) async => 'garbage');
 
       expect(await repository.restoreSession(), isNull);
-      verify(() => local.deleteToken()).called(1);
+      verify(() => local.deleteSession()).called(1);
     });
 
     test('starts signed out when storage itself fails', () async {
@@ -191,7 +333,7 @@ void main() {
 
       await repository.signOut();
 
-      verify(() => local.deleteToken()).called(1);
+      verify(() => local.deleteSession()).called(1);
     });
   });
 

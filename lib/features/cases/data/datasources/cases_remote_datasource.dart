@@ -18,8 +18,9 @@ import 'cases_datasource.dart';
 /// cases merged into the list ([_closedCases], on a 404 only) and an assignee's
 /// name ([_assigneesById]).
 ///
-/// [resolveAssignees] is off for clients: `GET /staff` is staff-only, and who
-/// holds a case is not theirs to see.
+/// [resolveAssignees] is off for clients, and for staff roles that cannot read
+/// `GET /staff` (regular): the request would only 403, and their rows show the
+/// case as assigned without a name.
 class CasesRemoteDataSourceImpl implements CasesDataSource {
   const CasesRemoteDataSourceImpl(this._client, {this.resolveAssignees = true});
 

@@ -360,6 +360,25 @@ void main() {
       expect(calls, 0);
     });
 
+    test("keeps a caller's own token over the session's", () async {
+      // Sign-in reads the staff role before the session holds the token.
+      final adapter = _FixedAdapter(403);
+      final dio = ApiClient.createDio(
+        tokenSupplier: () async => 'session-jwt',
+        onUnauthorized: () {},
+      )..httpClientAdapter = adapter;
+      addTearDown(dio.close);
+
+      await expectLater(
+        ApiClient(dio).get<Object?>(
+          '/staff/me',
+          headers: {'Authorization': 'Bearer new-jwt'},
+        ),
+        throwsA(isA<DioException>()),
+      );
+      expect(adapter.lastHeaders?['Authorization'], 'Bearer new-jwt');
+    });
+
     test('ignores other failures on an authenticated request', () async {
       var calls = 0;
       final dio = dioAnswering(403, token: 'jwt', onUnauthorized: () => calls++);
@@ -379,18 +398,24 @@ class _FixedAdapter implements HttpClientAdapter {
 
   final int statusCode;
 
+  /// The headers the last request went out with.
+  Map<String, dynamic>? lastHeaders;
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
-  ) async => ResponseBody.fromString(
-    jsonEncode({'status': 'fail', 'message': 'Nope'}),
-    statusCode,
-    headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    },
-  );
+  ) async {
+    lastHeaders = options.headers;
+    return ResponseBody.fromString(
+      jsonEncode({'status': 'fail', 'message': 'Nope'}),
+      statusCode,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
 
   @override
   void close({bool force = false}) {}

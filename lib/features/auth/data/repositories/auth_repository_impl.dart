@@ -1,3 +1,6 @@
+import 'package:dio/dio.dart';
+
+import '../../../../core/session/staff_role.dart';
 import '../../../../core/utils/error/app_failure.dart';
 import '../../../../core/utils/error/app_failures.dart';
 import '../../../../core/utils/error/error_handler.dart';
@@ -30,10 +33,36 @@ class AuthRepositoryImpl implements AuthRepository {
     final token = await _remote.signIn(email: email, password: password);
     // Decoded before it is stored, so a token this build cannot route never
     // outlives the attempt.
-    final session = AuthSessionModel.fromToken(token);
-    await _local.saveToken(token);
+    AuthSession session = AuthSessionModel.fromToken(token);
+    // Staff without a role cannot be placed, so a failure here fails the
+    // sign-in.
+    if (session.isStaff) session = session.withStaffRole(await _role(session));
+    await _local.saveSession(token: token, staffRole: session.staffRole);
     return session;
   });
+
+  @override
+  Future<Result<AuthSession>> refreshStaffRole(AuthSession session) =>
+      _guard(() async {
+        final role = await _role(session);
+        await _local.saveStaffRole(role);
+        return session.withStaffRole(role);
+      });
+
+  /// A 403 on reading their own record can only mean a role without access
+  /// to staff records — regular, the least-privileged — rather than locking
+  /// them out.
+  Future<StaffRole> _role(AuthSession session) async {
+    try {
+      return await _remote.fetchStaffRole(
+        userId: session.userId,
+        token: session.token,
+      );
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 403) return StaffRole.regular;
+      rethrow;
+    }
+  }
 
   @override
   Future<Result<void>> signUp(SignUpDraft draft) =>
@@ -64,7 +93,7 @@ class AuthRepositoryImpl implements AuthRepository {
       // The Keychain survives an uninstall but preferences do not, so a fresh
       // install that has not seen onboarding must not resume an old session.
       if (!await _local.hasSeenOnboarding()) {
-        await _local.deleteToken();
+        await _local.deleteSession();
         return null;
       }
 
@@ -73,10 +102,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final session = AuthSessionModel.fromToken(token);
       if (session.isExpiredAt(_now())) {
-        await _local.deleteToken();
+        await _local.deleteSession();
         return null;
       }
-      return session;
+      if (!session.isStaff) return session;
+      return session.withStaffRole(await _local.readStaffRole());
     } on Object {
       // Unreadable storage or a token this build cannot decode: start signed
       // out rather than stuck on the splash.
@@ -99,7 +129,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> clearSession() async {
     try {
-      await _local.deleteToken();
+      await _local.deleteSession();
     } on Object {
       // Nothing left to do; the session is gone from memory regardless.
     }

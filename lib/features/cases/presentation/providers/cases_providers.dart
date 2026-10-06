@@ -16,7 +16,9 @@ import '../../domain/repositories/cases_repository.dart';
 final casesDataSourceProvider = Provider<CasesDataSource>(
   (ref) => CasesRemoteDataSourceImpl(
     ref.watch(apiClientProvider),
-    resolveAssignees: ref.watch(sessionProvider)?.isStaff ?? false,
+    // Names come from `GET /staff`, which only some staff roles may read.
+    resolveAssignees:
+        ref.watch(sessionProvider)?.permissions.canViewStaff ?? false,
   ),
 );
 

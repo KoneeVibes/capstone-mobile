@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/session/staff_role.dart';
 import '../../../../shared/extensions/string_extensions.dart';
 import '../../domain/entities/staff.dart';
 import '../../domain/entities/staff_draft.dart';
-import '../../domain/entities/staff_role.dart';
 import '../../domain/entities/staff_status.dart';
 
 /// Wire format for [Staff].

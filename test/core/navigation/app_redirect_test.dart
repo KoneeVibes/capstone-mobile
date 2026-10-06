@@ -7,10 +7,12 @@ String? _redirect(
   String location, {
   AppRole? role,
   bool hasSeenOnboarding = true,
+  bool canViewStaff = true,
 }) => redirectFor(
   role: role,
   hasSeenOnboarding: hasSeenOnboarding,
   location: location,
+  canViewStaff: canViewStaff,
 );
 
 void main() {
@@ -128,6 +130,23 @@ void main() {
     test('leaves each role alone inside its own shell', () {
       expect(_redirect('/staff/cases/case-1', role: AppRole.staff), isNull);
       expect(_redirect('/client/cases/case-1', role: AppRole.client), isNull);
+    });
+
+    test('keeps staff who cannot list staff off the Staff tab', () {
+      expect(
+        _redirect(
+          AppRoutes.staffMembersPath,
+          role: AppRole.staff,
+          canViewStaff: false,
+        ),
+        AppRoutes.dashboardPath,
+      );
+      expect(_redirect(AppRoutes.staffMembersPath, role: AppRole.staff), isNull);
+      // The rest of the shell is still theirs.
+      expect(
+        _redirect(AppRoutes.casesPath, role: AppRole.staff, canViewStaff: false),
+        isNull,
+      );
     });
 
     test('matches whole path segments, not prefixes', () {

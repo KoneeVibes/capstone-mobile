@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 import 'package:propertyintelmobileapp/core/network/api_provider.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failure.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/auth/data/models/auth_session_model.dart';
+import 'package:propertyintelmobileapp/features/auth/domain/entities/auth_session.dart';
 import 'package:propertyintelmobileapp/features/auth/domain/repositories/auth_repository.dart';
 import 'package:propertyintelmobileapp/features/auth/presentation/providers/auth_overrides.dart';
 import 'package:propertyintelmobileapp/features/auth/presentation/providers/auth_providers.dart';
@@ -106,6 +110,58 @@ void main() {
 
     expect(container.read(sessionProvider), isNull);
     expect(container.read(sessionExpiredNoticeProvider), isFalse);
+  });
+
+  group('a restored staff session', () {
+    final staff = AuthSessionModel.fromToken(
+      staffToken(id: 'staff-1'),
+    ).withStaffRole(StaffRole.regular);
+
+    test('opens with the stored role, then picks up the server one', () async {
+      when(() => repository.restoreSession()).thenAnswer((_) async => staff);
+      when(
+        () => repository.refreshStaffRole(staff),
+      ).thenAnswer((_) async => Ok(staff.withStaffRole(StaffRole.admin)));
+      final container = makeContainer();
+
+      await container.read(sessionRestoreProvider.future);
+      expect(container.read(sessionProvider)?.staffRole, StaffRole.regular);
+
+      await pumpEventQueue();
+      expect(container.read(sessionProvider)?.staffRole, StaffRole.admin);
+    });
+
+    test('keeps the stored role when the refresh fails', () async {
+      when(() => repository.restoreSession()).thenAnswer((_) async => staff);
+      when(() => repository.refreshStaffRole(staff)).thenAnswer(
+        (_) async => const Err(
+          AppFailure(type: FailureType.network, message: 'Offline'),
+        ),
+      );
+      final container = makeContainer();
+
+      await container.read(sessionRestoreProvider.future);
+      await pumpEventQueue();
+
+      expect(container.read(sessionProvider)?.staffRole, StaffRole.regular);
+    });
+
+    test('a refresh landing after sign-out is dropped', () async {
+      when(() => repository.restoreSession()).thenAnswer((_) async => staff);
+      final refreshed = Completer<Result<AuthSession>>();
+      when(
+        () => repository.refreshStaffRole(staff),
+      ).thenAnswer((_) => refreshed.future);
+      final container = makeContainer();
+      await container.read(sessionRestoreProvider.future);
+      await pumpEventQueue();
+
+      await container.read(authSessionProvider.notifier).signOut();
+      refreshed.complete(Ok(staff.withStaffRole(StaffRole.admin)));
+      await pumpEventQueue();
+
+      expect(container.read(sessionProvider), isNull);
+    });
   });
 
   test('the onboarding flag reaches the router', () async {

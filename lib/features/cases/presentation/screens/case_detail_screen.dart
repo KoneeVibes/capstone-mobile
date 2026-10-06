@@ -47,8 +47,9 @@ class CaseDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(caseDetailProvider(caseId));
     final value = detail.value;
-    // Assigning is staff work; clients see the case read-only.
-    final isStaff = ref.watch(sessionProvider)?.isStaff ?? false;
+    // Assigning is staff work (StaffPermissions); clients see it read-only.
+    final canAssign =
+        ref.watch(sessionProvider)?.permissions.canAssignCases ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -89,7 +90,7 @@ class CaseDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (isStaff)
+              if (canAssign)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSizing.screenPadding,

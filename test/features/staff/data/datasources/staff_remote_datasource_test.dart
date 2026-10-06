@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/features/staff/data/datasources/staff_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_draft.dart';
-import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_role.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
 

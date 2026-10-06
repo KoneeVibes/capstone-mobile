@@ -35,8 +35,10 @@
 Each shell is a `StatefulShellRoute.indexedStack`, so every tab keeps its own
 history. `AppShell` draws the bottom bar from `AppShell.staffTabs` or
 `AppShell.clientTabs`. **Tab order must match branch order**; a debug assert
-fails if the counts differ. Both shells mount the same Cases screens; the
-screen reads the session to hide staff-only actions.
+fails if the counts differ. A branch can be hidden (`hiddenBranches`) without
+changing that order: the Staff tab is dropped for roles that cannot list staff.
+Both shells mount the same Cases screens; the screen reads the session to hide
+staff-only actions.
 Why two shells: [ADR 0005](adr/0005-one-app-two-role-shells.md).
 
 ## The redirect
@@ -53,6 +55,7 @@ every redirect and is unit-tested on its own:
 | signed out, onboarding seen | anything else | `/login` |
 | signed in | `/`, onboarding or a sign-in screen | their home tab |
 | signed in | the other role's shell | their home tab |
+| staff without `canViewStaff` | `/staff/members` | the dashboard |
 
 The router re-runs it whenever `sessionProvider` or `hasSeenOnboardingProvider`
 changes (`refreshListenable`). So **a successful sign-in or sign-out needs no
@@ -62,7 +65,7 @@ navigation code**: change the session, and the user is moved.
 
 ```
 SecureStore ◀── AuthRepository ◀── AuthSessionNotifier ──▶ sessionProvider (core)
-  (token)                          (AuthSession?)           (SessionUser?)
+  (token, staff role)              (AuthSession?)           (SessionUser?)
 ```
 
 - **Sign-in** returns a JWT, stored in the Keychain / Keystore. Its payload is
@@ -72,8 +75,14 @@ SecureStore ◀── AuthRepository ◀── AuthSessionNotifier ──▶ ses
 - **The token is decoded on the device, never verified.** The device has no key,
   and the server checks every request. There is no `/me` endpoint, so the app
   knows only the user's id and type.
+- **Staff role.** For a staff token, sign-in also reads `GET /staff/{id}` for
+  the role and fails if it cannot (a 403 reads as `regular`). The role is
+  stored with the token, and `SessionUser.permissions` (`StaffPermissions`,
+  `core/session/`) turns it into what the UI may show. Rules and reasoning:
+  [ADR 0011](adr/0011-staff-role-from-own-record.md).
 - **Restore.** On launch the splash waits for `sessionRestoreProvider`: the
-  stored token, minus one that has expired. Tokens last 24 hours; there is no
+  stored token, minus one that has expired. A staff session opens with its
+  stored role and re-reads it in the background. Tokens last 24 hours; there is no
   refresh, so an expired session means signing in again. A fresh install that
   has not seen onboarding discards any token left in the Keychain, which
   survives an uninstall on iOS.
@@ -104,13 +113,14 @@ new-password screen → `POST /auth/verify-otp` (`otpType: password-reset`, only
 rejected code sends the user back to the code screen with "Wrong code, please
 try again".
 
-Staff accounts are created by an admin (`POST /staff`) and never register.
+Staff accounts are created by a super-admin or admin (`POST /staff`) and never
+register. No
+password is issued: a new staff member sets one through "Forgot password".
 
 ## Not yet built
 
-- A real Profile screen — it needs a `/me` endpoint or equivalent.
-- Staff role checks in the UI. The token says `staff` but not which staff role,
-  and the backend restricts listing staff to admins and managers.
+- A real Profile screen — clients need a `/me` endpoint or equivalent; staff
+  could use `GET /staff/{id}`, which sign-in already calls.
 - Deep links. None are configured, so the app always starts at `/splash`. If
   they are added, `redirectFor` must hold a cold-start link until the session
   restore finishes. Otherwise the link is judged while the session still reads

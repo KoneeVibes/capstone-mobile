@@ -12,9 +12,10 @@ They are kept so the reason survives the people who were in the room.
 | [0005](0005-one-app-two-role-shells.md) | One app, one tab shell per role | Accepted |
 | [0006](0006-cases-fetched-whole.md) | Fetch the case list whole and filter on the device | Accepted |
 | [0007](0007-auth-through-core-seams.md) | Auth plugs into core through provider seams | Accepted |
-| [0008](0008-session-from-jwt-claims.md) | The session is the JWT, read but not verified | Accepted |
+| [0008](0008-session-from-jwt-claims.md) | The session is the JWT, read but not verified | Accepted; staff role superseded by 0011 |
 | [0009](0009-platform-plugins-behind-wrappers.md) | Platform plugins sit behind core wrappers | Accepted |
 | [0010](0010-unit-tests-only.md) | Unit tests only, plus a live check | Accepted |
+| [0011](0011-staff-role-from-own-record.md) | The staff role comes from the user's own staff record | Accepted |
 
 ## Writing one
 

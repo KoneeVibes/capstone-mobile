@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/features/staff/data/models/staff_model.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_draft.dart';
-import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_role.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_status.dart';
 
 /// The payload exactly as the OpenAPI spec documents it.

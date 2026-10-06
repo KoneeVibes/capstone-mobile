@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/features/staff/data/datasources/staff_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/staff/data/repositories/staff_repository_impl.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_draft.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_page.dart';
-import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_role.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_status.dart';
 
 class MockStaffRemoteDataSource extends Mock implements StaffRemoteDataSource {}

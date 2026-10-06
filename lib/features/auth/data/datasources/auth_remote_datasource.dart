@@ -1,5 +1,6 @@
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/session/staff_role.dart';
 import '../../domain/entities/sign_up_draft.dart';
 import '../models/auth_payloads.dart';
 
@@ -25,6 +26,14 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<void> signOut();
+
+  /// The staff member's role from `GET /staff/{id}`. Takes the [token]
+  /// explicitly: at sign-in the session that would supply it does not exist
+  /// yet.
+  Future<StaffRole> fetchStaffRole({
+    required String userId,
+    required String token,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -84,4 +93,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> signOut() => _client.post<Object?>(ApiEndpoints.signOut);
+
+  @override
+  Future<StaffRole> fetchStaffRole({
+    required String userId,
+    required String token,
+  }) async {
+    final response = await _client.get<StaffRole>(
+      ApiEndpoints.staffById(userId),
+      headers: {'Authorization': 'Bearer $token'},
+      decoder: (data) {
+        if (data is! Map<String, dynamic>) {
+          throw const FormatException('Expected a staff object in "data".');
+        }
+        final role = data['role'];
+        return StaffRole.fromApi(role is String ? role : null);
+      },
+    );
+    return response.data;
+  }
 }

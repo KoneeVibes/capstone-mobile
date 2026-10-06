@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/session/staff_role.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -14,7 +15,6 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/entities/staff.dart';
 import '../../domain/entities/staff_draft.dart';
-import '../../domain/entities/staff_role.dart';
 import '../providers/staff_mutation_provider.dart';
 import 'staff_avatar_field.dart';
 import 'staff_role_selector.dart';

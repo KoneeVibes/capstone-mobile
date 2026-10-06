@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_endpoints.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/features/auth/data/datasources/auth_remote_datasource.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
@@ -64,5 +65,48 @@ void main() {
             ).captured.single
             as Map<String, dynamic>;
     expect(body['otpType'], 'password-reset');
+  });
+
+  group('fetchStaffRole', () {
+    void stubStaff(Map<String, dynamic> data) {
+      when(
+        () => client.get<StaffRole>(
+          any(),
+          headers: any(named: 'headers'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).thenAnswer((invocation) async {
+        final decoder =
+            invocation.namedArguments[#decoder] as StaffRole Function(Object?);
+        return ApiResponse<StaffRole>.fromJson({
+          'status': 'success',
+          'data': data,
+        }, decoder: decoder);
+      });
+    }
+
+    test('reads the role from their own record, with the given token', () async {
+      // Trimmed from the live response for a super-admin, 6 Oct 2026.
+      stubStaff({'id': 'staff-1', 'type': 'staff', 'role': 'super-admin'});
+
+      final role = await source.fetchStaffRole(userId: 'staff-1', token: 'jwt');
+
+      expect(role, StaffRole.superAdmin);
+      verify(
+        () => client.get<StaffRole>(
+          ApiEndpoints.staffById('staff-1'),
+          headers: {'Authorization': 'Bearer jwt'},
+          decoder: any(named: 'decoder'),
+        ),
+      ).called(1);
+    });
+
+    test('an unrecognised role grants nothing', () async {
+      stubStaff({'id': 'staff-1', 'role': 'auditor'});
+
+      final role = await source.fetchStaffRole(userId: 'staff-1', token: 'jwt');
+
+      expect(role, StaffRole.unknown);
+    });
   });
 }

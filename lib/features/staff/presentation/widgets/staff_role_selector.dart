@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/session/staff_role.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/app_chip.dart';
-import '../../domain/entities/staff_role.dart';
 
 /// Horizontally scrolling role picker.
 ///
@@ -27,6 +27,13 @@ class StaffRoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A role that is held but never offered (super-admin) still shows, so the
+    // form does not look as if the member has none.
+    final roles = [
+      if (selected.isKnown && !selected.isAssignable) selected,
+      ...StaffRole.assignable,
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -36,13 +43,13 @@ class StaffRoleSelector extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              for (final role in StaffRole.assignable) ...[
+              for (final role in roles) ...[
                 AppChoiceChip(
                   label: AppFormatters.titleCase(role.apiValue),
                   isSelected: role == selected,
                   onSelected: () => onSelected(role),
                 ),
-                if (role != StaffRole.assignable.last)
+                if (role != roles.last)
                   const SizedBox(width: AppSizing.space8),
               ],
             ],

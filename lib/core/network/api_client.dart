@@ -95,15 +95,19 @@ class ApiClient {
     return dio;
   }
 
+  /// [headers] is for the rare call that needs its own, such as a bearer
+  /// token the session does not hold yet.
   Future<ApiResponse<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
     T Function(Object? data)? decoder,
     CancelToken? cancelToken,
   }) => _send<T>(
     path,
     method: 'GET',
     queryParameters: queryParameters,
+    headers: headers,
     decoder: decoder,
     cancelToken: cancelToken,
   );
@@ -173,6 +177,7 @@ class ApiClient {
     required String method,
     Object? data,
     Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
     T Function(Object? data)? decoder,
     CancelToken? cancelToken,
   }) async {
@@ -181,7 +186,7 @@ class ApiClient {
       data: data,
       queryParameters: queryParameters,
       cancelToken: cancelToken,
-      options: Options(method: method),
+      options: Options(method: method, headers: headers),
     );
     return _unwrap<T>(response, decoder);
   }
@@ -246,7 +251,10 @@ class _AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final token = await _tokenSupplier?.call();
-    if (token != null && token.isNotEmpty) {
+    // A caller that set its own token keeps it.
+    if (token != null &&
+        token.isNotEmpty &&
+        !options.headers.containsKey('Authorization')) {
       options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);

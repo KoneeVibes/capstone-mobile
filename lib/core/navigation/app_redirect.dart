@@ -8,11 +8,12 @@ import 'app_session.dart';
 /// - signed out, everything else lands on onboarding until it has been seen,
 ///   then on login — the other sign-in screens stay reachable;
 /// - signed in, the sign-in screens and the other role's shell land on the
-///   role's home tab.
+///   role's home tab, as does the Staff tab without [canViewStaff].
 String? redirectFor({
   required AppRole? role,
   required bool hasSeenOnboarding,
   required String location,
+  bool canViewStaff = false,
 }) {
   if (location == AppRoutes.splashPath || _isLegal(location)) return null;
 
@@ -35,6 +36,10 @@ String? redirectFor({
       ? AppRoutes.clientRootPath
       : AppRoutes.staffHomePath;
   if (_isWithin(location, foreignBranch)) return home;
+
+  if (!canViewStaff && _isWithin(location, AppRoutes.staffMembersPath)) {
+    return home;
+  }
 
   return null;
 }

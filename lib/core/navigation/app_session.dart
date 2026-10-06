@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../session/staff_permissions.dart';
+import '../session/staff_role.dart';
+
 /// Which side of the product the signed-in user sees.
 ///
 /// One app serves both audiences; the role decides the route branch and the
@@ -16,17 +19,24 @@ enum AppRole {
 
 /// Who is signed in, as far as the router and the features need to know.
 class SessionUser extends Equatable {
-  const SessionUser({required this.id, required this.role});
+  const SessionUser({required this.id, required this.role, this.staffRole});
 
   final String id;
   final AppRole role;
+
+  /// From `GET /staff/{id}`, not the token. Null for clients, and for a staff
+  /// session restored from a build that did not store it yet.
+  final StaffRole? staffRole;
 
   bool get isStaff => role.isStaff;
 
   bool get isClient => role.isClient;
 
+  StaffPermissions get permissions =>
+      isStaff ? StaffPermissions(staffRole) : StaffPermissions.none;
+
   @override
-  List<Object?> get props => [id, role];
+  List<Object?> get props => [id, role, staffRole];
 }
 
 // The providers below are the seam between core and the auth feature. Core

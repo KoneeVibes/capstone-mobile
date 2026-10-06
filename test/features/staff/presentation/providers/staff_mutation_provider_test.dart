@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failure.dart';
 import 'package:propertyintelmobileapp/core/utils/error/async_value_x.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
@@ -8,7 +9,6 @@ import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_draft.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_page.dart';
-import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_role.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/entities/staff_status.dart';
 import 'package:propertyintelmobileapp/features/staff/domain/repositories/staff_repository.dart';
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_list_provider.dart';

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/session/staff_role.dart';
 import 'staff.dart';
-import 'staff_role.dart';
 
 /// The editable shape of a staff member, used for both create and update.
 ///

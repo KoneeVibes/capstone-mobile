@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/result.dart';
@@ -15,8 +17,28 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSession?> {
   bool _signingOut = false;
 
   @override
-  Future<AuthSession?> build() =>
-      ref.read(authRepositoryProvider).restoreSession();
+  Future<AuthSession?> build() async {
+    final session = await ref.read(authRepositoryProvider).restoreSession();
+    // The stored role opens the app at once; this picks up a change made on
+    // the server since, without holding the splash.
+    if (session != null && session.isStaff) {
+      unawaited(Future(() => _refreshStaffRole(session)));
+    }
+    return session;
+  }
+
+  /// A failure keeps the stored role; a 401 ends the session through the
+  /// API client like any other request.
+  Future<void> _refreshStaffRole(AuthSession session) async {
+    final result = await ref
+        .read(authRepositoryProvider)
+        .refreshStaffRole(session);
+    if (!ref.mounted) return;
+    // Dropped if the user signed out, or in as someone else, meanwhile.
+    if (result case Ok(:final value) when state.value?.token == session.token) {
+      state = AsyncData(value);
+    }
+  }
 
   Future<Result<AuthSession>> signIn({
     required String email,

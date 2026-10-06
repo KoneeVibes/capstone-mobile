@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/navigation/app_session.dart';
+import '../../../../core/session/staff_permissions.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -20,7 +22,8 @@ import '../widgets/staff_form_sheet.dart';
 import '../widgets/staff_list_skeleton.dart';
 import '../widgets/staff_list_tile.dart';
 
-/// Staff management: list, add, edit and remove.
+/// Staff management: list, add, edit and remove — each action shown only to
+/// roles that may take it.
 class StaffListScreen extends ConsumerStatefulWidget {
   const StaffListScreen({super.key});
 
@@ -97,13 +100,17 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
   @override
   Widget build(BuildContext context) {
     final listState = ref.watch(staffListProvider);
+    final permissions =
+        ref.watch(sessionProvider)?.permissions ?? StaffPermissions.none;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Staff'),
         actions: [
-          _AddNewButton(onPressed: _openForm),
-          const SizedBox(width: AppSizing.screenPadding),
+          if (permissions.canCreateStaff) ...[
+            _AddNewButton(onPressed: _openForm),
+            const SizedBox(width: AppSizing.screenPadding),
+          ],
         ],
       ),
       body: SafeArea(
@@ -132,7 +139,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
                   onRetry: () =>
                       ref.read(staffListProvider.notifier).refresh(),
                 ),
-                data: _buildList,
+                data: (state) => _buildList(state, permissions),
               ),
             ),
           ],
@@ -141,7 +148,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
     );
   }
 
-  Widget _buildList(StaffListState state) {
+  Widget _buildList(StaffListState state, StaffPermissions permissions) {
     final refresh = ref.read(staffListProvider.notifier).refresh;
 
     if (state.isEmpty) {
@@ -154,10 +161,12 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: const AppStateView.empty(
+              child: AppStateView.empty(
                 icon: Icons.people_outline,
                 title: 'No staff yet',
-                message: 'Add your first staff member to get started.',
+                message: permissions.canCreateStaff
+                    ? 'Add your first staff member to get started.'
+                    : 'Staff members will appear here once they are added.',
               ),
             ),
           ),
@@ -191,8 +200,12 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
           final staff = state.items[index];
           return StaffListTile(
             staff: staff,
-            onEdit: () => _openForm(staff: staff),
-            onRemove: () => _confirmRemove(staff),
+            onEdit: permissions.canEditStaff
+                ? () => _openForm(staff: staff)
+                : null,
+            onRemove: permissions.canDeleteStaff
+                ? () => _confirmRemove(staff)
+                : null,
           );
         },
       ),

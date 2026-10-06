@@ -46,11 +46,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.splashPath,
     debugLogDiagnostics: kDebugMode,
     refreshListenable: refresh,
-    redirect: (context, state) => redirectFor(
-      role: ref.read(sessionProvider)?.role,
-      hasSeenOnboarding: ref.read(hasSeenOnboardingProvider),
-      location: state.matchedLocation,
-    ),
+    redirect: (context, state) {
+      final user = ref.read(sessionProvider);
+      return redirectFor(
+        role: user?.role,
+        hasSeenOnboarding: ref.read(hasSeenOnboardingProvider),
+        location: state.matchedLocation,
+        canViewStaff: user?.permissions.canViewStaff ?? false,
+      );
+    },
     errorBuilder: (context, state) => const _RouteNotFoundScreen(),
     routes: [
       GoRoute(
@@ -188,9 +192,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       // Branch order must match AppShell.staffTabs.
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => AppShell(
-          navigationShell: navigationShell,
-          tabs: AppShell.staffTabs,
+        builder: (context, state, navigationShell) => Consumer(
+          builder: (context, ref, _) {
+            final canViewStaff =
+                ref.watch(sessionProvider)?.permissions.canViewStaff ?? false;
+            return AppShell(
+              navigationShell: navigationShell,
+              tabs: AppShell.staffTabs,
+              hiddenBranches: canViewStaff
+                  ? const {}
+                  : const {AppShell.staffMembersBranch},
+            );
+          },
         ),
         branches: [
           StatefulShellBranch(

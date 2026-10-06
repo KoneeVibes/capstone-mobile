@@ -60,11 +60,12 @@ void main() {
     when(
       () => repository.signIn(email: 'a@b.co', password: 'pw'),
     ).thenAnswer((_) async => Ok(stored));
-    when(
-      () => repository.signIn(email: 'a@b.co', password: 'bad'),
-    ).thenAnswer(
+    when(() => repository.signIn(email: 'a@b.co', password: 'bad')).thenAnswer(
       (_) async => const Err(
-        AppFailure(type: FailureType.unauthorized, message: 'Incorrect password'),
+        AppFailure(
+          type: FailureType.unauthorized,
+          message: 'Incorrect password',
+        ),
       ),
     );
     final container = makeContainer();
@@ -89,12 +90,26 @@ void main() {
     await pumpEventQueue();
 
     expect(container.read(sessionProvider), isNull);
-    expect(container.read(sessionExpiredNoticeProvider), isTrue);
+    expect(container.read(sessionEndNoticeProvider), SessionEndNotice.expired);
     verify(() => repository.clearSession()).called(1);
 
-    final notice = container.read(sessionExpiredNoticeProvider.notifier);
-    expect(notice.consume(), isTrue);
-    expect(notice.consume(), isFalse);
+    final notice = container.read(sessionEndNoticeProvider.notifier);
+    expect(notice.consume(), SessionEndNotice.expired);
+    expect(notice.consume(), isNull);
+  });
+
+  test('signing out leaves a logged-out notice for login', () async {
+    when(() => repository.restoreSession()).thenAnswer((_) async => stored);
+    final container = makeContainer();
+    await container.read(sessionRestoreProvider.future);
+
+    await container.read(authSessionProvider.notifier).signOut();
+
+    expect(container.read(sessionProvider), isNull);
+    expect(
+      container.read(sessionEndNoticeProvider),
+      SessionEndNotice.signedOut,
+    );
   });
 
   test('signing out is not mistaken for an expiry', () async {
@@ -109,7 +124,10 @@ void main() {
     await container.read(authSessionProvider.notifier).signOut();
 
     expect(container.read(sessionProvider), isNull);
-    expect(container.read(sessionExpiredNoticeProvider), isFalse);
+    expect(
+      container.read(sessionEndNoticeProvider),
+      SessionEndNotice.signedOut,
+    );
   });
 
   group('a restored staff session', () {

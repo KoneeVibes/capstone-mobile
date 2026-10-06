@@ -24,17 +24,47 @@ void main() {
   });
 
   group('password', () {
-    test('requires at least eight characters', () {
+    test('requires a value', () {
       expect(Validators.password(null), 'Password is required.');
-      expect(
-        Validators.password('short12'),
-        'Password must be at least 8 characters.',
-      );
-      expect(Validators.password('Password1'), isNull);
+      expect(Validators.password(''), 'Password is required.');
     });
 
-    test('counts spaces, which are part of a password', () {
-      expect(Validators.password('        '), isNull);
+    test('accepts eight characters with a number and a special character', () {
+      expect(Validators.password('Passw0rd!'), isNull);
+      expect(Validators.password('SecurePassword123!'), isNull);
+    });
+
+    test('names each missing requirement', () {
+      expect(
+        Validators.password('Sh0rt!'),
+        'Password needs at least 8 characters.',
+      );
+      expect(Validators.password('Password!'), 'Password needs a number.');
+      expect(
+        Validators.password('Password1'),
+        'Password needs a special character.',
+      );
+      expect(
+        Validators.password('pass1'),
+        'Password needs at least 8 characters and a special character.',
+      );
+      expect(
+        Validators.password('pass'),
+        'Password needs at least 8 characters, a number and a special '
+        'character.',
+      );
+    });
+
+    test('counts spaces towards length but not as a special character', () {
+      expect(Validators.password('pass 1 word'), contains('special'));
+      expect(Validators.password('pass 1 word!'), isNull);
+    });
+
+    test('uses the caller label', () {
+      expect(
+        Validators.password('pass', label: 'New password'),
+        startsWith('New password needs'),
+      );
     });
   });
 
@@ -48,7 +78,10 @@ void main() {
         Validators.confirmation('password1', original: 'Password1'),
         "Passwords don't match.",
       );
-      expect(Validators.confirmation('Password1', original: 'Password1'), isNull);
+      expect(
+        Validators.confirmation('Password1', original: 'Password1'),
+        isNull,
+      );
     });
   });
 

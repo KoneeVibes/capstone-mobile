@@ -49,11 +49,13 @@ void main() {
       () => local.saveSession(
         token: any(named: 'token'),
         staffRole: any(named: 'staffRole'),
+        email: any(named: 'email'),
       ),
     ).thenAnswer((_) async {});
     when(() => local.saveStaffRole(any())).thenAnswer((_) async {});
     when(() => local.deleteSession()).thenAnswer((_) async {});
     when(() => local.hasSeenOnboarding()).thenAnswer((_) async => true);
+    when(() => local.readEmail()).thenAnswer((_) async => null);
   });
 
   group('signIn', () {
@@ -66,7 +68,9 @@ void main() {
       final result = await repository.signIn(email: 'a@b.co', password: 'pw');
 
       expect(result.valueOrNull?.userId, 'user-9');
-      verify(() => local.saveSession(token: token)).called(1);
+      // The token carries no email; the typed one is kept for forms.
+      expect(result.valueOrNull?.user.email, 'a@b.co');
+      verify(() => local.saveSession(token: token, email: 'a@b.co')).called(1);
     });
 
     test("shows the server's wording for a wrong password", () async {
@@ -84,6 +88,7 @@ void main() {
         () => local.saveSession(
           token: any(named: 'token'),
           staffRole: any(named: 'staffRole'),
+          email: any(named: 'email'),
         ),
       );
     });
@@ -105,8 +110,41 @@ void main() {
         () => local.saveSession(
           token: any(named: 'token'),
           staffRole: any(named: 'staffRole'),
+          email: any(named: 'email'),
         ),
       );
+    });
+  });
+
+  group('stored email', () {
+    test('a restored session carries the email saved at sign-in', () async {
+      when(() => local.readToken()).thenAnswer((_) async => clientToken());
+      when(() => local.readEmail()).thenAnswer((_) async => 'a@b.co');
+
+      final session = await repository.restoreSession();
+
+      expect(session?.user.email, 'a@b.co');
+    });
+
+    test(
+      'a session saved before the email was kept restores without one',
+      () async {
+        when(() => local.readToken()).thenAnswer((_) async => clientToken());
+
+        final session = await repository.restoreSession();
+
+        expect(session, isNotNull);
+        expect(session?.email, isNull);
+      },
+    );
+
+    test('the staff role survives adding the email, and the reverse', () {
+      final session = AuthSessionModel.fromToken(
+        staffToken(),
+      ).withEmail('a@b.co').withStaffRole(StaffRole.admin);
+
+      expect(session.email, 'a@b.co');
+      expect(session.withEmail('c@d.co').staffRole, StaffRole.admin);
     });
   });
 
@@ -186,7 +224,11 @@ void main() {
 
       expect(result.valueOrNull?.staffRole, StaffRole.manager);
       verify(
-        () => local.saveSession(token: token, staffRole: StaffRole.manager),
+        () => local.saveSession(
+          token: token,
+          staffRole: StaffRole.manager,
+          email: 'a@b.co',
+        ),
       ).called(1);
     });
 
@@ -220,6 +262,7 @@ void main() {
         () => local.saveSession(
           token: any(named: 'token'),
           staffRole: any(named: 'staffRole'),
+          email: any(named: 'email'),
         ),
       );
     });
@@ -296,9 +339,9 @@ void main() {
     });
 
     test('drops an expired token', () async {
-      when(() => local.readToken()).thenAnswer(
-        (_) async => clientToken(expiresAt: now),
-      );
+      when(
+        () => local.readToken(),
+      ).thenAnswer((_) async => clientToken(expiresAt: now));
 
       expect(await repository.restoreSession(), isNull);
       verify(() => local.deleteSession()).called(1);
@@ -329,7 +372,9 @@ void main() {
 
   group('signOut', () {
     test('forgets the token even when the server call fails', () async {
-      when(() => remote.signOut()).thenThrow(_http(401, 'Token is blacklisted'));
+      when(
+        () => remote.signOut(),
+      ).thenThrow(_http(401, 'Token is blacklisted'));
 
       await repository.signOut();
 

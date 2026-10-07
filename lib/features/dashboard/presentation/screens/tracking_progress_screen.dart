@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
-import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
@@ -17,9 +16,16 @@ import '../widgets/tracking_timeline.dart';
 
 /// The status history of one tracked case.
 class TrackingProgressScreen extends ConsumerStatefulWidget {
-  const TrackingProgressScreen({required this.trackingId, super.key});
+  const TrackingProgressScreen({
+    required this.trackingId,
+    required this.fallbackRouteName,
+    super.key,
+  });
 
   final String trackingId;
+
+  /// Where back goes when there is nothing to pop, as after a deep link.
+  final String fallbackRouteName;
 
   @override
   ConsumerState<TrackingProgressScreen> createState() =>
@@ -45,7 +51,7 @@ class _TrackingProgressScreenState
     if (context.canPop()) {
       context.pop();
     } else {
-      context.goNamed(AppRoutes.dashboardName);
+      context.goNamed(widget.fallbackRouteName);
     }
   }
 

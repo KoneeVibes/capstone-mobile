@@ -13,8 +13,11 @@ import '../../features/auth/presentation/screens/verify_code_screen.dart';
 import '../../features/auth/presentation/widgets/sign_out_button.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
+import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
+import '../../features/property_search/presentation/screens/search_property_screen.dart';
+import '../../features/property_search/presentation/screens/search_quote_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
@@ -139,9 +142,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.clientHomePath,
                 name: AppRoutes.clientHomeName,
-                builder: (context, state) => const PlaceholderScreen(
-                  title: 'Home',
-                  message: 'Your cases and recent searches will appear here.',
+                builder: (context, state) => const ClientHomeScreen(
+                  searchPropertyRouteName: AppRoutes.clientSearchPropertyName,
+                  progressRouteName: AppRoutes.clientTrackingProgressName,
                 ),
               ),
             ],
@@ -151,11 +154,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.clientSearchPath,
                 name: AppRoutes.clientSearchName,
-                builder: (context, state) => const PlaceholderScreen(
-                  title: 'Search',
-                  message:
-                      'Look up a tracking ID or start a new property search.',
+                builder: (context, state) => const DashboardScreen(
+                  progressRouteName: AppRoutes.clientTrackingProgressName,
+                  searchPropertyRouteName: AppRoutes.clientSearchPropertyName,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'track/:trackingId',
+                    name: AppRoutes.clientTrackingProgressName,
+                    builder: (context, state) => TrackingProgressScreen(
+                      trackingId: state.pathParameters['trackingId'] ?? '',
+                      fallbackRouteName: AppRoutes.clientSearchName,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'property',
+                    name: AppRoutes.clientSearchPropertyName,
+                    builder: (context, state) => const SearchPropertyScreen(
+                      quoteRouteName: AppRoutes.clientSearchQuoteName,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'quote/:invoiceId',
+                    name: AppRoutes.clientSearchQuoteName,
+                    builder: (context, state) => _quote(
+                      state,
+                      trackRouteName: AppRoutes.clientTrackingProgressName,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -211,13 +238,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.dashboardPath,
                 name: AppRoutes.dashboardName,
-                builder: (context, state) => const DashboardScreen(),
+                builder: (context, state) => const DashboardScreen(
+                  progressRouteName: AppRoutes.trackingProgressName,
+                  searchPropertyRouteName: AppRoutes.staffSearchPropertyName,
+                ),
                 routes: [
                   GoRoute(
                     path: 'track/:trackingId',
                     name: AppRoutes.trackingProgressName,
                     builder: (context, state) => TrackingProgressScreen(
                       trackingId: state.pathParameters['trackingId'] ?? '',
+                      fallbackRouteName: AppRoutes.dashboardName,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'search-property',
+                    name: AppRoutes.staffSearchPropertyName,
+                    builder: (context, state) => const SearchPropertyScreen(
+                      quoteRouteName: AppRoutes.staffSearchQuoteName,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'quote/:invoiceId',
+                    name: AppRoutes.staffSearchQuoteName,
+                    builder: (context, state) => _quote(
+                      state,
+                      trackRouteName: AppRoutes.trackingProgressName,
                     ),
                   ),
                 ],
@@ -271,6 +317,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// The cost of a search just filed, in either role's branch.
+Widget _quote(GoRouterState state, {required String trackRouteName}) =>
+    SearchQuoteScreen(
+      invoiceId: state.pathParameters['invoiceId'] ?? '',
+      trackingId: state.uri.queryParameters['trackingId'] ?? '',
+      trackRouteName: trackRouteName,
+    );
 
 /// Both roles' Profile tab until the profile screen is designed. Carries the
 /// only way to sign out meanwhile.

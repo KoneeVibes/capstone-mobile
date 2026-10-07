@@ -59,6 +59,7 @@ reference. In summary:
 | `AppStateView` | centred loading, empty and failure states |
 | `AppShimmer`, `AppShimmerBox` | skeletons |
 | `PlaceholderScreen` | a route whose screen is not built yet |
+| `showPaymentComingSoonSheet` | every "Pay now" until Paystack lands; owns its copy, since two features open it |
 
 Feature-only widgets stay in the feature (`features/<name>/presentation/widgets/`)
 until a second feature needs them; then they move to `shared/` and get documented.

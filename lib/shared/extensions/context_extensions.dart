@@ -36,7 +36,7 @@ extension BuildContextX on BuildContext {
   void showMessage(String message) {
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: AppColors.primary));
   }
 
   /// Renders a failure the only way it is allowed to be rendered: through
@@ -44,11 +44,6 @@ extension BuildContextX on BuildContext {
   void showFailure(AppFailure failure) {
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(failure.message),
-          backgroundColor: AppColors.destructive,
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(failure.message), backgroundColor: AppColors.destructive));
   }
 }

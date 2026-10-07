@@ -1,6 +1,6 @@
 # 0012 — Property search follows the API and the website, not the mockups
 
-- **Status:** Accepted
+- **Status:** Accepted; paying from the price screen superseded by 0014
 - **Recorded:** 2026-10-06
 
 ## Context

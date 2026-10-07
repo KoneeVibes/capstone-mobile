@@ -28,6 +28,11 @@ abstract final class AppConstants {
   /// Debounce applied to search fields before a query is issued.
   static const Duration searchDebounce = Duration(milliseconds: 350);
 
+  // Payment. After checkout reports completion, the invoice is re-read until
+  // the backend's webhook marks it paid — this many times, this far apart.
+  static const int paymentConfirmAttempts = 5;
+  static const Duration paymentConfirmInterval = Duration(seconds: 2);
+
   // Auth.
 
   /// Digits in a sign-up or password-reset code.

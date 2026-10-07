@@ -1,6 +1,5 @@
 import '../../../../core/utils/error/error_handler.dart';
 import '../../../../core/utils/result.dart';
-import '../../domain/entities/invoice.dart';
 import '../../domain/entities/property_location.dart';
 import '../../domain/entities/search_request.dart';
 import '../../domain/repositories/property_search_repository.dart';
@@ -18,10 +17,6 @@ class PropertySearchRepositoryImpl implements PropertySearchRepository {
   @override
   Future<Result<SubmittedSearch>> submit(SearchRequest request) =>
       _guard(() => _source.submit(request));
-
-  @override
-  Future<Result<Invoice>> fetchInvoice(String invoiceId) =>
-      _guard(() => _source.fetchInvoice(invoiceId));
 
   static Future<Result<T>> _guard<T>(Future<T> Function() action) async {
     try {

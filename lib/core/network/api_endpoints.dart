@@ -39,9 +39,16 @@ abstract final class ApiEndpoints {
   static String trackCase(String trackingId) =>
       '$cases/track/${Uri.encodeComponent(trackingId)}';
 
-  // Property search: the priced locations a case can be filed for, and the
-  // invoice a new case creates.
+  // Property search: the priced locations a case can be filed for.
   static const String locations = '/misc/location';
 
+  // Payment: the invoice a new case creates, and the Paystack transaction that
+  // settles it.
   static String invoiceById(String invoiceId) => '/invoice/$invoiceId';
+
+  static String settleInvoice(String invoiceId) => '/invoice/settle/$invoiceId';
+
+  /// Paystack's hosted checkout for an initialised transaction. Not our API.
+  static String paystackCheckout(String accessCode) =>
+      'https://checkout.paystack.com/${Uri.encodeComponent(accessCode)}';
 }

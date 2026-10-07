@@ -16,8 +16,8 @@ import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
+import '../../features/payment/presentation/screens/invoice_screen.dart';
 import '../../features/property_search/presentation/screens/search_property_screen.dart';
-import '../../features/property_search/presentation/screens/search_quote_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
@@ -320,7 +320,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 /// The cost of a search just filed, in either role's branch.
 Widget _quote(GoRouterState state, {required String trackRouteName}) =>
-    SearchQuoteScreen(
+    InvoiceScreen(
       invoiceId: state.pathParameters['invoiceId'] ?? '',
       trackingId: state.uri.queryParameters['trackingId'] ?? '',
       trackRouteName: trackRouteName,

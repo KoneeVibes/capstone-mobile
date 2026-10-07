@@ -7,7 +7,6 @@ import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_endpoints.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
 import 'package:propertyintelmobileapp/features/property_search/data/datasources/property_search_remote_datasource.dart';
-import 'package:propertyintelmobileapp/features/property_search/domain/entities/invoice.dart';
 import 'package:propertyintelmobileapp/features/property_search/domain/entities/property_location.dart';
 import 'package:propertyintelmobileapp/features/property_search/domain/entities/search_request.dart';
 
@@ -69,22 +68,14 @@ void main() {
     expect(captured.single, isA<FormData>());
   });
 
-  test('reads an invoice by id', () async {
-    when(
-      () => client.get<Invoice>(
-        ApiEndpoints.invoiceById('inv-1'),
-        decoder: any(named: 'decoder'),
-      ),
-    ).thenAnswer((invocation) async => _decoded(invocation, invoiceJson));
-
-    expect((await source.fetchInvoice('inv-1')).total, 11250);
-  });
-
   test('lets a failure propagate for the repository to convert', () {
     when(
-      () => client.get<Invoice>(any(), decoder: any(named: 'decoder')),
+      () => client.get<List<PropertyLocation>>(
+        any(),
+        decoder: any(named: 'decoder'),
+      ),
     ).thenThrow(DioException(requestOptions: RequestOptions()));
 
-    expect(() => source.fetchInvoice('x'), throwsA(isA<DioException>()));
+    expect(source.fetchLocations, throwsA(isA<DioException>()));
   });
 }

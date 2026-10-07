@@ -27,7 +27,8 @@ docs/                  you are here
 ```
 
 Current features: `auth`, `dashboard` (tracking lookup, client Home),
-`property_search` (file a search, see its price), `cases`, `staff`.
+`property_search` (file a search), `payment` (its invoice and Paystack
+checkout), `cases`, `staff`.
 
 ## The dependency rule
 

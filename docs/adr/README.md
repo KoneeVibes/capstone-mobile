@@ -17,6 +17,7 @@ They are kept so the reason survives the people who were in the room.
 | [0010](0010-unit-tests-only.md) | Unit tests only, plus a live check | Accepted |
 | [0011](0011-staff-role-from-own-record.md) | The staff role comes from the user's own staff record | Accepted |
 | [0012](0012-property-search-follows-the-api.md) | Property search follows the API and the website, not the mockups | Accepted |
+| [0013](0013-case-assignment-rules.md) | Who can take a case, and what an assignment writes | Accepted |
 
 ## Writing one
 

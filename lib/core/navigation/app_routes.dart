@@ -71,6 +71,11 @@ abstract final class AppRoutes {
   static const String clientCaseDetailName = 'clientCaseDetail';
   static const String clientCaseDetailPath = '/client/cases/:caseId';
 
+  /// Pay an unpaid case's invoice. Takes a `caseId` path parameter, which the
+  /// invoice endpoint resolves to the invoice. Client only — staff never pay.
+  static const String clientCasePayName = 'clientCasePay';
+  static const String clientCasePayPath = '/client/cases/:caseId/pay';
+
   static const String clientProfileName = 'clientProfile';
   static const String clientProfilePath = '/client/profile';
 

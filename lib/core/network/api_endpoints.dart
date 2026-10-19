@@ -44,8 +44,11 @@ abstract final class ApiEndpoints {
 
   // Payment: the invoice a new case creates, and the Paystack transaction that
   // settles it.
-  static String invoiceById(String invoiceId) => '/invoice/$invoiceId';
 
+  /// Accepts the invoice's own id or its case id; both resolve the invoice.
+  static String invoiceById(String lookupId) => '/invoice/$lookupId';
+
+  /// Takes the invoice's own id only.
   static String settleInvoice(String invoiceId) => '/invoice/settle/$invoiceId';
 
   /// Paystack's hosted checkout for an initialised transaction. Not our API.

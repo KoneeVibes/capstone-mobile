@@ -193,6 +193,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: AppRoutes.clientCasesName,
                 builder: (context, state) => const CasesListScreen(
                   detailRouteName: AppRoutes.clientCaseDetailName,
+                  payRouteName: AppRoutes.clientCasePayName,
                 ),
                 routes: [
                   GoRoute(
@@ -200,7 +201,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     name: AppRoutes.clientCaseDetailName,
                     builder: (context, state) => CaseDetailScreen(
                       caseId: state.pathParameters['caseId'] ?? '',
+                      payRouteName: AppRoutes.clientCasePayName,
                     ),
+                    routes: [
+                      // Pay an unpaid case: the invoice endpoint resolves the
+                      // case id, so the screen opens by it. No tracking card —
+                      // the user is already inside Cases.
+                      GoRoute(
+                        path: 'pay',
+                        name: AppRoutes.clientCasePayName,
+                        builder: (context, state) => InvoiceScreen(
+                          invoiceId: state.pathParameters['caseId'] ?? '',
+                          trackingId: '',
+                          title: 'Invoice',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

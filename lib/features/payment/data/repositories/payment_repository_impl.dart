@@ -11,8 +11,8 @@ class PaymentRepositoryImpl implements PaymentRepository {
   final PaymentDataSource _source;
 
   @override
-  Future<Result<Invoice>> fetchInvoice(String invoiceId) =>
-      _guard(() => _source.fetchInvoice(invoiceId));
+  Future<Result<Invoice>> fetchInvoice(String lookupId) =>
+      _guard(() => _source.fetchInvoice(lookupId));
 
   @override
   Future<Result<PaymentSession>> startPayment(String invoiceId) =>

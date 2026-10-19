@@ -91,6 +91,26 @@ void main() {
       expect(second.valueOrNull, isNull);
       verify(() => repository.startPayment('inv')).called(1);
     });
+
+    test('settles with the invoice id when looked up by case id', () async {
+      // Keyed by a case id; the lookup resolves the invoice, whose own id
+      // ('inv') is what settle must be given — not the case id.
+      container.listen(paymentProvider('case-1'), (_, _) {});
+      when(
+        () => repository.fetchInvoice('case-1'),
+      ).thenAnswer((_) async => Ok(invoice()));
+      when(
+        () => repository.startPayment('inv'),
+      ).thenAnswer((_) async => const Ok(session));
+
+      final result = await container
+          .read(paymentProvider('case-1').notifier)
+          .start();
+
+      expect(result.valueOrNull, session);
+      verify(() => repository.fetchInvoice('case-1')).called(1);
+      verify(() => repository.startPayment('inv')).called(1);
+    });
   });
 
   group('confirm', () {

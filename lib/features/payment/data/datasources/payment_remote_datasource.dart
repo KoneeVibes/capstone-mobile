@@ -7,8 +7,10 @@ import '../models/payment_session_model.dart';
 
 /// Network access for invoices and payments. Throws; the repository converts.
 abstract class PaymentDataSource {
-  Future<Invoice> fetchInvoice(String invoiceId);
+  /// By invoice id or case id — the endpoint resolves either to the invoice.
+  Future<Invoice> fetchInvoice(String lookupId);
 
+  /// Takes the invoice's own id only, never a case id.
   Future<PaymentSession> settle(String invoiceId);
 }
 
@@ -18,9 +20,9 @@ class PaymentRemoteDataSourceImpl implements PaymentDataSource {
   final ApiClient _client;
 
   @override
-  Future<Invoice> fetchInvoice(String invoiceId) async {
+  Future<Invoice> fetchInvoice(String lookupId) async {
     final response = await _client.get<Invoice>(
-      ApiEndpoints.invoiceById(invoiceId),
+      ApiEndpoints.invoiceById(lookupId),
       decoder: InvoiceModel.fromData,
     );
     return response.data;

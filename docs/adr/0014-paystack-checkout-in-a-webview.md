@@ -47,8 +47,9 @@ and a successful charge can arrive with the page already closed.
 - The WebView itself is a widget, not a platform call, so it is not wrapped as
   ADR 0009 asks of plugins. The logic that matters is the classifier, which is
   pure and unit tested; the screen around it is thin.
-- Cases "Pay now" still opens the coming-soon sheet: a case does not carry its
-  invoice id yet. When the backend ships one, it routes to the same screen.
+- Cases "Pay now" now routes to this screen too: `GET /invoice/{id}` accepts a
+  case id, so the invoice is reached without the case carrying its invoice id
+  (ADR 0015). Settling still uses the invoice's own id.
 - Confirmation depends on the backend's Paystack webhook. It exists: on device
   the invoice read `paid` about two seconds after checkout, and the case
   moved to `payment-validated`. If it ever lags past the retries, the screen

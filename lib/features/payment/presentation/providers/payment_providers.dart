@@ -20,16 +20,17 @@ final paymentRepositoryProvider = Provider<PaymentRepository>(
   (ref) => PaymentRepositoryImpl(ref.watch(paymentDataSourceProvider)),
 );
 
-/// An invoice, by id. Dropped when its screen closes, so coming back later
-/// reads the current status.
+/// An invoice, by invoice id or case id — both resolve the same invoice.
+/// Dropped when its screen closes, so coming back later reads the current
+/// status.
 final invoiceProvider = FutureProvider.autoDispose.family<Invoice, String>((
   ref,
-  invoiceId,
+  lookupId,
 ) async {
   ref.watch(sessionProvider);
   final result = await ref
       .watch(paymentRepositoryProvider)
-      .fetchInvoice(invoiceId);
+      .fetchInvoice(lookupId);
   return result.unwrapOrThrow();
 });
 
@@ -55,10 +56,14 @@ enum PaymentStage {
 
 /// One invoice's payment. The invoice is the only proof of payment: whatever
 /// checkout reports, [confirm] reads it back before saying "paid".
+///
+/// [lookupId] is what the invoice is read by — an invoice id (the search flow)
+/// or a case id (paying an existing case). Settling always uses the invoice's
+/// own id, which the lookup resolves, since the settle endpoint takes only that.
 class PaymentNotifier extends Notifier<PaymentStage> {
-  PaymentNotifier(this.invoiceId);
+  PaymentNotifier(this.lookupId);
 
-  final String invoiceId;
+  final String lookupId;
 
   PaymentRepository get _repository => ref.read(paymentRepositoryProvider);
 
@@ -74,21 +79,25 @@ class PaymentNotifier extends Notifier<PaymentStage> {
     if (state != PaymentStage.idle) return const Ok(null);
     state = PaymentStage.starting;
 
-    final invoice = await _repository.fetchInvoice(invoiceId);
+    final invoice = await _repository.fetchInvoice(lookupId);
     if (!ref.mounted) return const Ok(null);
-    if (invoice case Err(:final failure)) {
-      state = PaymentStage.idle;
-      return Err(failure);
-    }
-    if (invoice.valueOrNull?.isPaid ?? false) {
-      _markPaid();
-      return const Ok(null);
-    }
 
-    final session = await _repository.startPayment(invoiceId);
-    if (!ref.mounted) return const Ok(null);
-    state = session.isOk ? PaymentStage.checkingOut : PaymentStage.idle;
-    return session;
+    switch (invoice) {
+      case Err(:final failure):
+        state = PaymentStage.idle;
+        return Err(failure);
+      case Ok(:final value):
+        if (value.isPaid) {
+          _markPaid();
+          return const Ok(null);
+        }
+        // Settle with the invoice's own id: [lookupId] may be a case id, which
+        // the settle endpoint does not accept.
+        final session = await _repository.startPayment(value.id);
+        if (!ref.mounted) return const Ok(null);
+        state = session.isOk ? PaymentStage.checkingOut : PaymentStage.idle;
+        return session;
+    }
   }
 
   /// Reads the invoice after checkout closes. When checkout reported
@@ -119,7 +128,7 @@ class PaymentNotifier extends Notifier<PaymentStage> {
       if (attempt > 0) {
         await Future<void>.delayed(AppConstants.paymentConfirmInterval);
       }
-      final invoice = await _repository.fetchInvoice(invoiceId);
+      final invoice = await _repository.fetchInvoice(lookupId);
       if (!ref.mounted) return;
       if (invoice.valueOrNull?.isPaid ?? false) {
         _markPaid();
@@ -130,7 +139,7 @@ class PaymentNotifier extends Notifier<PaymentStage> {
 
   void _markPaid() {
     state = PaymentStage.paid;
-    ref.invalidate(invoiceProvider(invoiceId));
+    ref.invalidate(invoiceProvider(lookupId));
     ref.read(casesChangedProvider.notifier).bump();
   }
 }

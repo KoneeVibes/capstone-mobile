@@ -17,26 +17,37 @@ import '../../domain/entities/invoice.dart';
 import '../providers/payment_providers.dart';
 import 'paystack_checkout_screen.dart';
 
-/// "What this search costs": the new case's invoice, a way to pay it and a
-/// way to follow it.
+/// "What this search costs": a case's invoice, a way to pay it and a way to
+/// follow it.
 ///
-/// The case already exists here, unpaid, so there is no "Edit": a client
-/// cannot change a filed case, and re-submitting the form would file a second.
+/// Reached two ways — straight from filing a search (the tracking id in hand,
+/// titled "Search submitted"), and from an unpaid case under Cases (opened by
+/// its case id, no tracking card). Either way the case already exists, unpaid,
+/// so there is no "Edit": a client cannot change a filed case, and
+/// re-submitting the form would file a second.
 class InvoiceScreen extends ConsumerWidget {
   const InvoiceScreen({
     required this.invoiceId,
     required this.trackingId,
-    required this.trackRouteName,
+    this.trackRouteName,
+    this.title = 'Search submitted',
     super.key,
   });
 
+  /// The invoice's own id, or the id of the case it belongs to — the invoice
+  /// endpoint resolves either.
   final String invoiceId;
 
-  /// Empty when the route was opened without it.
+  /// Empty when the route was opened without it, which hides the tracking card
+  /// and the "Track this request" button.
   final String trackingId;
 
-  /// Takes a `trackingId` path parameter.
-  final String trackRouteName;
+  /// Takes a `trackingId` path parameter. Null when there is nowhere to track
+  /// to from here, e.g. paying from within Cases.
+  final String? trackRouteName;
+
+  /// The app-bar title; the filing flow keeps the default.
+  final String title;
 
   Future<void> _pay(BuildContext context, WidgetRef ref) async {
     final payment = ref.read(paymentProvider(invoiceId).notifier);
@@ -72,7 +83,7 @@ class InvoiceScreen extends ConsumerWidget {
     final stage = ref.watch(paymentProvider(invoiceId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Search submitted')),
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: invoice.when2(
           loading: () => const _QuoteSkeleton(),
@@ -151,13 +162,13 @@ class InvoiceScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSizing.space12),
                 ],
-                if (trackingId.isNotEmpty)
+                if (trackingId.isNotEmpty && trackRouteName != null)
                   AppButton(
                     label: 'Track this request',
                     variant: AppButtonVariant.secondary,
                     icon: Icons.arrow_forward,
                     onPressed: () => context.goNamed(
-                      trackRouteName,
+                      trackRouteName!,
                       pathParameters: {'trackingId': trackingId},
                     ),
                   ),

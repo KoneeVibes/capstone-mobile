@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:propertyintelmobileapp/features/property_search/data/models/invoice_model.dart';
-import 'package:propertyintelmobileapp/features/property_search/domain/entities/invoice.dart';
+import 'package:propertyintelmobileapp/features/payment/data/models/invoice_model.dart';
+import 'package:propertyintelmobileapp/features/payment/domain/entities/invoice.dart';
 
-import '../../property_search_fixtures.dart';
+import '../../payment_fixtures.dart';
 
 void main() {
   test('decodes the live invoice', () {
@@ -22,6 +22,16 @@ void main() {
     expect(invoice.total, 11250);
     expect(invoice.currency, 'NGN');
     expect(invoice.isPaid, isFalse);
+    expect(invoice.reference, isNull);
+  });
+
+  test('reads the reference once a payment has been started', () {
+    final invoice = InvoiceModel.fromData({
+      ...invoiceJson,
+      'transactionReference': 'T354204543241066',
+    });
+
+    expect(invoice.reference, 'T354204543241066');
   });
 
   test('takes the server total over the sum of the lines', () {

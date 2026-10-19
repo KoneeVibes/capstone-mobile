@@ -7,7 +7,6 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_state_view.dart';
-import '../../../../shared/widgets/payment_coming_soon_sheet.dart';
 import '../../domain/entities/case_filter.dart';
 import '../providers/cases_list_provider.dart';
 import '../widgets/case_filter_bar.dart';
@@ -19,10 +18,18 @@ import '../widgets/case_list_tile.dart';
 /// Mounted in both shells; the server scopes the list to what the signed-in
 /// user may see.
 class CasesListScreen extends ConsumerWidget {
-  const CasesListScreen({required this.detailRouteName, super.key});
+  const CasesListScreen({
+    required this.detailRouteName,
+    this.payRouteName,
+    super.key,
+  });
 
   /// The detail route inside the shell this list lives in.
   final String detailRouteName;
+
+  /// The route that pays a case's invoice. Null in the staff shell, where
+  /// nobody pays; set in the client shell.
+  final String? payRouteName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,8 +62,11 @@ class CasesListScreen extends ConsumerWidget {
                   failure: failure,
                   onRetry: notifier.refresh,
                 ),
-                data: (state) =>
-                    _CasesList(state: state, detailRouteName: detailRouteName),
+                data: (state) => _CasesList(
+                  state: state,
+                  detailRouteName: detailRouteName,
+                  payRouteName: payRouteName,
+                ),
               ),
             ),
           ],
@@ -67,10 +77,15 @@ class CasesListScreen extends ConsumerWidget {
 }
 
 class _CasesList extends ConsumerWidget {
-  const _CasesList({required this.state, required this.detailRouteName});
+  const _CasesList({
+    required this.state,
+    required this.detailRouteName,
+    this.payRouteName,
+  });
 
   final CasesListState state;
   final String detailRouteName;
+  final String? payRouteName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,8 +140,12 @@ class _CasesList extends ConsumerWidget {
               detailRouteName,
               pathParameters: {'caseId': value.id},
             ),
-            onPayNow: canPay && value.status.isAwaitingPayment
-                ? () => showPaymentComingSoonSheet(context)
+            onPayNow:
+                canPay && payRouteName != null && value.status.isAwaitingPayment
+                ? () => context.pushNamed(
+                    payRouteName!,
+                    pathParameters: {'caseId': value.id},
+                  )
                 : null,
           );
         },

@@ -54,6 +54,9 @@ abstract final class AppSizing {
   static const double bannerIllustrationSize = 56;
   static const double timelineConnectorWidth = 2;
 
+  // Payment: the page-load bar under the checkout's app bar.
+  static const double progressBarHeight = 2;
+
   /// Rendered width of the splash wordmark.
   ///
   /// The source art is 482 px wide, so this is about as wide as it can be

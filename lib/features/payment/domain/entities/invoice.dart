@@ -9,6 +9,7 @@ class Invoice extends Equatable {
     required this.total,
     required this.currency,
     required this.isPaid,
+    this.reference,
   });
 
   final String id;
@@ -19,8 +20,12 @@ class Invoice extends Equatable {
   /// `paid` (or `refunded`): nothing left to pay.
   final bool isPaid;
 
+  /// Paystack's reference for the latest payment attempt; null until one is
+  /// started.
+  final String? reference;
+
   @override
-  List<Object?> get props => [id, items, total, currency, isPaid];
+  List<Object?> get props => [id, items, total, currency, isPaid, reference];
 }
 
 class InvoiceItem extends Equatable {

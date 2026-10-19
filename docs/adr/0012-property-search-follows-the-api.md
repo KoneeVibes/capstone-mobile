@@ -1,6 +1,6 @@
 # 0012 — Property search follows the API and the website, not the mockups
 
-- **Status:** Accepted
+- **Status:** Accepted; paying from the price screen superseded by 0014
 - **Recorded:** 2026-10-06
 
 ## Context
@@ -36,8 +36,9 @@ the reference for fields and wording.
   It has no "Edit": the case exists, a client cannot change it, and
   re-submitting would file a duplicate. The form replaces itself with the
   price screen for the same reason.
-- **"Pay now" opens a coming-soon sheet** on the price screen and on a client's
-  `submitted` cases (list and detail) until Paystack is integrated.
+- **"Pay now" originally opened a coming-soon sheet.** Paystack was wired into
+  the price screen (ADR 0014) and into a client's `submitted` cases — list and
+  detail — (ADR 0015), and the sheet is gone.
 - **The sign-in email is stored with the session** and locks a client's
   applicant email, so the case lands in their Cases. Staff file for someone
   else and type it.
@@ -46,8 +47,9 @@ the reference for fields and wording.
 
 ## Consequences
 
-- Paying from the Cases list needs the backend to expose `invoiceId` on the case
-  (or an invoice-by-case lookup). Until then only the price screen holds it.
+- Paying from the Cases list needed a way to reach the invoice from a case. The
+  backend made `GET /invoice/{id}` accept a case id; Cases "Pay now" uses it
+  (ADR 0015).
 - The mockups' per-title prices, multi-step pager and receipt screen are not
   built. The receipt waits on Paystack.
 - Pricing oddities seen live and left to the backend: two titles named, one

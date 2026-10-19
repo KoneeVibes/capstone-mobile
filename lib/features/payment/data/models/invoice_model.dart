@@ -31,6 +31,7 @@ abstract final class InvoiceModel {
           : items.fold<num>(0, (sum, item) => sum + item.amount),
       currency: _string(data['currency']) ?? 'NGN',
       isPaid: status == 'paid' || status == 'refunded',
+      reference: _string(data['transactionReference']),
     );
   }
 

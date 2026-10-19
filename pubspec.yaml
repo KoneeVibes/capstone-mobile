@@ -51,6 +51,9 @@ dependencies:
   # A replaceable "now", so countdowns are testable with fake_async.
   clock: ^1.1.2
 
+  # Paystack's hosted checkout, opened with the access code the backend issues.
+  webview_flutter: ^4.14.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
 import '../../../../core/navigation/app_session.dart';
@@ -12,7 +13,6 @@ import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_state_view.dart';
-import '../../../../shared/widgets/payment_coming_soon_sheet.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_applicant.dart';
 import '../../domain/entities/case_property.dart';
@@ -24,9 +24,13 @@ import '../widgets/case_status_chip.dart';
 /// One case in full, with the action that assigns or re-assigns it (staff
 /// only).
 class CaseDetailScreen extends ConsumerWidget {
-  const CaseDetailScreen({required this.caseId, super.key});
+  const CaseDetailScreen({required this.caseId, this.payRouteName, super.key});
 
   final String caseId;
+
+  /// The route that pays this case's invoice. Null in the staff shell, where
+  /// nobody pays; set in the client shell.
+  final String? payRouteName;
 
   Future<void> _assign(BuildContext context, WidgetRef ref, Case value) async {
     // The sheet performs the write itself and reports its own failures inline,
@@ -105,7 +109,9 @@ class CaseDetailScreen extends ConsumerWidget {
                     onPressed: () => _assign(context, ref, loaded),
                   ),
                 )
-              else if (canPay && loaded.status.isAwaitingPayment)
+              else if (canPay &&
+                  payRouteName != null &&
+                  loaded.status.isAwaitingPayment)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSizing.screenPadding,
@@ -118,7 +124,10 @@ class CaseDetailScreen extends ConsumerWidget {
                     children: [
                       AppButton(
                         label: 'Pay now',
-                        onPressed: () => showPaymentComingSoonSheet(context),
+                        onPressed: () => context.pushNamed(
+                          payRouteName!,
+                          pathParameters: {'caseId': caseId},
+                        ),
                       ),
                       const SizedBox(height: AppSizing.space8),
                       const Text(

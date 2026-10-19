@@ -24,13 +24,22 @@ import '../widgets/case_status_chip.dart';
 /// One case in full, with the action that assigns or re-assigns it (staff
 /// only).
 class CaseDetailScreen extends ConsumerWidget {
-  const CaseDetailScreen({required this.caseId, this.payRouteName, super.key});
+  const CaseDetailScreen({
+    required this.caseId,
+    this.payRouteName,
+    this.chatRouteName,
+    super.key,
+  });
 
   final String caseId;
 
   /// The route that pays this case's invoice. Null in the staff shell, where
   /// nobody pays; set in the client shell.
   final String? payRouteName;
+
+  /// The case conversation route. Set in the staff shell; null for clients,
+  /// where the chat is not offered yet.
+  final String? chatRouteName;
 
   Future<void> _assign(BuildContext context, WidgetRef ref, Case value) async {
     // The sheet performs the write itself and reports its own failures inline,
@@ -67,6 +76,20 @@ class CaseDetailScreen extends ConsumerWidget {
             ? const Text('Case')
             : _ApplicantHeader(applicant: value.applicant),
         actions: [
+          if (value != null && chatRouteName != null)
+            IconButton(
+              onPressed: () => context.pushNamed(
+                chatRouteName!,
+                pathParameters: {'caseId': caseId},
+                queryParameters: {'ref': value.trackingId ?? ''},
+              ),
+              tooltip: 'Open conversation',
+              icon: const Icon(
+                Icons.chat_bubble_outline,
+                size: AppSizing.iconMd,
+                color: AppColors.textSecondary,
+              ),
+            ),
           if (value != null) CaseStatusChip(status: value.status),
           const SizedBox(width: AppSizing.screenPadding),
         ],

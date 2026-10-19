@@ -86,6 +86,17 @@ abstract final class AppRoutes {
   static const String dashboardName = 'dashboard';
   static const String dashboardPath = '/staff/dashboard';
 
+  /// The tracking-ID lookup / "Search property" entry, reached from the staff
+  /// home header (it used to be the dashboard tab's root).
+  static const String staffTrackingLookupName = 'staffTrackingLookup';
+  static const String staffTrackingLookupPath = '/staff/dashboard/lookup';
+
+  /// A case conversation. Top-level (above the shell) so it opens full screen,
+  /// reachable from both the staff queue and case detail. Takes a `caseId` path
+  /// parameter and an optional `ref` query parameter for the header label.
+  static const String caseChatName = 'caseChat';
+  static const String caseChatPath = '/staff/chat/:caseId';
+
   /// Takes a `trackingId` path parameter.
   static const String trackingProgressName = 'trackingProgress';
   static const String trackingProgressPath =

@@ -142,6 +142,7 @@ class _StaffBody extends ConsumerWidget {
     final canAssign = viewer.permissions.canAssignCases;
     final disputes = ref.watch(caseDisputesProvider(value.id));
     final menu = menuActionsFor(value, viewer);
+    final awaitingPayment = value.status.isAwaitingPayment;
 
     return _Layout(
       content: [
@@ -201,16 +202,18 @@ class _StaffBody extends ConsumerWidget {
             Expanded(
               child: AppButton(
                 label: 'Add Report',
-                onPressed: () => _run(context, ref, CaseAction.addReport),
+                onPressed: awaitingPayment
+                    ? null
+                    : () => _run(context, ref, CaseAction.addReport),
               ),
             ),
           ],
         ),
-        // The assign button greys out rather than vanishing; this says why.
-        if (canAssign && !value.status.canBeAssigned) ...[
+        // Both buttons grey out rather than vanishing; this says why.
+        if (awaitingPayment) ...[
           const SizedBox(height: AppSizing.space8),
           const Text(
-            'This case can be assigned once its payment is validated.',
+            'Work on this case starts once its payment is validated.',
             style: AppTextStyles.bodySmall,
             textAlign: TextAlign.center,
           ),

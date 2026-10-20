@@ -30,7 +30,8 @@ reports and disputes have no endpoints yet. The designs also show a due date
 - **Accept and suspend are mock.** Each asks for confirmation (Confirm over
   Cancel, no reason), then raises a snackbar. Nothing is written, so ADR 0013
   stands: the app still only writes `assigned`.
-- **Add Report shows for all staff** and says "coming soon"; so does Review
+- **Add Report shows for all staff**, greyed out like assign until the case
+  is paid, and says "coming soon"; so does Review
   report. The reports half of Property Update stays hidden. When it lands, a
   client sees a report only once it is approved.
 - **Client view.** Cards and detail show **Pay now** while unpaid (ADR 0015),

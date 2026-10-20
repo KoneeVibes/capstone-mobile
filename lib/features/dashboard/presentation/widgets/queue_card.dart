@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/case_summary_card.dart';
 import '../../domain/entities/queue_item.dart';
 import '../../domain/queue_action.dart';
 import 'queue_status_chip.dart';
@@ -39,102 +38,14 @@ class QueueCard extends StatelessWidget {
       QueueActionKind.chat => onOpenChat,
     };
 
-    return Container(
-      padding: const EdgeInsets.all(AppSizing.space16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizing.radiusLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _Thumbnail(),
-              const SizedBox(width: AppSizing.space12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.reference,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.primaryBright,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: AppSizing.space8),
-                        QueueStatusChip(status: item.status),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizing.space4),
-                    Text(
-                      item.propertyName,
-                      style: AppTextStyles.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSizing.space4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.partyName,
-                            style: AppTextStyles.bodyMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: AppSizing.space8),
-                        _DueLabel(dueInDays: item.dueInDays),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizing.space12),
-          AppButton(
-            label: action.label,
-            variant: AppButtonVariant.soft,
-            onPressed: action.isEnabled ? onPressed : null,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Property thumbnail stand-in.
-///
-/// TODO(backend): show the property image once the queue endpoint carries one.
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: AppSizing.iconButtonSize,
-      height: AppSizing.iconButtonSize,
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(AppSizing.radiusMd),
-      ),
-      child: const Icon(
-        Icons.location_city_outlined,
-        size: AppSizing.iconMd,
-        color: AppColors.primary,
-      ),
+    return CaseSummaryCard(
+      reference: item.reference,
+      title: item.propertyName,
+      subtitle: item.partyName,
+      status: QueueStatusChip(status: item.status),
+      trailing: _DueLabel(dueInDays: item.dueInDays),
+      actionLabel: action.label,
+      onAction: action.isEnabled ? onPressed : null,
     );
   }
 }

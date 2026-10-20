@@ -10,7 +10,6 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_state_view.dart';
 import '../providers/tracking_provider.dart';
 import '../widgets/tracking_back_button.dart';
-import '../widgets/tracking_banner.dart';
 import '../widgets/tracking_panel.dart';
 import '../widgets/tracking_timeline.dart';
 
@@ -62,8 +61,6 @@ class _TrackingProgressScreenState
         child: ListView(
           padding: const EdgeInsets.all(AppSizing.screenPadding),
           children: [
-            const TrackingBanner(),
-            const SizedBox(height: AppSizing.space12),
             TrackingPanel(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

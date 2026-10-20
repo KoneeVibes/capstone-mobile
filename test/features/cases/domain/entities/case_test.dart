@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:propertyintelmobileapp/features/cases/domain/entities/case.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_applicant.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_filter.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_property.dart';
@@ -123,7 +124,11 @@ void main() {
     });
 
     test('collapses a city and state that are the same place', () {
-      const property = CaseProperty(type: 'land', city: 'Lagos', state: 'Lagos');
+      const property = CaseProperty(
+        type: 'land',
+        city: 'Lagos',
+        state: 'Lagos',
+      );
       expect(property.location, 'Lagos');
     });
 
@@ -151,14 +156,30 @@ void main() {
     });
 
     test('drops a part the record does not carry', () {
-      expect(
-        buildCase(city: null, state: null).summary,
-        'Building',
+      expect(buildCase(city: null, state: null).summary, 'Building');
+      expect(buildCase(propertyType: '').summary, 'Victoria Island, Lagos');
+    });
+  });
+
+  group('Case.headline', () {
+    test('is the street address', () {
+      expect(buildCase().headline, '5 Kayode Abraham, Off Ligali Ayorinde');
+    });
+
+    test('falls back to the summary without an address', () {
+      final value = buildCase();
+      final noAddress = Case(
+        id: value.id,
+        applicant: value.applicant,
+        property: const CaseProperty(
+          type: 'land',
+          address: '  ',
+          city: 'Ikeja',
+          state: 'Lagos',
+        ),
+        status: value.status,
       );
-      expect(
-        buildCase(propertyType: '').summary,
-        'Victoria Island, Lagos',
-      );
+      expect(noAddress.headline, 'Land · Ikeja, Lagos');
     });
   });
 

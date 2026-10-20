@@ -8,7 +8,8 @@ import 'app_button.dart';
 /// Asks the user to confirm an action, resolving to true when they accept.
 ///
 /// Dismissing by tapping outside resolves to false, so a stray tap can never
-/// trigger a destructive action. Pass a null [icon] for a text-only dialog.
+/// trigger a destructive action. Pass a null [icon] for a text-only dialog, and
+/// [stackActions] to put Confirm above Cancel at full width.
 Future<bool> showAppConfirmDialog({
   required BuildContext context,
   required String title,
@@ -17,6 +18,7 @@ Future<bool> showAppConfirmDialog({
   required String cancelLabel,
   IconData? icon = Icons.delete_outline,
   bool isDestructive = true,
+  bool stackActions = false,
 }) async {
   final result = await showDialog<bool>(
     context: context,
@@ -28,6 +30,7 @@ Future<bool> showAppConfirmDialog({
       cancelLabel: cancelLabel,
       icon: icon,
       isDestructive: isDestructive,
+      stackActions: stackActions,
     ),
   );
   return result ?? false;
@@ -41,6 +44,7 @@ class _AppConfirmDialog extends StatelessWidget {
     required this.cancelLabel,
     required this.icon,
     required this.isDestructive,
+    required this.stackActions,
   });
 
   final String title;
@@ -49,9 +53,23 @@ class _AppConfirmDialog extends StatelessWidget {
   final String cancelLabel;
   final IconData? icon;
   final bool isDestructive;
+  final bool stackActions;
 
   @override
   Widget build(BuildContext context) {
+    final cancel = AppButton(
+      label: cancelLabel,
+      variant: AppButtonVariant.secondary,
+      onPressed: () => Navigator.of(context).pop(false),
+    );
+    final confirm = AppButton(
+      label: confirmLabel,
+      variant: isDestructive
+          ? AppButtonVariant.destructive
+          : AppButtonVariant.primary,
+      onPressed: () => Navigator.of(context).pop(true),
+    );
+
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: AppSizing.space24),
       child: Padding(
@@ -91,27 +109,18 @@ class _AppConfirmDialog extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizing.space24),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    label: cancelLabel,
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => Navigator.of(context).pop(false),
-                  ),
-                ),
-                const SizedBox(width: AppSizing.space12),
-                Expanded(
-                  child: AppButton(
-                    label: confirmLabel,
-                    variant: isDestructive
-                        ? AppButtonVariant.destructive
-                        : AppButtonVariant.primary,
-                    onPressed: () => Navigator.of(context).pop(true),
-                  ),
-                ),
-              ],
-            ),
+            if (stackActions) ...[
+              confirm,
+              const SizedBox(height: AppSizing.space12),
+              cancel,
+            ] else
+              Row(
+                children: [
+                  Expanded(child: cancel),
+                  const SizedBox(width: AppSizing.space12),
+                  Expanded(child: confirm),
+                ],
+              ),
           ],
         ),
       ),

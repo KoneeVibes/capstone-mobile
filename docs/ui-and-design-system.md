@@ -47,7 +47,7 @@ reference. In summary:
 
 | Widget | Use it for |
 | --- | --- |
-| `AppButton` | every button: primary, secondary (outlined), destructive; loading state built in |
+| `AppButton` | every button: primary, secondary (outlined), destructive, soft, destructive-outlined; loading state built in |
 | `AppTextField` | labelled form fields; `showLabel: false` for placeholder-only designs |
 | `AppSearchField` | pill search input |
 | `AppOtpField` | one-time codes: boxes over one hidden field, so paste and autofill work |
@@ -55,7 +55,9 @@ reference. In summary:
 | `AppAvatar` | initials or a photo, falling back to initials on error |
 | `AppBottomNav` | the tab bar (driven by `AppShell`) |
 | `showAppBottomSheet` / `AppBottomSheet` | forms in a sheet, keyboard-aware |
-| `showAppConfirmDialog` | yes/no confirmation, with or without an icon |
+| `showAppConfirmDialog` | yes/no confirmation, with or without an icon; `stackActions` for Confirm over Cancel |
+| `AppUploadField` | an upload box listing the picked files, with optional "Clear all" |
+| `CaseSummaryCard` | the case card the staff queue and the Cases lists share |
 | `AppStateView` | centred loading, empty and failure states |
 | `AppShimmer`, `AppShimmerBox` | skeletons |
 | `PlaceholderScreen` | a route whose screen is not built yet |

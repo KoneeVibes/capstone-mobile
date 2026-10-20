@@ -7,7 +7,10 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_state_view.dart';
+import '../../domain/case_actions.dart';
+import '../../domain/entities/case.dart';
 import '../../domain/entities/case_filter.dart';
+import '../case_action_runner.dart';
 import '../providers/cases_list_provider.dart';
 import '../widgets/case_filter_bar.dart';
 import '../widgets/case_list_skeleton.dart';
@@ -20,16 +23,25 @@ import '../widgets/case_list_tile.dart';
 class CasesListScreen extends ConsumerWidget {
   const CasesListScreen({
     required this.detailRouteName,
+    required this.chatRouteName,
     this.payRouteName,
+    this.trackRouteName,
     super.key,
   });
 
   /// The detail route inside the shell this list lives in.
   final String detailRouteName;
 
+  /// The case conversation for this role. Takes a `caseId` path parameter.
+  final String chatRouteName;
+
   /// The route that pays a case's invoice. Null in the staff shell, where
   /// nobody pays; set in the client shell.
   final String? payRouteName;
+
+  /// The client's progress timeline. Takes `caseId` and `trackingId` path
+  /// parameters; null in the staff shell.
+  final String? trackRouteName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,7 +77,9 @@ class CasesListScreen extends ConsumerWidget {
                 data: (state) => _CasesList(
                   state: state,
                   detailRouteName: detailRouteName,
+                  chatRouteName: chatRouteName,
                   payRouteName: payRouteName,
+                  trackRouteName: trackRouteName,
                 ),
               ),
             ),
@@ -80,12 +94,65 @@ class _CasesList extends ConsumerWidget {
   const _CasesList({
     required this.state,
     required this.detailRouteName,
+    required this.chatRouteName,
     this.payRouteName,
+    this.trackRouteName,
   });
 
   final CasesListState state;
   final String detailRouteName;
+  final String chatRouteName;
   final String? payRouteName;
+  final String? trackRouteName;
+
+  /// The staff card's button, from the shared action rules.
+  (String?, VoidCallback?) _staffAction(
+    BuildContext context,
+    WidgetRef ref,
+    Case value,
+    CaseViewer viewer,
+  ) {
+    final card = cardActionFor(value, viewer);
+    if (card == null) return (null, null);
+    return (
+      caseCardLabel(card.action),
+      card.isEnabled
+          ? () => runCaseAction(
+              context: context,
+              ref: ref,
+              value: value,
+              action: card.action,
+              chatRouteName: chatRouteName,
+            )
+          : null,
+    );
+  }
+
+  /// Pay now while unpaid, then Track progress.
+  (String?, VoidCallback?) _clientAction(
+    BuildContext context,
+    Case value, {
+    required bool canPay,
+  }) {
+    final payRoute = payRouteName;
+    if (canPay && payRoute != null && value.status.isAwaitingPayment) {
+      return (
+        'Pay now',
+        () => context.pushNamed(payRoute, pathParameters: {'caseId': value.id}),
+      );
+    }
+    final trackRoute = trackRouteName;
+    final trackingId = value.trackingId;
+    // Older records carry no tracking id, so there is nothing to track by.
+    if (trackRoute == null || trackingId == null) return (null, null);
+    return (
+      'Track progress',
+      () => context.pushNamed(
+        trackRoute,
+        pathParameters: {'caseId': value.id, 'trackingId': trackingId},
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,6 +161,7 @@ class _CasesList extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     final isStaff = session?.isStaff ?? false;
     final canPay = session?.canPayForCases ?? false;
+    final viewer = caseViewerOf(ref);
 
     if (visible.isEmpty) {
       return RefreshIndicator(
@@ -134,19 +202,17 @@ class _CasesList extends ConsumerWidget {
           }
 
           final value = visible[index];
+          final (label, onAction) = isStaff
+              ? _staffAction(context, ref, value, viewer)
+              : _clientAction(context, value, canPay: canPay);
           return CaseListTile(
             value: value,
             onTap: () => context.pushNamed(
               detailRouteName,
               pathParameters: {'caseId': value.id},
             ),
-            onPayNow:
-                canPay && payRouteName != null && value.status.isAwaitingPayment
-                ? () => context.pushNamed(
-                    payRouteName!,
-                    pathParameters: {'caseId': value.id},
-                  )
-                : null,
+            actionLabel: label,
+            onAction: onAction,
           );
         },
       ),

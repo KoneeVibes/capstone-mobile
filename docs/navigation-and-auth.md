@@ -28,8 +28,16 @@
   Home       /client/home        (banner and recent searches go to Search)
   Search     /client/search      (+ track/:trackingId, property,
                                     quote/:invoiceId?trackingId=)
-  Cases      /client/cases       (+ :caseId)
+  Cases      /client/cases       (+ :caseId, :caseId/pay,
+                                    :caseId/track/:trackingId)
   Profile    /client/profile
+
+Full screen, above the shells (no bottom bar):
+  /staff/chat/:caseId                    case conversation (staff side)
+  /staff/disputes/:caseId/:disputeId     answer a dispute
+  /client/chat/:caseId                   case conversation (client side)
+  /client/disputes/:caseId/new           raise a dispute
+  /client/disputes/:caseId/:disputeId    follow a dispute
 
 /legal/privacy-policy, /legal/terms   reserved for the legal screens
 ```
@@ -39,8 +47,10 @@ history. `AppShell` draws the bottom bar from `AppShell.staffTabs` or
 `AppShell.clientTabs`. **Tab order must match branch order**; a debug assert
 fails if the counts differ. A branch can be hidden (`hiddenBranches`) without
 changing that order: the Staff tab is dropped for roles that cannot list staff.
-Both shells mount the same Cases screens; the screen reads the session to hide
-staff-only actions. The tracking lookup and the property search are mounted the
+Both shells mount the same Cases screens; the detail screen reads the session
+and draws a staff or a client layout ([ADR 0017](adr/0017-case-actions-and-disputes.md)).
+The full-screen routes sit under `/staff` or `/client`, so the redirect keeps
+each role on its own copy without a rule of its own. The tracking lookup and the property search are mounted the
 same way — staff Dashboard and client Search — with route names passed in.
 The quote is a sibling of the form, not its child: the form replaces itself
 with the quote once the case exists, so back never returns to a filled-in form

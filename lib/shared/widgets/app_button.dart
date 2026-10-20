@@ -18,6 +18,10 @@ enum AppButtonVariant {
   /// Tinted fill in the brand's soft blue — a low-emphasis action that still
   /// reads as the brand, used for the per-row actions on the staff queue cards.
   soft,
+
+  /// Outlined in red, for a refusal that is not destructive — declining a
+  /// dispute, say.
+  destructiveOutlined,
 }
 
 /// The app's button.
@@ -125,7 +129,7 @@ class AppButton extends StatelessWidget {
   (Color, Color, Color?) _palette(bool isEnabled) {
     if (!isEnabled) {
       return switch (variant) {
-        AppButtonVariant.secondary => (
+        AppButtonVariant.secondary || AppButtonVariant.destructiveOutlined => (
           AppColors.surface,
           AppColors.disabledText,
           AppColors.border,
@@ -158,6 +162,11 @@ class AppButton extends StatelessWidget {
         null,
       ),
       AppButtonVariant.soft => (AppColors.primarySoft, AppColors.primary, null),
+      AppButtonVariant.destructiveOutlined => (
+        AppColors.surface,
+        AppColors.destructive,
+        AppColors.destructiveSoft,
+      ),
     };
   }
 }

@@ -76,6 +76,24 @@ abstract final class AppRoutes {
   static const String clientCasePayName = 'clientCasePay';
   static const String clientCasePayPath = '/client/cases/:caseId/pay';
 
+  /// A case's progress timeline, inside the Cases tab. Takes `caseId` and
+  /// `trackingId` path parameters.
+  static const String clientCaseTrackName = 'clientCaseTrack';
+  static const String clientCaseTrackPath =
+      '/client/cases/:caseId/track/:trackingId';
+
+  /// The client's side of a case conversation. Top-level, as [caseChatName].
+  static const String clientCaseChatName = 'clientCaseChat';
+  static const String clientCaseChatPath = '/client/chat/:caseId';
+
+  /// The dispute form. Top-level, so it opens full screen. Takes `caseId`.
+  static const String clientRaiseDisputeName = 'clientRaiseDispute';
+  static const String clientRaiseDisputePath = '/client/disputes/:caseId/new';
+
+  /// One dispute. Takes `caseId` and `disputeId` path parameters.
+  static const String clientDisputeName = 'clientDispute';
+  static const String clientDisputePath = '/client/disputes/:caseId/:disputeId';
+
   static const String clientProfileName = 'clientProfile';
   static const String clientProfilePath = '/client/profile';
 
@@ -96,6 +114,10 @@ abstract final class AppRoutes {
   /// parameter and an optional `ref` query parameter for the header label.
   static const String caseChatName = 'caseChat';
   static const String caseChatPath = '/staff/chat/:caseId';
+
+  /// One dispute, where staff answer it. Takes `caseId` and `disputeId`.
+  static const String staffDisputeName = 'staffDispute';
+  static const String staffDisputePath = '/staff/disputes/:caseId/:disputeId';
 
   /// Takes a `trackingId` path parameter.
   static const String trackingProgressName = 'trackingProgress';

@@ -64,14 +64,24 @@ class Case extends Equatable {
   bool get isAssigned => assigneeId != null;
 
   /// `Due diligence, Physical inspection`, or empty when none were given.
-  String get purposeLabel =>
-      inquiryPurpose.map(AppFormatters.apiLabel).where((p) => p.isNotEmpty).join(', ');
+  String get purposeLabel => inquiryPurpose
+      .map(AppFormatters.apiLabel)
+      .where((p) => p.isNotEmpty)
+      .join(', ');
 
   /// `Building · Victoria Island, Lagos` — the list row's second line.
   String get summary => [
     property.typeLabel,
     property.location,
   ].where((part) => part.isNotEmpty).join(' · ');
+
+  /// `5 Kayode Abraham, Off Ligali Ayorinde` — the card title. Falls back to
+  /// the [summary] for a request filed without a street address.
+  String get headline {
+    final address = property.address?.trim() ?? '';
+    if (address.isNotEmpty) return address;
+    return summary.isEmpty ? 'Property search' : summary;
+  }
 
   /// Returns a copy holding [assignee], including when that is null.
   ///

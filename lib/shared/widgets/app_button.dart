@@ -4,7 +4,7 @@ import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
-/// The three looks an [AppButton] can take.
+/// The looks an [AppButton] can take.
 enum AppButtonVariant {
   /// Filled call to action.
   primary,
@@ -14,6 +14,10 @@ enum AppButtonVariant {
 
   /// Filled red, for irreversible actions.
   destructive,
+
+  /// Tinted fill in the brand's soft blue — a low-emphasis action that still
+  /// reads as the brand, used for the per-row actions on the staff queue cards.
+  soft,
 }
 
 /// The app's button.
@@ -126,6 +130,13 @@ class AppButton extends StatelessWidget {
           AppColors.disabledText,
           AppColors.border,
         ),
+        // Muted tint rather than the filled grey, so a disabled soft button
+        // stays flat against the card it sits on.
+        AppButtonVariant.soft => (
+          AppColors.surfaceMuted,
+          AppColors.disabledText,
+          null,
+        ),
         _ => (AppColors.disabled, AppColors.surface, null),
       };
     }
@@ -146,6 +157,7 @@ class AppButton extends StatelessWidget {
         AppColors.textOnPrimary,
         null,
       ),
+      AppButtonVariant.soft => (AppColors.primarySoft, AppColors.primary, null),
     };
   }
 }

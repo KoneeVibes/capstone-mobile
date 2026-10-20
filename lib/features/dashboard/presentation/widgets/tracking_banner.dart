@@ -8,9 +8,13 @@ import '../../../../core/theme/app_text_styles.dart';
 /// The blue "Search a Property" header. With [onTap] it opens a new property
 /// search and shows an arrow saying so.
 class TrackingBanner extends StatelessWidget {
-  const TrackingBanner({super.key, this.onTap});
+  const TrackingBanner({super.key, this.onTap, this.showIllustration = true});
 
   final VoidCallback? onTap;
+
+  /// Whether to draw the leading illustration. On by default; the staff home's
+  /// search card turns it off to keep the card plain and compact.
+  final bool showIllustration;
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +37,16 @@ class TrackingBanner extends StatelessWidget {
   Widget _content() {
     return Row(
       children: [
-        Image.asset(
-          AppAssets.searchPropertyIllustration,
-          width: AppSizing.bannerIllustrationSize,
-          height: AppSizing.bannerIllustrationSize,
-          fit: BoxFit.contain,
-          excludeFromSemantics: true,
-        ),
-        const SizedBox(width: AppSizing.space16),
+        if (showIllustration) ...[
+          Image.asset(
+            AppAssets.searchPropertyIllustration,
+            width: AppSizing.bannerIllustrationSize,
+            height: AppSizing.bannerIllustrationSize,
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
+          ),
+          const SizedBox(width: AppSizing.space16),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

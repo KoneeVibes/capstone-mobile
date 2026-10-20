@@ -13,8 +13,10 @@ import '../../features/auth/presentation/screens/verify_code_screen.dart';
 import '../../features/auth/presentation/widgets/sign_out_button.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
+import '../../features/chat/presentation/screens/case_chat_screen.dart';
 import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/dashboard/presentation/screens/staff_home_screen.dart';
 import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
 import '../../features/payment/presentation/screens/invoice_screen.dart';
 import '../../features/property_search/presentation/screens/search_property_screen.dart';
@@ -129,6 +131,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.staffHomePath,
         name: AppRoutes.staffHomeName,
         redirect: (context, state) => AppRoutes.dashboardPath,
+      ),
+      // Top-level, so a case conversation opens full screen over the shell. The
+      // staff-only redirect keeps clients out. Mock UI for now.
+      GoRoute(
+        path: AppRoutes.caseChatPath,
+        name: AppRoutes.caseChatName,
+        builder: (context, state) => CaseChatScreen(
+          caseId: state.pathParameters['caseId'] ?? '',
+          reference: state.uri.queryParameters['ref'],
+        ),
       ),
       // Branch order must match AppShell.clientTabs.
       StatefulShellRoute.indexedStack(
@@ -254,17 +266,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.dashboardPath,
                 name: AppRoutes.dashboardName,
-                builder: (context, state) => const DashboardScreen(
-                  progressRouteName: AppRoutes.trackingProgressName,
-                  searchPropertyRouteName: AppRoutes.staffSearchPropertyName,
+                builder: (context, state) => const StaffHomeScreen(
+                  caseDetailRouteName: AppRoutes.caseDetailName,
+                  chatRouteName: AppRoutes.caseChatName,
+                  trackingLookupRouteName: AppRoutes.staffTrackingLookupName,
+                  casesRouteName: AppRoutes.casesName,
                 ),
                 routes: [
+                  // The tracking lookup moved off the tab root; it is now
+                  // reached from the home header's search entry.
+                  GoRoute(
+                    path: 'lookup',
+                    name: AppRoutes.staffTrackingLookupName,
+                    builder: (context, state) => const DashboardScreen(
+                      progressRouteName: AppRoutes.trackingProgressName,
+                      searchPropertyRouteName:
+                          AppRoutes.staffSearchPropertyName,
+                    ),
+                  ),
                   GoRoute(
                     path: 'track/:trackingId',
                     name: AppRoutes.trackingProgressName,
                     builder: (context, state) => TrackingProgressScreen(
                       trackingId: state.pathParameters['trackingId'] ?? '',
-                      fallbackRouteName: AppRoutes.dashboardName,
+                      fallbackRouteName: AppRoutes.staffTrackingLookupName,
                     ),
                   ),
                   GoRoute(
@@ -304,6 +329,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     // should produce.
                     builder: (context, state) => CaseDetailScreen(
                       caseId: state.pathParameters['caseId'] ?? '',
+                      chatRouteName: AppRoutes.caseChatName,
                     ),
                   ),
                 ],

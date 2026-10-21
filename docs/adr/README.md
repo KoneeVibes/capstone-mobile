@@ -21,7 +21,8 @@ They are kept so the reason survives the people who were in the room.
 | [0014](0014-paystack-checkout-in-a-webview.md) | Pay through Paystack's hosted checkout in a WebView; the invoice is the proof | Accepted |
 | [0015](0015-pay-an-unpaid-case-by-case-id.md) | Pay an unpaid case through the invoice screen, looked up by case id | Accepted |
 | [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted |
-| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted |
+| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018 |
+| [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted |
 
 ## Writing one
 

@@ -32,7 +32,8 @@ reports and disputes have no endpoints yet. The designs also show a due date
   stands: the app still only writes `assigned`.
 - **Add Report shows for all staff**, greyed out like assign until the case
   is paid, and says "coming soon"; so does Review
-  report. The reports half of Property Update stays hidden. When it lands, a
+  report. *Superseded by [0018](0018-add-report-sheet.md): Add Report opens
+  a mock upload sheet.* The reports half of Property Update stays hidden. When it lands, a
   client sees a report only once it is approved.
 - **Client view.** Cards and detail show **Pay now** while unpaid (ADR 0015),
   then **Track progress**. It opens `TrackingProgressScreen` on a route inside

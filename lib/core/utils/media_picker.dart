@@ -28,14 +28,26 @@ class PickedMedia extends Equatable {
   /// Lower-case, without the leading dot.
   final String extension;
 
-  bool get isImage =>
-      AppConstants.allowedImageExtensions.contains(extension);
+  bool get isImage => AppConstants.allowedImageExtensions.contains(extension);
 
   /// Human-readable size, e.g. `1.2 MB`.
   String get displaySize => AppFormatters.fileSize(sizeBytes);
 
   @override
   List<Object?> get props => [path, fileName, sizeBytes, extension];
+}
+
+/// What a multi-file pick kept, and how many files it left out over the limit.
+class PickedDocuments extends Equatable {
+  const PickedDocuments({required this.files, this.dropped = 0});
+
+  static const none = PickedDocuments(files: []);
+
+  final List<PickedMedia> files;
+  final int dropped;
+
+  @override
+  List<Object?> get props => [files, dropped];
 }
 
 /// The raw plugin calls, isolated so the validation around them is testable
@@ -84,11 +96,8 @@ class MediaPicker {
   );
 
   /// Picks a single document.
-  Future<Result<PickedMedia?>> pickDocument({
-    Set<String>? allowedExtensions,
-  }) {
-    final allowed =
-        allowedExtensions ?? AppConstants.allowedDocumentExtensions;
+  Future<Result<PickedMedia?>> pickDocument({Set<String>? allowedExtensions}) {
+    final allowed = allowedExtensions ?? AppConstants.allowedDocumentExtensions;
     return _guard(
       () async {
         final files = await _backend.pickFiles(
@@ -107,14 +116,14 @@ class MediaPicker {
 
   /// Picks several documents at once.
   ///
-  /// Returns `Ok([])` when the user backs out. The first invalid file fails the
-  /// whole batch, so a partially-valid selection is never silently trimmed.
-  Future<Result<List<PickedMedia>>> pickDocuments({
+  /// Returns empty [PickedDocuments] when the user backs out. The first invalid
+  /// file fails the whole batch; files past [limit] are left out and counted in
+  /// [PickedDocuments.dropped], so the caller can say so.
+  Future<Result<PickedDocuments>> pickDocuments({
     Set<String>? allowedExtensions,
     int? limit,
   }) async {
-    final allowed =
-        allowedExtensions ?? AppConstants.allowedDocumentExtensions;
+    final allowed = allowedExtensions ?? AppConstants.allowedDocumentExtensions;
 
     final List<RawPickedFile> raw;
     try {
@@ -126,7 +135,7 @@ class MediaPicker {
       return Err(_pluginFailure(error, stackTrace));
     }
 
-    if (raw.isEmpty) return const Ok([]);
+    if (raw.isEmpty) return const Ok(PickedDocuments.none);
 
     final capped = limit != null && raw.length > limit
         ? raw.take(limit).toList()
@@ -143,7 +152,9 @@ class MediaPicker {
       picked.add(validated.valueOrNull!);
     }
 
-    return Ok(picked);
+    return Ok(
+      PickedDocuments(files: picked, dropped: raw.length - capped.length),
+    );
   }
 
   /// Runs [pick], converting a cancel into `Ok(null)`, a plugin throw into an

@@ -166,7 +166,7 @@ class SearchFormNotifier extends Notifier<SearchFormState> {
         final paths = existing.map((file) => file.path).toSet();
         _setFiles(kind, [
           ...existing,
-          ...value.where((file) => paths.add(file.path)),
+          ...value.files.where((file) => paths.add(file.path)),
         ]);
         return null;
     }

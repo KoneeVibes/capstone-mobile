@@ -69,9 +69,15 @@ class _SubmitDisputeScreenState extends ConsumerState<SubmitDisputeScreen> {
         setState(
           () => _evidence = [
             ..._evidence,
-            ...value.where((file) => paths.add(file.path)),
+            ...value.files.where((file) => paths.add(file.path)),
           ],
         );
+        if (value.dropped > 0) {
+          context.showMessage(
+            'You can attach up to ${SubmitDisputeScreen.maxEvidence} files. '
+            'The extra files were left out.',
+          );
+        }
     }
   }
 

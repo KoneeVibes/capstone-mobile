@@ -11,6 +11,7 @@ import '../domain/entities/case.dart';
 import 'providers/case_detail_provider.dart';
 import 'providers/cases_list_provider.dart';
 import 'widgets/case_assign_sheet.dart';
+import 'widgets/case_report_sheet.dart';
 
 /// The signed-in staff member, as the action rules see them.
 CaseViewer caseViewerOf(WidgetRef ref) {
@@ -46,7 +47,8 @@ String caseMenuLabel(CaseAction action) => switch (action) {
 /// Carries out [action] on [value], from a list card or the detail screen.
 ///
 /// Assigning writes for real; accept and suspend confirm, then only raise a
-/// snackbar; the report actions are not built yet (ADR 0017).
+/// snackbar; Add Report opens a sheet that keeps nothing yet, and Review
+/// report is not built (ADR 0017).
 Future<void> runCaseAction({
   required BuildContext context,
   required WidgetRef ref,
@@ -83,8 +85,12 @@ Future<void> runCaseAction({
       if (confirmed && context.mounted) context.showMessage('Case suspended.');
     case CaseAction.reviewReport:
       context.showMessage('Reviewing reports is coming soon.');
+    // TODO(backend): the sheet keeps nothing until the report endpoint exists.
     case CaseAction.addReport:
-      context.showMessage('Adding reports is coming soon.');
+      final uploaded = await showCaseReportSheet(context: context);
+      if (uploaded == true && context.mounted) {
+        context.showMessage('Report submitted.');
+      }
   }
 }
 

@@ -24,7 +24,7 @@ class ChatConversationControls extends StatelessWidget {
       children: [
         Expanded(
           child: AppButton(
-            label: 'Open conversation',
+            label: 'Open chat',
             variant: AppButtonVariant.secondary,
             onPressed: canOpen ? onOpen : null,
           ),
@@ -32,7 +32,7 @@ class ChatConversationControls extends StatelessWidget {
         const SizedBox(width: AppSizing.space12),
         Expanded(
           child: AppButton(
-            label: 'Close conversation.',
+            label: 'Close chat',
             onPressed: canClose ? onClose : null,
           ),
         ),

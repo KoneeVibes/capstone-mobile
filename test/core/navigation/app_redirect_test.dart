@@ -132,6 +132,33 @@ void main() {
       expect(_redirect('/client/cases/case-1', role: AppRole.client), isNull);
     });
 
+    test('gives each role its own chat and dispute screens', () {
+      for (final location in [
+        '/client/chat/case-1',
+        '/client/disputes/case-1/new',
+        '/client/disputes/case-1/case-1-1',
+        '/client/cases/case-1/track/PI-URF8T7C2',
+      ]) {
+        expect(_redirect(location, role: AppRole.client), isNull);
+        expect(
+          _redirect(location, role: AppRole.staff),
+          AppRoutes.dashboardPath,
+          reason: location,
+        );
+      }
+      for (final location in [
+        '/staff/chat/case-1',
+        '/staff/disputes/case-1/case-1-1',
+      ]) {
+        expect(_redirect(location, role: AppRole.staff), isNull);
+        expect(
+          _redirect(location, role: AppRole.client),
+          AppRoutes.clientHomePath,
+          reason: location,
+        );
+      }
+    });
+
     test('keeps staff who cannot list staff off the Staff tab', () {
       expect(
         _redirect(
@@ -141,10 +168,17 @@ void main() {
         ),
         AppRoutes.dashboardPath,
       );
-      expect(_redirect(AppRoutes.staffMembersPath, role: AppRole.staff), isNull);
+      expect(
+        _redirect(AppRoutes.staffMembersPath, role: AppRole.staff),
+        isNull,
+      );
       // The rest of the shell is still theirs.
       expect(
-        _redirect(AppRoutes.casesPath, role: AppRole.staff, canViewStaff: false),
+        _redirect(
+          AppRoutes.casesPath,
+          role: AppRole.staff,
+          canViewStaff: false,
+        ),
         isNull,
       );
     });

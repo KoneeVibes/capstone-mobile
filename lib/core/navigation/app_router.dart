@@ -13,6 +13,8 @@ import '../../features/auth/presentation/screens/verify_code_screen.dart';
 import '../../features/auth/presentation/widgets/sign_out_button.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
+import '../../features/cases/presentation/screens/dispute_detail_screen.dart';
+import '../../features/cases/presentation/screens/submit_dispute_screen.dart';
 import '../../features/chat/presentation/screens/case_chat_screen.dart';
 import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -142,6 +144,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           reference: state.uri.queryParameters['ref'],
         ),
       ),
+      // The client's side of the same conversation; either side may open or
+      // close it.
+      GoRoute(
+        path: AppRoutes.clientCaseChatPath,
+        name: AppRoutes.clientCaseChatName,
+        builder: (context, state) => CaseChatScreen(
+          caseId: state.pathParameters['caseId'] ?? '',
+          reference: state.uri.queryParameters['ref'],
+        ),
+      ),
+      // Disputes open full screen, like the chat. `new` is listed before the
+      // id route so it is never read as a dispute id.
+      GoRoute(
+        path: AppRoutes.clientRaiseDisputePath,
+        name: AppRoutes.clientRaiseDisputeName,
+        builder: (context, state) =>
+            SubmitDisputeScreen(caseId: state.pathParameters['caseId'] ?? ''),
+      ),
+      GoRoute(
+        path: AppRoutes.clientDisputePath,
+        name: AppRoutes.clientDisputeName,
+        builder: (context, state) => _dispute(state),
+      ),
+      GoRoute(
+        path: AppRoutes.staffDisputePath,
+        name: AppRoutes.staffDisputeName,
+        builder: (context, state) => _dispute(state),
+      ),
       // Branch order must match AppShell.clientTabs.
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(
@@ -205,7 +235,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: AppRoutes.clientCasesName,
                 builder: (context, state) => const CasesListScreen(
                   detailRouteName: AppRoutes.clientCaseDetailName,
+                  chatRouteName: AppRoutes.clientCaseChatName,
                   payRouteName: AppRoutes.clientCasePayName,
+                  trackRouteName: AppRoutes.clientCaseTrackName,
                 ),
                 routes: [
                   GoRoute(
@@ -213,9 +245,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     name: AppRoutes.clientCaseDetailName,
                     builder: (context, state) => CaseDetailScreen(
                       caseId: state.pathParameters['caseId'] ?? '',
+                      chatRouteName: AppRoutes.clientCaseChatName,
+                      disputeRouteName: AppRoutes.clientDisputeName,
                       payRouteName: AppRoutes.clientCasePayName,
+                      trackRouteName: AppRoutes.clientCaseTrackName,
+                      raiseDisputeRouteName: AppRoutes.clientRaiseDisputeName,
                     ),
                     routes: [
+                      // Kept inside the Cases tab, rather than jumping to the
+                      // Search tab's copy of the timeline.
+                      GoRoute(
+                        path: 'track/:trackingId',
+                        name: AppRoutes.clientCaseTrackName,
+                        builder: (context, state) => TrackingProgressScreen(
+                          trackingId: state.pathParameters['trackingId'] ?? '',
+                          fallbackRouteName: AppRoutes.clientCasesName,
+                        ),
+                      ),
                       // Pay an unpaid case: the invoice endpoint resolves the
                       // case id, so the screen opens by it. No tracking card —
                       // the user is already inside Cases.
@@ -318,6 +364,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: AppRoutes.casesName,
                 builder: (context, state) => const CasesListScreen(
                   detailRouteName: AppRoutes.caseDetailName,
+                  chatRouteName: AppRoutes.caseChatName,
                 ),
                 routes: [
                   GoRoute(
@@ -330,6 +377,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => CaseDetailScreen(
                       caseId: state.pathParameters['caseId'] ?? '',
                       chatRouteName: AppRoutes.caseChatName,
+                      disputeRouteName: AppRoutes.staffDisputeName,
                     ),
                   ),
                 ],
@@ -367,6 +415,12 @@ Widget _quote(GoRouterState state, {required String trackRouteName}) =>
       trackingId: state.uri.queryParameters['trackingId'] ?? '',
       trackRouteName: trackRouteName,
     );
+
+/// One dispute; the same screen for both roles, which answers by session.
+Widget _dispute(GoRouterState state) => DisputeDetailScreen(
+  caseId: state.pathParameters['caseId'] ?? '',
+  disputeId: state.pathParameters['disputeId'] ?? '',
+);
 
 /// Both roles' Profile tab until the profile screen is designed. Carries the
 /// only way to sign out meanwhile.

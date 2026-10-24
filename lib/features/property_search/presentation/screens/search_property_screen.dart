@@ -13,11 +13,11 @@ import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_shimmer.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_upload_field.dart';
 import '../../domain/entities/property_location.dart';
 import '../../domain/entities/search_options.dart';
 import '../providers/property_search_providers.dart';
 import '../providers/search_form_provider.dart';
-import '../widgets/document_upload_field.dart';
 import '../widgets/search_dropdown_field.dart';
 import '../widgets/search_option_card.dart';
 
@@ -225,7 +225,7 @@ class _SearchPropertyScreenState extends ConsumerState<SearchPropertyScreen> {
                   ],
                 ),
                 const _SectionHeading('Documents you already have'),
-                DocumentUploadField(
+                AppUploadField(
                   label: 'Survey plan',
                   helper: "Survey Plan, Beacon Certificate, Surveyor's Report",
                   files: form.surveyPlans,
@@ -237,7 +237,7 @@ class _SearchPropertyScreenState extends ConsumerState<SearchPropertyScreen> {
                       notifier.remove(SearchDocument.surveyPlan, file),
                 ),
                 const SizedBox(height: AppSizing.space16),
-                DocumentUploadField(
+                AppUploadField(
                   label: 'Title documents',
                   helper: 'C of O, deed, receipts',
                   files: form.titleDocuments,

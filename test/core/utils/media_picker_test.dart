@@ -183,7 +183,7 @@ void main() {
 
       final result = await picker.pickDocuments();
 
-      expect(result.valueOrNull, hasLength(2));
+      expect(result.valueOrNull?.files, hasLength(2));
       expect(backend.lastAllowMultiple, isTrue);
     });
 
@@ -201,16 +201,32 @@ void main() {
       expect(result.failureOrNull, AppFailures.unsupportedDocumentType);
     });
 
-    test('caps the selection at the given limit', () async {
-      backend.files = [
-        _file(path: '/tmp/a.pdf', name: 'a.pdf'),
-        _file(path: '/tmp/b.pdf', name: 'b.pdf'),
-        _file(path: '/tmp/c.pdf', name: 'c.pdf'),
-      ];
+    test(
+      'caps the selection at the limit and counts what it left out',
+      () async {
+        backend.files = [
+          _file(path: '/tmp/a.pdf', name: 'a.pdf'),
+          _file(path: '/tmp/b.pdf', name: 'b.pdf'),
+          _file(path: '/tmp/c.pdf', name: 'c.pdf'),
+        ];
 
-      final result = await picker.pickDocuments(limit: 2);
+        final result = await picker.pickDocuments(limit: 2);
 
-      expect(result.valueOrNull, hasLength(2));
+        expect(result.valueOrNull?.files.map((file) => file.fileName), [
+          'a.pdf',
+          'b.pdf',
+        ]);
+        expect(result.valueOrNull?.dropped, 1);
+      },
+    );
+
+    test('drops nothing when the pick fits the limit', () async {
+      backend.files = [_file(path: '/tmp/a.pdf', name: 'a.pdf')];
+
+      final result = await picker.pickDocuments(limit: 3);
+
+      expect(result.valueOrNull?.files, hasLength(1));
+      expect(result.valueOrNull?.dropped, 0);
     });
 
     test('returns an empty list when nothing was chosen', () async {
@@ -219,7 +235,7 @@ void main() {
       final result = await picker.pickDocuments();
 
       expect(result.isOk, isTrue);
-      expect(result.valueOrNull, isEmpty);
+      expect(result.valueOrNull, PickedDocuments.none);
     });
 
     test('converts a plugin throw into a safe failure', () async {

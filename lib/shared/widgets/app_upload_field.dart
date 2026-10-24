@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/sizing/app_sizing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/media_picker.dart';
+import '../../core/sizing/app_sizing.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/media_picker.dart';
 
 /// An upload box that collects several files, listing each with a remove
 /// button. The caller supplies the wording.
-class DocumentUploadField extends StatelessWidget {
-  const DocumentUploadField({
+class AppUploadField extends StatelessWidget {
+  /// Creates the field. All wording comes from the caller.
+  const AppUploadField({
     required this.label,
     required this.helper,
     required this.files,
@@ -16,16 +17,33 @@ class DocumentUploadField extends StatelessWidget {
     required this.onRemove,
     super.key,
     this.errorText,
+    this.clearAllLabel,
+    this.onClearAll,
   });
 
+  /// The heading above the box.
   final String label;
 
   /// What counts, e.g. "C of O, deed, receipts".
   final String helper;
+
+  /// The files chosen so far, listed under the box.
   final List<PickedMedia> files;
+
+  /// Opens the picker.
   final VoidCallback onPick;
+
+  /// Drops one file from [files].
   final ValueChanged<PickedMedia> onRemove;
+
+  /// Replaces [helper] and outlines the box in red.
   final String? errorText;
+
+  /// With [onClearAll], a link over the file list that empties it.
+  final String? clearAllLabel;
+
+  /// Empties [files].
+  final VoidCallback? onClearAll;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +98,15 @@ class DocumentUploadField extends StatelessWidget {
             color: hasError ? AppColors.destructive : null,
           ),
         ),
+        if (clearAllLabel case final clearAll?
+            when onClearAll != null && files.isNotEmpty)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onClearAll,
+              child: Text(clearAll, style: AppTextStyles.link),
+            ),
+          ),
         for (final file in files) ...[
           const SizedBox(height: AppSizing.space8),
           _FileRow(file: file, onRemove: () => onRemove(file)),

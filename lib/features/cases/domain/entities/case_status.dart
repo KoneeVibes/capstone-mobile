@@ -2,8 +2,8 @@
 ///
 /// Owned by the backend: these are the eight values `GET /api/v1/case` returns.
 /// The app reads a status freely but writes only one — `assigned`, when it
-/// hands a payment-validated case to someone. Every other transition happens
-/// elsewhere.
+/// hands a payment-validated case to someone. Accept and suspend are offered
+/// but mock (ADR 0017); every other transition happens elsewhere.
 enum CaseStatus {
   /// Raised by an applicant, with payment not yet validated. The one status
   /// the app cannot assign from.
@@ -67,6 +67,14 @@ enum CaseStatus {
 
   /// Filed but not paid for: `payment-validated` is the step after.
   bool get isAwaitingPayment => this == submitted;
+
+  /// Only a paid, running case can be suspended — not one awaiting payment,
+  /// nor one already closed or suspended.
+  bool get canBeSuspended =>
+      this != submitted && this != closed && this != suspended;
+
+  /// A client may raise a dispute on anything they have paid for.
+  bool get canBeDisputed => this != submitted;
 
   /// Whether assigning also moves the case along its lifecycle.
   ///

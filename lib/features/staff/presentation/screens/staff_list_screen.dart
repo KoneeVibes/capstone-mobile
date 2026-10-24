@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/app_failure.dart';
 import '../../../../core/utils/error/async_value_x.dart';
+import '../../../../core/utils/search_query.dart';
 import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_confirm_dialog.dart';
 import '../../../../shared/widgets/app_search_field.dart';
@@ -18,6 +19,7 @@ import '../../../../shared/widgets/app_state_view.dart';
 import '../../domain/entities/staff.dart';
 import '../providers/staff_list_provider.dart';
 import '../providers/staff_mutation_provider.dart';
+import '../providers/staff_search_provider.dart';
 import '../widgets/staff_form_sheet.dart';
 import '../widgets/staff_list_skeleton.dart';
 import '../widgets/staff_list_tile.dart';
@@ -34,6 +36,12 @@ class StaffListScreen extends ConsumerStatefulWidget {
 class _StaffListScreenState extends ConsumerState<StaffListScreen> {
   final _scrollController = ScrollController();
 
+  // Seeded from the provider, so the bar survives a rebuild of the tab.
+  late final _search = TextEditingController(
+    text: ref.read(staffSearchQueryProvider),
+  );
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -42,10 +50,37 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(
+      AppConstants.searchDebounce,
+      () => ref.read(staffSearchQueryProvider.notifier).change(value),
+    );
+  }
+
+  void _clearSearch() {
+    _debounce?.cancel();
+    _search.clear();
+    ref.read(staffSearchQueryProvider.notifier).change('');
+  }
+
+  /// Re-runs the search. Its failure shows as the error state, so it is not
+  /// rethrown into the pull-to-refresh.
+  Future<void> _refreshSearch() async {
+    ref.invalidate(staffSearchProvider);
+    try {
+      await ref.read(staffSearchProvider.future);
+    } on Object {
+      return;
+    }
   }
 
   void _onScroll() {
@@ -102,6 +137,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
     final listState = ref.watch(staffListProvider);
     final permissions =
         ref.watch(sessionProvider)?.permissions ?? StaffPermissions.none;
+    final query = searchQueryFrom(ref.watch(staffSearchQueryProvider));
 
     return Scaffold(
       appBar: AppBar(
@@ -116,31 +152,48 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
                 AppSizing.screenPadding,
                 AppSizing.space12,
                 AppSizing.screenPadding,
                 AppSizing.space12,
               ),
-              // Disabled until the list endpoint supports a search parameter.
               child: AppSearchField(
                 hint: 'Search staff by name, email or role',
-                enabled: false,
+                controller: _search,
+                onChanged: _onSearchChanged,
+                onClear: _clearSearch,
               ),
             ),
             Expanded(
-              child: listState.when2(
-                // A skeleton rather than a spinner: the row shape is known, so
-                // the list can be previewed and nothing shifts on arrival.
-                loading: () => const StaffListSkeleton(),
-                error: (failure) => AppStateView.failure(
-                  failure: failure,
-                  onRetry: () =>
-                      ref.read(staffListProvider.notifier).refresh(),
-                ),
-                data: (state) => _buildList(state, permissions),
-              ),
+              child: query == null
+                  ? listState.when2(
+                      // A skeleton rather than a spinner: the row shape is
+                      // known, so the list can be previewed and nothing shifts
+                      // on arrival.
+                      loading: () => const StaffListSkeleton(),
+                      error: (failure) => AppStateView.failure(
+                        failure: failure,
+                        onRetry: () =>
+                            ref.read(staffListProvider.notifier).refresh(),
+                      ),
+                      data: (state) => _buildList(state, permissions),
+                    )
+                  : ref
+                        .watch(staffSearchProvider)
+                        .when2(
+                          loading: () => const StaffListSkeleton(),
+                          error: (failure) => AppStateView.failure(
+                            failure: failure,
+                            onRetry: () => ref.invalidate(staffSearchProvider),
+                          ),
+                          data: (found) => _buildResults(
+                            found ?? const [],
+                            query,
+                            permissions,
+                          ),
+                        ),
             ),
           ],
         ),
@@ -152,8 +205,8 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
     final refresh = ref.read(staffListProvider.notifier).refresh;
 
     if (state.isEmpty) {
-      // The design's "No Matches" state belongs to search, which is disabled;
-      // this is the genuinely-no-records case.
+      // Search has its own "No Matches" state; this is the genuinely
+      // no-records case.
       return RefreshIndicator(
         onRefresh: refresh,
         child: LayoutBuilder(
@@ -197,20 +250,55 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
             );
           }
 
-          final staff = state.items[index];
-          return StaffListTile(
-            staff: staff,
-            onEdit: permissions.canEditStaff
-                ? () => _openForm(staff: staff)
-                : null,
-            onRemove: permissions.canDeleteStaff
-                ? () => _confirmRemove(staff)
-                : null,
-          );
+          return _tile(state.items[index], permissions);
         },
       ),
     );
   }
+
+  /// Search results: one page, so no infinite scroll and no footer.
+  Widget _buildResults(
+    List<Staff> found,
+    String query,
+    StaffPermissions permissions,
+  ) {
+    return RefreshIndicator(
+      onRefresh: _refreshSearch,
+      child: found.isEmpty
+          ? LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: AppStateView.empty(
+                    icon: Icons.search_off,
+                    title: 'No staff match "$query"',
+                    message: 'Try a first or last name, an email or a role.',
+                  ),
+                ),
+              ),
+            )
+          : ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSizing.screenPadding,
+                0,
+                AppSizing.screenPadding,
+                AppSizing.space24,
+              ),
+              itemCount: found.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(height: AppSizing.space12),
+              itemBuilder: (context, index) => _tile(found[index], permissions),
+            ),
+    );
+  }
+
+  Widget _tile(Staff staff, StaffPermissions permissions) => StaffListTile(
+    staff: staff,
+    onEdit: permissions.canEditStaff ? () => _openForm(staff: staff) : null,
+    onRemove: permissions.canDeleteStaff ? () => _confirmRemove(staff) : null,
+  );
 }
 
 /// Outlined "Add New" action in the app bar.

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/network/api_client.dart';
+import 'package:propertyintelmobileapp/core/network/api_endpoints.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
 import 'package:propertyintelmobileapp/core/utils/media_picker.dart';
 import 'package:propertyintelmobileapp/features/cases/data/datasources/cases_remote_datasource.dart';
@@ -782,5 +783,71 @@ void main() {
         expect(updated.reports, ['https://x/report.pdf']);
       },
     );
+  });
+
+  group('searchCases', () {
+    void stubSearch({Object? data, DioException? failure}) {
+      final call = when(
+        () => client.get<List<Case>>(
+          ApiEndpoints.search,
+          queryParameters: any(named: 'queryParameters'),
+          decoder: any(named: 'decoder'),
+        ),
+      );
+      if (failure != null) {
+        call.thenThrow(failure);
+        return;
+      }
+      call.thenAnswer((invocation) async {
+        final decoder =
+            invocation.namedArguments[#decoder] as List<Case> Function(Object?);
+        return ApiResponse<List<Case>>(
+          status: 'success',
+          message: 'Search completed successfully.',
+          data: decoder(data),
+        );
+      });
+    }
+
+    setUp(
+      () => source = CasesRemoteDataSourceImpl(client, resolveAssignees: false),
+    );
+
+    test(
+      'asks /search for cases, one large page, and decodes data.cases',
+      () async {
+        stubSearch(
+          data: {
+            'cases': [caseJson],
+          },
+        );
+
+        final found = await source.searchCases('PI-2RW');
+
+        expect(found.single.id, caseJson['id']);
+        final query =
+            verify(
+                  () => client.get<List<Case>>(
+                    ApiEndpoints.search,
+                    queryParameters: captureAny(named: 'queryParameters'),
+                    decoder: any(named: 'decoder'),
+                  ),
+                ).captured.single
+                as Map<String, dynamic>;
+        expect(query, {'q': 'PI-2RW', 'flag': 'case', 'perPage': 100});
+      },
+    );
+
+    test('reads "No matching records found." (404) as none', () async {
+      stubSearch(failure: _httpFailure(404));
+
+      expect(await source.searchCases('zzzzzz'), isEmpty);
+    });
+
+    test('lets any other failure propagate', () async {
+      stubSearch(failure: _httpFailure(400));
+
+      expect(() => source.searchCases('Zz'), throwsA(isA<DioException>()));
+    });
   });
 }

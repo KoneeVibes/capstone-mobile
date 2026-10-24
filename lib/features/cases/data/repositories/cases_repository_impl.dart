@@ -37,6 +37,10 @@ class CasesRepositoryImpl implements CasesRepository {
       _guard(() => _source.fetchCase(id));
 
   @override
+  Future<Result<List<Case>>> searchCases(String query) =>
+      _guard(() => _source.searchCases(query));
+
+  @override
   Future<Result<List<CaseAssignee>>> fetchAssignees() =>
       _guard(_source.fetchAssignees);
 

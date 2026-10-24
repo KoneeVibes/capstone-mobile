@@ -24,6 +24,7 @@ They are kept so the reason survives the people who were in the room.
 | [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018, actions by 0019 |
 | [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted; cap and upload superseded by 0019 |
 | [0019](0019-case-status-actions-and-reports.md) | Case status actions and reports write for real | Accepted |
+| [0020](0020-search-through-the-search-endpoint.md) | Search cases and staff through `GET /search`, one tab at a time | Accepted |
 
 ## Writing one
 

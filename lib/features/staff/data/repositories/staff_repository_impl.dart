@@ -43,6 +43,19 @@ class StaffRepositoryImpl implements StaffRepository {
       _guard(() => _remote.fetchStaffMember(id));
 
   @override
+  Future<Result<List<Staff>>> searchStaff(String query) async {
+    try {
+      return Ok(await _remote.searchStaff(query));
+    } on Object catch (error, stackTrace) {
+      final failure = ErrorHandler.from(error, stackTrace);
+      // "No matching records found." is a 404: an empty answer, as the list's
+      // 404 is.
+      if (failure.type == FailureType.notFound) return const Ok([]);
+      return Err(failure);
+    }
+  }
+
+  @override
   Future<Result<void>> createStaff(StaffDraft draft) =>
       _guard(() => _remote.createStaff(draft));
 

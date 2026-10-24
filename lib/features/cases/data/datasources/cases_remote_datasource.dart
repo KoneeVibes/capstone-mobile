@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_pagination.dart';
@@ -95,6 +96,27 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
       decoder: CaseModel.fromData,
     );
     return resolveAssignees ? _withAssigneeName(response.data) : response.data;
+  }
+
+  /// One `GET /search` page of cases, the largest the API serves. Its
+  /// "No matching records found." 404 is an empty answer, as the list's is.
+  @override
+  Future<List<Case>> searchCases(String query) async {
+    final found = await _noneOn404(() async {
+      final response = await _client.get<List<Case>>(
+        ApiEndpoints.search,
+        queryParameters: {
+          'q': query,
+          'flag': 'case',
+          'perPage': AppConstants.searchResultLimit,
+        },
+        decoder: (data) => CaseModel.listFromJson(
+          data is Map<String, dynamic> ? data['cases'] : null,
+        ),
+      );
+      return response.data;
+    });
+    return resolveAssignees ? _withAssigneeNames(found) : found;
   }
 
   /// The staff a case may be given to.

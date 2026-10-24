@@ -28,6 +28,14 @@ abstract final class AppConstants {
   /// Debounce applied to search fields before a query is issued.
   static const Duration searchDebounce = Duration(milliseconds: 350);
 
+  /// `GET /search` takes 2–100 characters; shorter is "not searching".
+  static const int searchMinLength = 2;
+  static const int searchMaxLength = 100;
+
+  /// One search request's results — the API's largest page. It sends no
+  /// totals, so a search with more hits is one to narrow, not to page.
+  static const int searchResultLimit = 100;
+
   // Payment. After checkout reports completion, the invoice is re-read until
   // the backend's webhook marks it paid — this many times, this far apart.
   static const int paymentConfirmAttempts = 5;

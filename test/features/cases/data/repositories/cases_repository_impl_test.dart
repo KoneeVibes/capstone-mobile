@@ -245,4 +245,22 @@ void main() {
       expect(result.isErr, isTrue);
     });
   });
+
+  group('searchCases', () {
+    test('returns Ok with the matches', () async {
+      when(() => source.searchCases('Zz')).thenAnswer((_) async => [_case]);
+
+      final result = await repository.searchCases('Zz');
+
+      expect(result.valueOrNull, [_case]);
+    });
+
+    test('returns Err when the search fails', () async {
+      when(() => source.searchCases(any())).thenThrow(_httpFailure(500));
+
+      final result = await repository.searchCases('Zz');
+
+      expect(result.isErr, isTrue);
+    });
+  });
 }

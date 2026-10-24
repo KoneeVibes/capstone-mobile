@@ -9,9 +9,16 @@ import '../entities/staff_page.dart';
 /// at its boundary and converts through `ErrorHandler`, so callers cannot
 /// forget the failure path or see a raw exception.
 abstract class StaffRepository {
-  Future<Result<StaffPage>> fetchStaff({required int page, required int perPage});
+  Future<Result<StaffPage>> fetchStaff({
+    required int page,
+    required int perPage,
+  });
 
   Future<Result<Staff>> fetchStaffMember(String id);
+
+  /// Staff matching [query], up to the API's largest page; no match is an
+  /// empty list, not a failure.
+  Future<Result<List<Staff>>> searchStaff(String query);
 
   /// Creates a staff member.
   ///

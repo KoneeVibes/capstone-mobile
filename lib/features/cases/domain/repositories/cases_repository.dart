@@ -21,6 +21,10 @@ abstract class CasesRepository {
 
   Future<Result<Case>> fetchCase(String id);
 
+  /// Cases matching [query] through `GET /search`, up to the API's largest
+  /// page; no match is an empty list, not a failure.
+  Future<Result<List<Case>>> searchCases(String query);
+
   /// The team members a case may be given to.
   Future<Result<List<CaseAssignee>>> fetchAssignees();
 

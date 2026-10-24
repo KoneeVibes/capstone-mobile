@@ -15,6 +15,9 @@ abstract class CasesDataSource {
 
   Future<Case> fetchCase(String id);
 
+  /// Cases matching [query], as the server matches them; none is empty.
+  Future<List<Case>> searchCases(String query);
+
   Future<List<CaseAssignee>> fetchAssignees();
 
   Future<Case> assignCase({required String caseId, required String assigneeId});

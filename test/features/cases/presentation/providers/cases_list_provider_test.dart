@@ -200,7 +200,10 @@ void main() {
 
       await notifier.refresh();
 
-      expect(container.read(casesListProvider).value!.filter, CaseFilter.closed);
+      expect(
+        container.read(casesListProvider).value!.filter,
+        CaseFilter.closed,
+      );
     });
 
     test('surfaces a failure that arrives on reload', () async {
@@ -236,12 +239,33 @@ void main() {
       verify(repository.fetchCases).called(2);
     });
   });
+
+  group('CasesListState.latestOf', () {
+    test('draws a result from the list copy, keeping search order', () {
+      final stale = buildCase(id: 'case-1', status: CaseStatus.assigned);
+      final fresh = buildCase(id: 'case-1', status: CaseStatus.accepted);
+      final other = buildCase(id: 'case-2');
+
+      final latest = CasesListState.latestOf([
+        other,
+        stale,
+      ], CasesListState(items: [fresh]));
+
+      expect(latest, [other, fresh]);
+    });
+
+    test('keeps the search copy without a list', () {
+      final found = [buildCase(id: 'case-9')];
+      expect(CasesListState.latestOf(found, null), found);
+    });
+  });
 }
 
 /// A signed-in user the test can swap, standing in for auth.
 class _SignedIn extends Notifier<SessionUser?> {
   @override
-  SessionUser? build() => const SessionUser(id: 'client-a', role: AppRole.client);
+  SessionUser? build() =>
+      const SessionUser(id: 'client-a', role: AppRole.client);
 
   void become(String id) => state = SessionUser(id: id, role: AppRole.client);
 }

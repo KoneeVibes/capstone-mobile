@@ -67,6 +67,11 @@ class TrackingStatusChip extends StatelessWidget {
           AppColors.surfaceMuted,
           AppColors.destructive,
         ),
+        TrackingStatus.disputed => (
+          'Disputed',
+          AppColors.surfaceMuted,
+          AppColors.warning,
+        ),
         TrackingStatus.unknown => (
           '',
           AppColors.surfaceMuted,

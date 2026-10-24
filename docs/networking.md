@@ -86,5 +86,8 @@ whenever you add a request with a new payload shape.
 ## Files and links
 
 Uploads use `FormData` through the same `ApiClient`. Picking files and opening
-links go through `MediaPicker` and `LinkOpener` — see
+links go through `MediaPicker` and `LinkOpener`. Drawing a document in the app
+goes through `DocumentPreview`, which downloads with its own plain `Dio` —
+never `ApiClient` — so a third-party file host is not sent the session
+token. See
 [Dependency injection](dependency-injection.md#platform-plugins-sit-behind-interfaces).

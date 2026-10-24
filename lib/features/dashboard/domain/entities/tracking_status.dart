@@ -11,6 +11,7 @@ enum TrackingStatus {
   underReview('under-review'),
   closed('closed'),
   suspended('suspended'),
+  disputed('disputed'),
 
   /// A value this build does not know; renders rather than breaking the screen.
   unknown('');

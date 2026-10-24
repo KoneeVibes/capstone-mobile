@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_pagination.dart';
+import '../../../../core/utils/media_picker.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_assignee.dart';
 import '../../domain/entities/case_status.dart';
@@ -127,14 +128,44 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
 
     final response = await _client.patch<Case>(
       ApiEndpoints.caseById(caseId),
-      data: CaseModel.assignmentBody(
-        assigneeId: assigneeId,
-        currentStatus: current.data.status,
+      data: CaseModel.form(
+        CaseModel.assignmentBody(
+          assigneeId: assigneeId,
+          currentStatus: current.data.status,
+        ),
       ),
       decoder: CaseModel.fromData,
     );
 
     return _withAssigneeName(response.data);
+  }
+
+  @override
+  Future<Case> updateStatus({
+    required String caseId,
+    required CaseStatus status,
+  }) async {
+    final response = await _client.patch<Case>(
+      ApiEndpoints.caseById(caseId),
+      data: CaseModel.form(CaseModel.statusBody(status)),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
+  }
+
+  /// Submits, or replaces, the case's report; the case moves to
+  /// `under-review`.
+  @override
+  Future<Case> submitReport({
+    required String caseId,
+    required List<PickedMedia> files,
+  }) async {
+    final response = await _client.put<Case>(
+      ApiEndpoints.caseById(caseId),
+      data: await CaseModel.reportFormData(files),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
   }
 
   /// Joins names onto a list of cases, in one staff request rather than one

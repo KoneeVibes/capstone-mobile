@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
+import 'package:propertyintelmobileapp/core/utils/media_picker.dart';
 import 'package:propertyintelmobileapp/features/cases/data/datasources/cases_datasource.dart';
 import 'package:propertyintelmobileapp/features/cases/data/repositories/cases_repository_impl.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_status.dart';
@@ -31,6 +32,8 @@ DioException _httpFailure(int statusCode, {Object? body}) {
 void main() {
   late MockCasesDataSource source;
   late CasesRepositoryImpl repository;
+
+  setUpAll(() => registerFallbackValue(<PickedMedia>[]));
 
   setUp(() {
     source = MockCasesDataSource();
@@ -158,6 +161,88 @@ void main() {
         'That case is already assigned to someone else.',
       );
       expect(result.failureOrNull!.type, FailureType.conflict);
+    });
+  });
+
+  group('updateStatus', () {
+    test('returns Ok with the moved case', () async {
+      final accepted = buildCase(id: 'case-101', status: CaseStatus.accepted);
+      when(
+        () => source.updateStatus(
+          caseId: 'case-101',
+          status: CaseStatus.accepted,
+        ),
+      ).thenAnswer((_) async => accepted);
+
+      final result = await repository.updateStatus(
+        caseId: 'case-101',
+        status: CaseStatus.accepted,
+      );
+
+      expect(result.valueOrNull, accepted);
+    });
+
+    test(
+      'a refused transition is an Err carrying the server message',
+      () async {
+        when(
+          () => source.updateStatus(
+            caseId: any(named: 'caseId'),
+            status: CaseStatus.suspended,
+          ),
+        ).thenThrow(
+          _httpFailure(
+            409,
+            body: const {
+              'status': 'fail',
+              'message': 'This case cannot be suspended.',
+            },
+          ),
+        );
+
+        final result = await repository.updateStatus(
+          caseId: 'case-101',
+          status: CaseStatus.suspended,
+        );
+
+        expect(result.failureOrNull!.message, 'This case cannot be suspended.');
+      },
+    );
+  });
+
+  group('submitReport', () {
+    test('returns Ok with the case under review', () async {
+      final reviewed = buildCase(
+        id: 'case-101',
+        status: CaseStatus.underReview,
+        reports: const ['https://x/report.pdf'],
+      );
+      when(
+        () => source.submitReport(caseId: 'case-101', files: const []),
+      ).thenAnswer((_) async => reviewed);
+
+      final result = await repository.submitReport(
+        caseId: 'case-101',
+        files: const [],
+      );
+
+      expect(result.valueOrNull, reviewed);
+    });
+
+    test('never lets an exception escape', () async {
+      when(
+        () => source.submitReport(
+          caseId: any(named: 'caseId'),
+          files: any(named: 'files'),
+        ),
+      ).thenThrow(_httpFailure(403));
+
+      final result = await repository.submitReport(
+        caseId: 'case-101',
+        files: const [],
+      );
+
+      expect(result.isErr, isTrue);
     });
   });
 }

@@ -54,6 +54,10 @@ dependencies:
   # Paystack's hosted checkout, opened with the access code the backend issues.
   webview_flutter: ^4.14.1
 
+  # Reports rendered page by page in the review view, with the platform's own
+  # PDF renderer. pdfrx needs a newer Flutter.
+  pdfx: ^2.11.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -6,7 +6,7 @@ import '../../domain/entities/case_filter.dart';
 
 /// The tab bar above the cases list: All, then one chip per status.
 ///
-/// Scrolls horizontally — nine chips do not fit on a phone, and the row is
+/// Scrolls horizontally — ten chips do not fit on a phone, and the row is
 /// deliberately not wrapped or squeezed to make them: a status is either worth
 /// its own tab at full width or it is not.
 ///
@@ -60,5 +60,6 @@ class CaseFilterBar extends StatelessWidget {
     CaseFilter.underReview => 'Under review',
     CaseFilter.closed => 'Closed',
     CaseFilter.suspended => 'Suspended',
+    CaseFilter.disputed => 'Disputed',
   };
 }

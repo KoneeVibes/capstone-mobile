@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatting/app_formatters.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/link_opener.dart';
-import '../../../../shared/extensions/context_extensions.dart';
 import '../../domain/entities/case.dart';
-import '../../domain/entities/case_property.dart';
+import 'case_document_tile.dart';
 
 /// The case card on the detail screen: `Case PI-…` with an optional [menu],
 /// what was asked for, and the documents filed with it.
@@ -87,7 +84,18 @@ class CaseRequestCard extends StatelessWidget {
                     style: AppTextStyles.titleSmall,
                   ),
                   const SizedBox(height: AppSizing.space12),
-                  _DocumentGrid(property: property),
+                  CaseDocumentGrid(
+                    documents: [
+                      ...CaseDocumentGrid.numbered(
+                        'Survey plan',
+                        property.surveyPlans,
+                      ),
+                      ...CaseDocumentGrid.numbered(
+                        'Title document',
+                        property.titleDocuments,
+                      ),
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -147,151 +155,5 @@ class _Field extends StatelessWidget {
         Text(value, style: AppTextStyles.label),
       ],
     );
-  }
-}
-
-/// The survey plans and title documents, two to a row.
-class _DocumentGrid extends ConsumerWidget {
-  const _DocumentGrid({required this.property});
-
-  final CaseProperty property;
-
-  Future<void> _open(BuildContext context, WidgetRef ref, String url) async {
-    final result = await ref.read(linkOpenerProvider).open(url);
-    if (!context.mounted) return;
-
-    // A document that will not open is worth saying out loud — the user tapped
-    // it deliberately, and silence would read as the tap not registering.
-    final failure = result.failureOrNull;
-    if (failure != null) context.showFailure(failure);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final documents = _documents(property);
-
-    return Column(
-      children: [
-        for (var row = 0; row < documents.length; row += 2) ...[
-          if (row > 0) const SizedBox(height: AppSizing.space8),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final i in [row, row + 1]) ...[
-                  if (i != row) const SizedBox(width: AppSizing.space8),
-                  Expanded(
-                    child: i < documents.length
-                        ? _DocumentTile(
-                            label: documents[i].$1,
-                            url: documents[i].$2,
-                            onTap: () => _open(context, ref, documents[i].$2),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// (label, url) for every attachment, survey plans first.
-  ///
-  /// Numbered only when there is more than one of a kind: `Survey plan 1` on a
-  /// case with a single plan would imply a second one exists.
-  static List<(String, String)> _documents(CaseProperty property) => [
-    for (final (index, url) in property.surveyPlans.indexed)
-      (
-        property.surveyPlans.length == 1
-            ? 'Survey plan'
-            : 'Survey plan ${index + 1}',
-        url,
-      ),
-    for (final (index, url) in property.titleDocuments.indexed)
-      (
-        property.titleDocuments.length == 1
-            ? 'Title document'
-            : 'Title document ${index + 1}',
-        url,
-      ),
-  ];
-}
-
-/// A file tile: its type icon, name and format. Opens outside the app.
-class _DocumentTile extends StatelessWidget {
-  const _DocumentTile({
-    required this.label,
-    required this.url,
-    required this.onTap,
-  });
-
-  final String label;
-  final String url;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppSizing.radiusSm);
-    final extension = _extension(url);
-    final isPdf = extension == 'pdf';
-
-    return Material(
-      color: AppColors.surface,
-      borderRadius: radius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: radius,
-        child: Ink(
-          padding: const EdgeInsets.all(AppSizing.space12),
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            border: Border.all(
-              color: AppColors.border,
-              width: AppSizing.borderWidth,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                isPdf ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
-                size: AppSizing.iconLg,
-                color: isPdf ? AppColors.destructiveIcon : AppColors.primary,
-              ),
-              const SizedBox(width: AppSizing.space8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: AppTextStyles.label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (extension.isNotEmpty)
-                      Text(
-                        extension.toUpperCase(),
-                        style: AppTextStyles.bodySmall,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// `pdf` from `…/plan.pdf?x=1`, or empty when the URL names no format.
-  static String _extension(String url) {
-    final path = Uri.tryParse(url)?.path ?? url;
-    final name = path.split('/').last;
-    final dot = name.lastIndexOf('.');
-    return dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
   }
 }

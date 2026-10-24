@@ -191,7 +191,7 @@ class _TimelineEntry extends StatelessWidget {
       ),
       TrackingStatus.underReview => (
         'Under review',
-        'Records are being checked for litigation and disputes.',
+        'The report is in and being checked before it is released.',
       ),
       TrackingStatus.closed => (
         'Closed',
@@ -200,6 +200,10 @@ class _TimelineEntry extends StatelessWidget {
       TrackingStatus.suspended => (
         'Suspended',
         'This request was halted and will not be processed further.',
+      ),
+      TrackingStatus.disputed => (
+        'Disputed',
+        'The outcome is being looked at again after a dispute.',
       ),
       TrackingStatus.unknown => ('Status updated', ''),
     };

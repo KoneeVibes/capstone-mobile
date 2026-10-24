@@ -14,6 +14,7 @@ import '../../domain/entities/case.dart';
 import '../../domain/entities/case_assignee.dart';
 import '../providers/case_assignment_provider.dart';
 import '../providers/cases_providers.dart';
+import 'case_error_banner.dart';
 
 /// Opens the assign sheet. Resolves to true when the case was assigned.
 Future<bool?> showCaseAssignSheet({
@@ -91,7 +92,7 @@ class _CaseAssignSheetState extends ConsumerState<CaseAssignSheet> {
         const SizedBox(height: AppSizing.space20),
         assignees.when2(
           loading: () => const _AssigneeListSkeleton(),
-          error: (failure) => _SheetError(
+          error: (failure) => CaseErrorBanner(
             failure: failure,
             onRetry: () => ref.invalidate(caseAssigneesProvider),
           ),
@@ -107,7 +108,7 @@ class _CaseAssignSheetState extends ConsumerState<CaseAssignSheet> {
         ),
         if (_failure != null) ...[
           const SizedBox(height: AppSizing.space16),
-          _SheetError(failure: _failure!),
+          CaseErrorBanner(failure: _failure!),
         ],
         const SizedBox(height: AppSizing.space24),
         AppButton(
@@ -277,48 +278,6 @@ class _AssigneeListSkeleton extends StatelessWidget {
                 ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Inline failure banner. Renders [AppFailure.message] and nothing else.
-class _SheetError extends StatelessWidget {
-  const _SheetError({required this.failure, this.onRetry});
-
-  final AppFailure failure;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final showRetry = onRetry != null && failure.isRetryable;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizing.space12),
-      decoration: BoxDecoration(
-        color: AppColors.destructiveSoft,
-        borderRadius: BorderRadius.circular(AppSizing.radiusMd),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.error_outline,
-            size: AppSizing.iconSm,
-            color: AppColors.destructive,
-          ),
-          const SizedBox(width: AppSizing.space8),
-          Expanded(
-            child: Text(
-              failure.message,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.destructive,
-              ),
-            ),
-          ),
-          if (showRetry)
-            TextButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );

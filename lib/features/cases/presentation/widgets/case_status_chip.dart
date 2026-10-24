@@ -78,6 +78,11 @@ class CaseStatusChip extends StatelessWidget {
       AppColors.surfaceMuted,
       AppColors.destructive,
     ),
+    CaseStatus.disputed => (
+      'Disputed',
+      AppColors.surfaceMuted,
+      AppColors.warning,
+    ),
     // Unreachable: guarded above. Present so the switch stays exhaustive and a
     // new status has to be given colours deliberately.
     CaseStatus.unknown => ('', AppColors.surfaceMuted, AppColors.textTertiary),

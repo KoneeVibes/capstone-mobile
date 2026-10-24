@@ -1,6 +1,6 @@
 # 0018 — Add Report sheet, three files per report (mock)
 
-- **Status:** Accepted
+- **Status:** Accepted; the file cap and mock upload superseded by [0019](0019-case-status-actions-and-reports.md)
 - **Recorded:** 2026-10-21
 
 ## Context

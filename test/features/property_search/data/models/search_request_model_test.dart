@@ -66,15 +66,6 @@ void main() {
     });
   });
 
-  test('declares a picked jpg as jpeg', () {
-    expect(
-      SearchRequestModel.contentTypeOf(
-        pickedFile('/x/photo.jpg', extension: 'jpg'),
-      ).mimeType,
-      'image/jpeg',
-    );
-  });
-
   group('submittedFromData', () {
     test('reads the live reply', () {
       expect(

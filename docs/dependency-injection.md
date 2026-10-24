@@ -70,6 +70,7 @@ Features and tests never touch a platform channel directly:
 | --- | --- | --- |
 | `MediaPicker` | `image_picker`, `file_picker` | `Result`; `Ok(null)` is a dismissal |
 | `LinkOpener` | `url_launcher` | `Result` |
+| `DocumentPreview` | `pdfx` (+ its own plain `Dio` for the download) | `Result` |
 | `SecureStore` | `flutter_secure_storage` | throws on platform failure |
 | `PreferencesStore` | `shared_preferences` | throws on platform failure |
 

@@ -2,9 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:propertyintelmobileapp/core/session/staff_permissions.dart';
 import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/case_actions.dart';
+import 'package:propertyintelmobileapp/features/cases/domain/entities/case.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_status.dart';
 
 import '../case_fixtures.dart';
+
+const _superAdmin = CaseViewer(
+  permissions: StaffPermissions(StaffRole.superAdmin),
+  userId: 'super-1',
+);
+
+const _admin = CaseViewer(
+  permissions: StaffPermissions(StaffRole.admin),
+  userId: 'admin-1',
+);
 
 const _manager = CaseViewer(
   permissions: StaffPermissions(StaffRole.manager),
@@ -22,160 +33,234 @@ const _otherRegular = CaseViewer(
   userId: 'staff-9',
 );
 
+Case _held(CaseStatus status) => buildCase(status: status, assignee: ada);
+
 void main() {
   group('menuActionsFor', () {
-    test('always offers the chat first', () {
-      for (final status in CaseStatus.values) {
-        final actions = menuActionsFor(
-          buildCase(status: status),
-          _otherRegular,
-        );
-        expect(actions.first, CaseAction.requestInformation, reason: '$status');
+    test('assign is for assigners, on a paid case only', () {
+      final paid = buildCase(status: CaseStatus.paymentValidated);
+      for (final viewer in [_superAdmin, _admin, _manager]) {
+        expect(menuActionsFor(paid, viewer), contains(CaseAction.assign));
+      }
+      expect(menuActionsFor(paid, _otherRegular), isEmpty);
+      expect(menuActionsFor(buildCase(), _manager), isEmpty);
+    });
+
+    test('reassign is offered on assigned and accepted cases', () {
+      for (final status in [CaseStatus.assigned, CaseStatus.accepted]) {
+        for (final viewer in [_superAdmin, _admin, _manager]) {
+          final actions = menuActionsFor(_held(status), viewer);
+          expect(actions, contains(CaseAction.reassign), reason: '$status');
+          expect(actions, isNot(contains(CaseAction.assign)));
+        }
       }
     });
 
-    test('a manager assigns an unassigned paid case and may suspend it', () {
-      final actions = menuActionsFor(
-        buildCase(status: CaseStatus.paymentValidated),
-        _manager,
+    test('a suspended case changes hands only through a super-admin', () {
+      final suspended = _held(CaseStatus.suspended);
+      expect(
+        menuActionsFor(suspended, _superAdmin),
+        contains(CaseAction.reassign),
       );
-      expect(actions, [
-        CaseAction.requestInformation,
-        CaseAction.assign,
+      expect(
+        menuActionsFor(suspended, _admin),
+        isNot(contains(CaseAction.reassign)),
+      );
+      expect(
+        menuActionsFor(suspended, _manager),
+        isNot(contains(CaseAction.reassign)),
+      );
+    });
+
+    test('a case mid-review or finished cannot change hands', () {
+      for (final status in [
+        CaseStatus.pendingInformation,
+        CaseStatus.underReview,
+        CaseStatus.closed,
+        CaseStatus.disputed,
+      ]) {
+        final actions = menuActionsFor(_held(status), _superAdmin);
+        expect(
+          actions,
+          isNot(contains(CaseAction.reassign)),
+          reason: '$status',
+        );
+        expect(actions, isNot(contains(CaseAction.assign)), reason: '$status');
+      }
+    });
+
+    test('only the assignee accepts, and only an assigned case', () {
+      final value = _held(CaseStatus.assigned);
+      expect(menuActionsFor(value, _assignee), [CaseAction.accept]);
+      for (final viewer in [_superAdmin, _manager, _otherRegular]) {
+        expect(
+          menuActionsFor(value, viewer),
+          isNot(contains(CaseAction.accept)),
+        );
+      }
+      expect(
+        menuActionsFor(_held(CaseStatus.accepted), _assignee),
+        isNot(contains(CaseAction.accept)),
+      );
+    });
+
+    test('review report is a super-admin action on a case under review', () {
+      final value = _held(CaseStatus.underReview);
+      expect(menuActionsFor(value, _superAdmin), [
+        CaseAction.reviewReport,
         CaseAction.suspend,
       ]);
+      for (final viewer in [_admin, _manager, _assignee]) {
+        expect(
+          menuActionsFor(value, viewer),
+          isNot(contains(CaseAction.reviewReport)),
+        );
+      }
     });
 
-    test('a manager re-assigns a held case rather than assigning it', () {
-      final actions = menuActionsFor(
-        buildCase(status: CaseStatus.assigned, assignee: ada),
-        _manager,
-      );
-      expect(actions, contains(CaseAction.reassign));
-      expect(actions, isNot(contains(CaseAction.assign)));
-    });
-
-    test('nothing is assignable or suspendable before payment', () {
-      final actions = menuActionsFor(
-        buildCase(status: CaseStatus.submitted),
-        _manager,
-      );
-      expect(actions, [CaseAction.requestInformation]);
-    });
-
-    test('only the assignee may accept', () {
-      final value = buildCase(status: CaseStatus.assigned, assignee: ada);
-      expect(menuActionsFor(value, _assignee), contains(CaseAction.accept));
+    test('suspend is super-admin only, on a paid and running case', () {
+      for (final status in CaseStatus.values) {
+        final offered = menuActionsFor(
+          _held(status),
+          _superAdmin,
+        ).contains(CaseAction.suspend);
+        expect(offered, status.canBeSuspended, reason: '$status');
+      }
       expect(
-        menuActionsFor(value, _otherRegular),
-        isNot(contains(CaseAction.accept)),
+        menuActionsFor(_held(CaseStatus.accepted), _admin),
+        isNot(contains(CaseAction.suspend)),
       );
+    });
+
+    test('request information follows the status, for assignee or manager', () {
+      for (final status in CaseStatus.values) {
+        final offered = menuActionsFor(
+          _held(status),
+          _assignee,
+        ).contains(CaseAction.requestInformation);
+        expect(offered, status.opensConversation, reason: '$status');
+      }
+      final value = _held(CaseStatus.accepted);
       expect(
         menuActionsFor(value, _manager),
-        isNot(contains(CaseAction.accept)),
+        contains(CaseAction.requestInformation),
       );
-    });
-
-    test('a regular member gets no manager actions', () {
-      final actions = menuActionsFor(
-        buildCase(status: CaseStatus.underReview, assignee: ada),
-        _assignee,
-      );
-      expect(actions, [CaseAction.requestInformation]);
-    });
-
-    test('review report is a manager action on a case under review', () {
-      final actions = menuActionsFor(
-        buildCase(status: CaseStatus.underReview, assignee: ada),
-        _manager,
-      );
-      expect(actions, contains(CaseAction.reviewReport));
-    });
-
-    test('a closed or suspended case cannot be suspended again', () {
-      for (final status in [CaseStatus.closed, CaseStatus.suspended]) {
+      for (final viewer in [_superAdmin, _admin, _otherRegular]) {
         expect(
-          menuActionsFor(buildCase(status: status, assignee: ada), _manager),
-          isNot(contains(CaseAction.suspend)),
+          menuActionsFor(value, viewer),
+          isNot(contains(CaseAction.requestInformation)),
+        );
+      }
+    });
+
+    test('the menu is empty when the viewer can do nothing', () {
+      expect(menuActionsFor(_held(CaseStatus.closed), _superAdmin), isEmpty);
+      expect(
+        menuActionsFor(_held(CaseStatus.accepted), _otherRegular),
+        isEmpty,
+      );
+    });
+  });
+
+  group('cardActionFor', () {
+    test('an unpaid case shows assign greyed out to assigners only', () {
+      final card = cardActionFor(buildCase(), _manager)!;
+      expect(card.action, CaseAction.assign);
+      expect(card.isEnabled, isFalse);
+      expect(cardActionFor(buildCase(), _otherRegular), isNull);
+    });
+
+    test('a paid case asks an assigner to assign it', () {
+      final value = buildCase(status: CaseStatus.paymentValidated);
+      expect(cardActionFor(value, _admin)!.action, CaseAction.assign);
+      expect(cardActionFor(value, _otherRegular), isNull);
+    });
+
+    test('the holder sees their own next step before a manager\'s', () {
+      expect(
+        cardActionFor(_held(CaseStatus.assigned), _assignee)!.action,
+        CaseAction.accept,
+      );
+      expect(
+        cardActionFor(_held(CaseStatus.accepted), _assignee)!.action,
+        CaseAction.addReport,
+      );
+      expect(
+        cardActionFor(_held(CaseStatus.disputed), _assignee)!.action,
+        CaseAction.addReport,
+      );
+      expect(
+        cardActionFor(_held(CaseStatus.pendingInformation), _assignee)!.action,
+        CaseAction.requestInformation,
+      );
+    });
+
+    test('assigners reassign what the holder has not finished', () {
+      for (final status in [CaseStatus.assigned, CaseStatus.accepted]) {
+        expect(
+          cardActionFor(_held(status), _manager)!.action,
+          CaseAction.reassign,
+          reason: '$status',
+        );
+      }
+    });
+
+    test('a manager chats on a case waiting for information or disputed', () {
+      for (final status in [
+        CaseStatus.pendingInformation,
+        CaseStatus.disputed,
+      ]) {
+        expect(
+          cardActionFor(_held(status), _manager)!.action,
+          CaseAction.requestInformation,
+          reason: '$status',
+        );
+      }
+    });
+
+    test('a report under review is the super-admin\'s to review', () {
+      final value = _held(CaseStatus.underReview);
+      expect(
+        cardActionFor(value, _superAdmin)!.action,
+        CaseAction.reviewReport,
+      );
+      expect(cardActionFor(value, _assignee), isNull);
+      expect(cardActionFor(value, _manager), isNull);
+    });
+
+    test('a suspended case is the super-admin\'s to hand on', () {
+      final value = _held(CaseStatus.suspended);
+      expect(cardActionFor(value, _superAdmin)!.action, CaseAction.reassign);
+      expect(cardActionFor(value, _admin), isNull);
+    });
+
+    test('a closed case has no button', () {
+      for (final viewer in [_superAdmin, _manager, _assignee]) {
+        expect(cardActionFor(_held(CaseStatus.closed), viewer), isNull);
+      }
+    });
+
+    test('suspend is never a card button', () {
+      for (final status in CaseStatus.values) {
+        expect(
+          cardActionFor(_held(status), _superAdmin)?.action,
+          isNot(CaseAction.suspend),
           reason: '$status',
         );
       }
     });
   });
 
-  group('cardActionFor', () {
-    test('an unpaid case shows assign greyed out to a manager', () {
-      final card = cardActionFor(buildCase(), _manager)!;
-      expect(card.action, CaseAction.assign);
-      expect(card.isEnabled, isFalse);
-    });
-
-    test('a regular member sees no button they could not use', () {
-      expect(cardActionFor(buildCase(), _otherRegular), isNull);
-      expect(
-        cardActionFor(
-          buildCase(status: CaseStatus.paymentValidated),
-          _otherRegular,
-        ),
-        isNull,
-      );
-    });
-
-    test('an assigned case asks its holder to accept', () {
-      final value = buildCase(status: CaseStatus.assigned, assignee: ada);
-      expect(cardActionFor(value, _assignee)!.action, CaseAction.accept);
-      expect(cardActionFor(value, _manager)!.action, CaseAction.reassign);
-      expect(cardActionFor(value, _otherRegular), isNull);
-    });
-
-    test('maps the working statuses to their next step', () {
-      expect(
-        cardActionFor(
-          buildCase(status: CaseStatus.accepted),
-          _assignee,
-        )!.action,
-        CaseAction.addReport,
-      );
-      expect(
-        cardActionFor(
-          buildCase(status: CaseStatus.pendingInformation),
-          _assignee,
-        )!.action,
-        CaseAction.requestInformation,
-      );
-      expect(
-        cardActionFor(
-          buildCase(status: CaseStatus.underReview),
-          _manager,
-        )!.action,
-        CaseAction.reviewReport,
-      );
-    });
-
-    test('closed and suspended cases can still change hands', () {
-      for (final status in [CaseStatus.closed, CaseStatus.suspended]) {
-        final card = cardActionFor(
-          buildCase(status: status, assignee: ada),
-          _manager,
-        )!;
-        expect(card.action, CaseAction.reassign, reason: '$status');
-        expect(card.isEnabled, isTrue);
+  group('canAddReport', () {
+    test('is the assignee\'s, on accepted, under-review and disputed', () {
+      for (final status in CaseStatus.values) {
+        expect(
+          _assignee.canAddReport(_held(status)),
+          status.takesReport,
+          reason: '$status',
+        );
       }
-    });
-  });
-
-  group('CaseStatus', () {
-    test('only a paid, running case can be suspended', () {
-      expect(CaseStatus.submitted.canBeSuspended, isFalse);
-      expect(CaseStatus.closed.canBeSuspended, isFalse);
-      expect(CaseStatus.suspended.canBeSuspended, isFalse);
-      expect(CaseStatus.accepted.canBeSuspended, isTrue);
-    });
-
-    test('anything paid for can be disputed', () {
-      expect(CaseStatus.submitted.canBeDisputed, isFalse);
-      expect(CaseStatus.paymentValidated.canBeDisputed, isTrue);
-      expect(CaseStatus.closed.canBeDisputed, isTrue);
+      expect(_superAdmin.canAddReport(_held(CaseStatus.accepted)), isFalse);
     });
   });
 }

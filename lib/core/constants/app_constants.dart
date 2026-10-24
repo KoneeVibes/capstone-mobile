@@ -85,6 +85,10 @@ abstract final class AppConstants {
   /// JPEG quality applied to picked images, 0-100.
   static const int pickedImageQuality = 85;
 
+  /// Width a PDF page is drawn at for reading in the app, in pixels — sharp on
+  /// a phone without holding a full-resolution scan per page.
+  static const int documentPageWidth = 1200;
+
   // Validation patterns.
   static final RegExp emailPattern = RegExp(
     r'^[\w.!#$%&’*+/=?^`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',

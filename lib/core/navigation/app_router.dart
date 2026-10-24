@@ -15,6 +15,7 @@ import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/cases/presentation/screens/dispute_detail_screen.dart';
 import '../../features/cases/presentation/screens/submit_dispute_screen.dart';
+import '../../features/cases/presentation/widgets/case_queue_section.dart';
 import '../../features/chat/presentation/screens/case_chat_screen.dart';
 import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -313,10 +314,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.dashboardPath,
                 name: AppRoutes.dashboardName,
                 builder: (context, state) => const StaffHomeScreen(
-                  caseDetailRouteName: AppRoutes.caseDetailName,
-                  chatRouteName: AppRoutes.caseChatName,
+                  // The cases feature's own section, so the queue's buttons
+                  // follow the same rules as the Cases tab (ADR 0019).
+                  queue: CaseQueueSection(
+                    detailRouteName: AppRoutes.caseDetailName,
+                    chatRouteName: AppRoutes.caseChatName,
+                    viewAllRouteName: AppRoutes.casesName,
+                  ),
                   trackingLookupRouteName: AppRoutes.staffTrackingLookupName,
-                  casesRouteName: AppRoutes.casesName,
                 ),
                 routes: [
                   // The tracking lookup moved off the tab root; it is now

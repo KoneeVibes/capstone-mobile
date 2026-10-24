@@ -7,7 +7,6 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_state_view.dart';
-import '../../domain/case_actions.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_filter.dart';
 import '../case_action_runner.dart';
@@ -105,29 +104,6 @@ class _CasesList extends ConsumerWidget {
   final String? payRouteName;
   final String? trackRouteName;
 
-  /// The staff card's button, from the shared action rules.
-  (String?, VoidCallback?) _staffAction(
-    BuildContext context,
-    WidgetRef ref,
-    Case value,
-    CaseViewer viewer,
-  ) {
-    final card = cardActionFor(value, viewer);
-    if (card == null) return (null, null);
-    return (
-      caseCardLabel(card.action),
-      card.isEnabled
-          ? () => runCaseAction(
-              context: context,
-              ref: ref,
-              value: value,
-              action: card.action,
-              chatRouteName: chatRouteName,
-            )
-          : null,
-    );
-  }
-
   /// Pay now while unpaid, then Track progress.
   (String?, VoidCallback?) _clientAction(
     BuildContext context,
@@ -203,7 +179,13 @@ class _CasesList extends ConsumerWidget {
 
           final value = visible[index];
           final (label, onAction) = isStaff
-              ? _staffAction(context, ref, value, viewer)
+              ? staffCardButton(
+                  context: context,
+                  ref: ref,
+                  value: value,
+                  viewer: viewer,
+                  chatRouteName: chatRouteName,
+                )
               : _clientAction(context, value, canPay: canPay);
           return CaseListTile(
             value: value,
@@ -267,7 +249,7 @@ class _EmptyState extends StatelessWidget {
       ),
       CaseFilter.underReview => (
         'No cases under review',
-        'Cases being worked through show here.',
+        'Cases wait here once a report is in, until it is accepted.',
       ),
       CaseFilter.closed => (
         'No closed cases',
@@ -276,6 +258,10 @@ class _EmptyState extends StatelessWidget {
       CaseFilter.suspended => (
         'No suspended cases',
         'Cases halted before they could be finished show here.',
+      ),
+      CaseFilter.disputed => (
+        'No disputed cases',
+        'Cases a client has disputed wait here for a new report.',
       ),
       // Unreachable: an empty All tab means no cases at all, handled above.
       CaseFilter.all => ('No cases yet', null),

@@ -17,12 +17,13 @@ They are kept so the reason survives the people who were in the room.
 | [0010](0010-unit-tests-only.md) | Unit tests only, plus a live check | Accepted |
 | [0011](0011-staff-role-from-own-record.md) | The staff role comes from the user's own staff record | Accepted |
 | [0012](0012-property-search-follows-the-api.md) | Property search follows the API and the website, not the mockups | Accepted; payment superseded by 0014 |
-| [0013](0013-case-assignment-rules.md) | Who can take a case, and what an assignment writes | Accepted |
+| [0013](0013-case-assignment-rules.md) | Who can take a case, and what an assignment writes | Accepted; assignable statuses superseded by 0019 |
 | [0014](0014-paystack-checkout-in-a-webview.md) | Pay through Paystack's hosted checkout in a WebView; the invoice is the proof | Accepted |
 | [0015](0015-pay-an-unpaid-case-by-case-id.md) | Pay an unpaid case through the invoice screen, looked up by case id | Accepted |
-| [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted |
-| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018 |
-| [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted |
+| [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted; queue superseded by 0019 |
+| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018, actions by 0019 |
+| [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted; cap and upload superseded by 0019 |
+| [0019](0019-case-status-actions-and-reports.md) | Case status actions and reports write for real | Accepted |
 
 ## Writing one
 

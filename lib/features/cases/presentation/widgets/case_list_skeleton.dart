@@ -27,13 +27,14 @@ class CaseListSkeleton extends StatelessWidget {
       ),
       itemCount: rowCount,
       separatorBuilder: (_, _) => const SizedBox(height: AppSizing.space12),
-      itemBuilder: (_, _) => const _CaseRowSkeleton(),
+      itemBuilder: (_, _) => const CaseCardSkeleton(),
     );
   }
 }
 
-class _CaseRowSkeleton extends StatelessWidget {
-  const _CaseRowSkeleton();
+/// One placeholder card. Public so the home queue can stack a few inline.
+class CaseCardSkeleton extends StatelessWidget {
+  const CaseCardSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

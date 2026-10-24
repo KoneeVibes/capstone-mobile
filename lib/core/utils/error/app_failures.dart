@@ -53,7 +53,8 @@ abstract final class AppFailures {
 
   static const AppFailure unsupportedDocumentType = AppFailure(
     type: FailureType.validation,
-    message: "That file type isn't supported. Choose a PDF, Word or image file.",
+    message:
+        "That file type isn't supported. Choose a PDF, Word or image file.",
   );
 
   static const AppFailure fileTooLarge = AppFailure(
@@ -77,5 +78,19 @@ abstract final class AppFailures {
   static const AppFailure fileUnreadable = AppFailure(
     type: FailureType.unknown,
     message: "We couldn't read that file. Try choosing it again.",
+  );
+
+  /// The file host refused a document, or it would not render. Not retryable:
+  /// asking again gets the same answer. Kept apart from `ErrorHandler`, which
+  /// would read the host's 401 as an expired session.
+  static const AppFailure documentUnavailable = AppFailure(
+    type: FailureType.forbidden,
+    message: 'This file could not be loaded.',
+  );
+
+  /// A document whose type the app cannot draw — open it outside instead.
+  static const AppFailure documentUnsupported = AppFailure(
+    type: FailureType.validation,
+    message: "This file can't be shown here.",
   );
 }

@@ -1,6 +1,8 @@
+import '../../../../core/utils/media_picker.dart';
 import '../../../../core/utils/result.dart';
 import '../entities/case.dart';
 import '../entities/case_assignee.dart';
+import '../entities/case_status.dart';
 
 /// Case data access.
 ///
@@ -29,5 +31,18 @@ abstract class CasesRepository {
   Future<Result<Case>> assignCase({
     required String caseId,
     required String assigneeId,
+  });
+
+  /// Moves [caseId] to [status] — accept, suspend, or close — returning the
+  /// updated case. The backend decides whether the move is allowed.
+  Future<Result<Case>> updateStatus({
+    required String caseId,
+    required CaseStatus status,
+  });
+
+  /// Submits or replaces the report on [caseId]; it moves to `under-review`.
+  Future<Result<Case>> submitReport({
+    required String caseId,
+    required List<PickedMedia> files,
   });
 }

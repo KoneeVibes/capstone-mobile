@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
+import 'package:propertyintelmobileapp/core/utils/media_picker.dart';
 import 'package:propertyintelmobileapp/features/cases/data/datasources/cases_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/cases/data/models/case_assignee_model.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case.dart';
@@ -169,25 +172,28 @@ void main() {
   }
 
   /// Every `queryParameters` map the list endpoint was called with, in order.
-  List<Map<String, dynamic>> capturedListQueries() =>
-      verify(
-        () => client.get<List<Case>>(
-          any(),
-          queryParameters: captureAny(named: 'queryParameters'),
-          decoder: any(named: 'decoder'),
-        ),
-      ).captured.cast<Map<String, dynamic>>();
+  List<Map<String, dynamic>> capturedListQueries() => verify(
+    () => client.get<List<Case>>(
+      any(),
+      queryParameters: captureAny(named: 'queryParameters'),
+      decoder: any(named: 'decoder'),
+    ),
+  ).captured.cast<Map<String, dynamic>>();
 
   /// The body the datasource sent to PATCH.
-  Map<String, dynamic> capturedPatchBody() =>
-      verify(
-            () => client.patch<Case>(
-              any(),
-              data: captureAny(named: 'data'),
-              decoder: any(named: 'decoder'),
-            ),
-          ).captured.single
-          as Map<String, dynamic>;
+  /// The PATCH's multipart fields, as a map.
+  Map<String, String> capturedPatchBody() {
+    final form =
+        verify(
+              () => client.patch<Case>(
+                any(),
+                data: captureAny(named: 'data'),
+                decoder: any(named: 'decoder'),
+              ),
+            ).captured.single
+            as FormData;
+    return Map.fromEntries(form.fields);
+  }
 
   group('fetchCases', () {
     test('returns the first page when that is all there is', () async {
@@ -216,29 +222,32 @@ void main() {
       expect(queries.first['perPage'], 100);
     });
 
-    test('asks for closed cases separately, in case the default drops them', () async {
-      // "Defaults to all active case statuses" reads as excluding `closed`, and
-      // a Closed tab that is always empty would look like a working filter
-      // rather than a bug.
-      stubCasePages(
-        {
-          1: [caseJson],
-        },
-        closedPages: {
-          1: [
-            {...caseJson, 'id': 'case-closed', 'status': 'closed'},
-          ],
-        },
-      );
+    test(
+      'asks for closed cases separately, in case the default drops them',
+      () async {
+        // "Defaults to all active case statuses" reads as excluding `closed`, and
+        // a Closed tab that is always empty would look like a working filter
+        // rather than a bug.
+        stubCasePages(
+          {
+            1: [caseJson],
+          },
+          closedPages: {
+            1: [
+              {...caseJson, 'id': 'case-closed', 'status': 'closed'},
+            ],
+          },
+        );
 
-      final cases = await source.fetchCases();
+        final cases = await source.fetchCases();
 
-      expect(capturedListQueries().last['filter'], 'closed');
-      expect(cases.map((c) => c.id), [
-        '914ae488-1b1c-4eb8-8798-bc511b175d9f',
-        'case-closed',
-      ]);
-    });
+        expect(capturedListQueries().last['filter'], 'closed');
+        expect(cases.map((c) => c.id), [
+          '914ae488-1b1c-4eb8-8798-bc511b175d9f',
+          'case-closed',
+        ]);
+      },
+    );
 
     test('does not repeat a closed case the default already returned', () async {
       // The merge has to cost nothing if "active" turns out to include closed.
@@ -370,21 +379,24 @@ void main() {
       expect(cases.single.assignee?.fullName, 'Ada Okafor');
     });
 
-    test('does not touch the staff endpoint when nothing is assigned', () async {
-      stubCasePages({
-        1: [caseJson],
-      });
+    test(
+      'does not touch the staff endpoint when nothing is assigned',
+      () async {
+        stubCasePages({
+          1: [caseJson],
+        });
 
-      await source.fetchCases();
+        await source.fetchCases();
 
-      verifyNever(
-        () => client.get<List<CaseAssigneeModel>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          decoder: any(named: 'decoder'),
-        ),
-      );
-    });
+        verifyNever(
+          () => client.get<List<CaseAssigneeModel>>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            decoder: any(named: 'decoder'),
+          ),
+        );
+      },
+    );
 
     test('fetches the staff list once for the whole page', () async {
       stubCasePages({
@@ -433,33 +445,37 @@ void main() {
       expect(cases.single.isAssigned, isTrue);
     });
 
-    test('leaves the name null when the holder is not in the staff list',
-        () async {
-      stubCasePages({
-        1: [
-          {...caseJson, 'assigneeId': 'staff-99', 'status': 'assigned'},
-        ],
-      });
-      stubStaffList([staffJson()]);
+    test(
+      'leaves the name null when the holder is not in the staff list',
+      () async {
+        stubCasePages({
+          1: [
+            {...caseJson, 'assigneeId': 'staff-99', 'status': 'assigned'},
+          ],
+        });
+        stubStaffList([staffJson()]);
 
-      final cases = await source.fetchCases();
+        final cases = await source.fetchCases();
 
-      expect(cases.single.assignee, isNull);
-      expect(cases.single.isAssigned, isTrue);
-    });
+        expect(cases.single.assignee, isNull);
+        expect(cases.single.isAssigned, isTrue);
+      },
+    );
 
-    test('lets a cases failure propagate for the repository to convert',
-        () async {
-      when(
-        () => client.get<List<Case>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          decoder: any(named: 'decoder'),
-        ),
-      ).thenThrow(_httpFailure(500));
+    test(
+      'lets a cases failure propagate for the repository to convert',
+      () async {
+        when(
+          () => client.get<List<Case>>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            decoder: any(named: 'decoder'),
+          ),
+        ).thenThrow(_httpFailure(500));
 
-      expect(source.fetchCases, throwsA(isA<DioException>()));
-    });
+        expect(source.fetchCases, throwsA(isA<DioException>()));
+      },
+    );
   });
 
   group('fetchCase', () {
@@ -579,11 +595,7 @@ void main() {
       // The status the case is read at, not the one the caller believes: the
       // GET before the PATCH is what decides whether a status is written.
       stubSingleCase({...caseJson, 'status': 'payment-validated'});
-      stubPatch({
-        ...caseJson,
-        'assigneeId': 'staff-1',
-        'status': 'assigned',
-      });
+      stubPatch({...caseJson, 'assigneeId': 'staff-1', 'status': 'assigned'});
       stubSingleStaff(staffJson());
 
       final updated = await source.assignCase(
@@ -603,14 +615,10 @@ void main() {
       // Reads the case first precisely so it can tell these two apart.
       stubSingleCase({
         ...caseJson,
-        'status': 'under-review',
+        'status': 'accepted',
         'assigneeId': 'staff-1',
       });
-      stubPatch({
-        ...caseJson,
-        'status': 'under-review',
-        'assigneeId': 'staff-2',
-      });
+      stubPatch({...caseJson, 'status': 'accepted', 'assigneeId': 'staff-2'});
       stubSingleStaff(
         staffJson(id: 'staff-2', firstName: 'Tunde', lastName: 'Bello'),
       );
@@ -621,7 +629,7 @@ void main() {
       );
 
       expect(capturedPatchBody(), {'assigneeId': 'staff-2'});
-      expect(updated.status, CaseStatus.underReview);
+      expect(updated.status, CaseStatus.accepted);
       expect(updated.assignee?.fullName, 'Tunde Bello');
     });
 
@@ -654,5 +662,125 @@ void main() {
         throwsA(isA<DioException>()),
       );
     });
+  });
+
+  group('updateStatus', () {
+    test(
+      'sends the status alone, as multipart, and returns the record',
+      () async {
+        stubPatch({...caseJson, 'status': 'accepted', 'assigneeId': 'staff-1'});
+        stubSingleStaff(staffJson());
+
+        final updated = await source.updateStatus(
+          caseId: 'case-1',
+          status: CaseStatus.accepted,
+        );
+
+        expect(capturedPatchBody(), {'status': 'accepted'});
+        expect(updated.status, CaseStatus.accepted);
+        expect(updated.assignee?.fullName, 'Ada Okafor');
+      },
+    );
+
+    test('skips the name for a role that cannot read staff', () async {
+      source = CasesRemoteDataSourceImpl(client, resolveAssignees: false);
+      stubPatch({...caseJson, 'status': 'accepted', 'assigneeId': 'staff-1'});
+
+      final updated = await source.updateStatus(
+        caseId: 'case-1',
+        status: CaseStatus.accepted,
+      );
+
+      expect(updated.isAssigned, isTrue);
+      expect(updated.assignee, isNull);
+      verifyNever(
+        () => client.get<CaseAssignee>(any(), decoder: any(named: 'decoder')),
+      );
+    });
+
+    test('lets a refused transition propagate', () async {
+      when(
+        () => client.patch<Case>(
+          any(),
+          data: any(named: 'data'),
+          decoder: any(named: 'decoder'),
+        ),
+      ).thenThrow(_httpFailure(409));
+
+      expect(
+        () => source.updateStatus(caseId: 'case-1', status: CaseStatus.closed),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
+
+  group('submitReport', () {
+    late Directory dir;
+
+    setUp(() => dir = Directory.systemTemp.createTempSync('case_report'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    PickedMedia file(String name) {
+      final path = '${dir.path}/$name';
+      File(path).writeAsBytesSync([1, 2, 3]);
+      return PickedMedia(
+        path: path,
+        fileName: name,
+        sizeBytes: 3,
+        extension: name.split('.').last,
+      );
+    }
+
+    test(
+      'PUTs every file under inquiryReport and returns the record',
+      () async {
+        when(
+          () => client.put<Case>(
+            any(),
+            data: any(named: 'data'),
+            decoder: any(named: 'decoder'),
+          ),
+        ).thenAnswer((invocation) async {
+          final decoder =
+              invocation.namedArguments[#decoder] as Case Function(Object?);
+          return ApiResponse<Case>(
+            status: 'success',
+            message: 'Case report submitted successfully.',
+            data: decoder({
+              ...caseJson,
+              'status': 'under-review',
+              'inquiryReport': ['https://x/report.pdf'],
+            }),
+          );
+        });
+        source = CasesRemoteDataSourceImpl(client, resolveAssignees: false);
+
+        final updated = await source.submitReport(
+          caseId: 'case-1',
+          files: [file('report.pdf'), file('photo.png')],
+        );
+
+        final form =
+            verify(
+                  () => client.put<Case>(
+                    '/case/case-1',
+                    data: captureAny(named: 'data'),
+                    decoder: any(named: 'decoder'),
+                  ),
+                ).captured.single
+                as FormData;
+        expect(form.files.map((entry) => entry.key), [
+          'inquiryReport',
+          'inquiryReport',
+        ]);
+        expect(form.files.map((entry) => entry.value.filename), [
+          'report.pdf',
+          'photo.png',
+        ]);
+        expect(form.files.first.value.contentType?.mimeType, 'application/pdf');
+        expect(updated.status, CaseStatus.underReview);
+        expect(updated.reports, ['https://x/report.pdf']);
+      },
+    );
   });
 }

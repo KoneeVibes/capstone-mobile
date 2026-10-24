@@ -5,51 +5,27 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/extensions/context_extensions.dart';
-import '../../domain/entities/queue_item.dart';
 import '../providers/queue_overview_provider.dart';
 import '../widgets/overview_card.dart';
-import '../widgets/queue_section.dart';
 import '../widgets/staff_greeting_banner.dart';
 import '../widgets/tracking_banner.dart';
 
 /// The staff member's home — the Dashboard tab.
 ///
-/// A greeting, the two headline counts, and the work in their queue. The routes
-/// its actions open come in from the router, so the screen imports no other
-/// feature.
+/// A greeting, the two headline counts, and the work in their queue. The queue
+/// is the cases feature's own section, handed in by the router (ADR 0019), so
+/// the screen imports no other feature.
 class StaffHomeScreen extends ConsumerWidget {
   const StaffHomeScreen({
-    required this.caseDetailRouteName,
-    required this.chatRouteName,
+    required this.queue,
     required this.trackingLookupRouteName,
-    required this.casesRouteName,
     super.key,
   });
 
-  /// Takes a `caseId` path parameter.
-  final String caseDetailRouteName;
-
-  /// Takes a `caseId` path parameter.
-  final String chatRouteName;
+  /// "My queue": real cases, with the same buttons as the Cases tab.
+  final Widget queue;
 
   final String trackingLookupRouteName;
-  final String casesRouteName;
-
-  void _openDetail(BuildContext context, QueueItem item) => context.goNamed(
-    caseDetailRouteName,
-    pathParameters: {'caseId': item.reference},
-  );
-
-  void _openChat(BuildContext context, QueueItem item) => context.pushNamed(
-    chatRouteName,
-    pathParameters: {'caseId': item.reference},
-  );
-
-  // The one confirmed one-click action; no screen to open.
-  // TODO(backend): accept the assignment through the real endpoint.
-  void _accept(BuildContext context, QueueItem item) =>
-      context.showMessage('Assignment accepted');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,12 +47,7 @@ class StaffHomeScreen extends ConsumerWidget {
               onTap: () => context.pushNamed(trackingLookupRouteName),
             ),
             const SizedBox(height: AppSizing.space24),
-            QueueSection(
-              onViewAll: () => context.goNamed(casesRouteName),
-              onOpenDetail: (item) => _openDetail(context, item),
-              onAccept: (item) => _accept(context, item),
-              onOpenChat: (item) => _openChat(context, item),
-            ),
+            queue,
           ],
         ),
       ),

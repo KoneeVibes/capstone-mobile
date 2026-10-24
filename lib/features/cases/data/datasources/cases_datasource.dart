@@ -1,5 +1,7 @@
+import '../../../../core/utils/media_picker.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_assignee.dart';
+import '../../domain/entities/case_status.dart';
 
 /// Case data access at the IO boundary.
 ///
@@ -16,4 +18,14 @@ abstract class CasesDataSource {
   Future<List<CaseAssignee>> fetchAssignees();
 
   Future<Case> assignCase({required String caseId, required String assigneeId});
+
+  Future<Case> updateStatus({
+    required String caseId,
+    required CaseStatus status,
+  });
+
+  Future<Case> submitReport({
+    required String caseId,
+    required List<PickedMedia> files,
+  });
 }

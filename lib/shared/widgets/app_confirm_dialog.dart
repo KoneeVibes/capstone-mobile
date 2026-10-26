@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../extensions/context_extensions.dart';
 import 'app_button.dart';
 
 /// Asks the user to confirm an action, resolving to true when they accept.
@@ -20,6 +21,7 @@ Future<bool> showAppConfirmDialog({
   bool isDestructive = true,
   bool stackActions = false,
 }) async {
+  context.hideKeyboard();
   final result = await showDialog<bool>(
     context: context,
     barrierColor: AppColors.overlay,

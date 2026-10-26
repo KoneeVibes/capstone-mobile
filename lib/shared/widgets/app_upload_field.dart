@@ -4,6 +4,7 @@ import '../../core/sizing/app_sizing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/media_picker.dart';
+import '../extensions/context_extensions.dart';
 
 /// An upload box that collects several files, listing each with a remove
 /// button. The caller supplies the wording.
@@ -59,7 +60,10 @@ class AppUploadField extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: radius,
           child: InkWell(
-            onTap: onPick,
+            onTap: () {
+              context.hideKeyboard();
+              onPick();
+            },
             borderRadius: radius,
             child: Ink(
               width: double.infinity,

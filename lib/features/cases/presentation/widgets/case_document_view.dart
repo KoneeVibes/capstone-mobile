@@ -4,6 +4,7 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/document_preview.dart';
+import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_button.dart';
 import 'case_document_pages.dart';
 
@@ -12,22 +13,25 @@ import 'case_document_pages.dart';
 Future<T?> showCaseFileDialog<T>({
   required BuildContext context,
   required Widget child,
-}) => showDialog<T>(
-  context: context,
-  barrierColor: AppColors.overlay,
-  builder: (_) => Dialog(
-    insetPadding: const EdgeInsets.symmetric(
-      horizontal: AppSizing.screenPadding,
-      vertical: AppSizing.space24,
+}) {
+  context.hideKeyboard();
+  return showDialog<T>(
+    context: context,
+    barrierColor: AppColors.overlay,
+    builder: (_) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: AppSizing.screenPadding,
+        vertical: AppSizing.space24,
+      ),
+      backgroundColor: AppColors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizing.radiusLg),
+      ),
+      child: child,
     ),
-    backgroundColor: AppColors.surface,
-    clipBehavior: Clip.antiAlias,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSizing.radiusLg),
-    ),
-    child: child,
-  ),
-);
+  );
+}
 
 /// Opens one case file — a property document or a report file — to read in
 /// the app.

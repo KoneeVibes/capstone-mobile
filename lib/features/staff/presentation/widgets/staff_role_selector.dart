@@ -15,6 +15,7 @@ class StaffRoleSelector extends StatelessWidget {
   const StaffRoleSelector({
     required this.label,
     required this.selected,
+    required this.options,
     required this.onSelected,
     super.key,
     this.errorText,
@@ -22,16 +23,19 @@ class StaffRoleSelector extends StatelessWidget {
 
   final String label;
   final StaffRole selected;
+
+  /// The roles the editor may give (`StaffPermissions.grantableRoles`).
+  final List<StaffRole> options;
   final ValueChanged<StaffRole> onSelected;
   final String? errorText;
 
   @override
   Widget build(BuildContext context) {
-    // A role that is held but never offered (super-admin) still shows, so the
+    // A role that is held but not on offer (super-admin) still shows, so the
     // form does not look as if the member has none.
     final roles = [
-      if (selected.isKnown && !selected.isAssignable) selected,
-      ...StaffRole.assignable,
+      if (selected.isKnown && !options.contains(selected)) selected,
+      ...options,
     ];
 
     return Column(
@@ -49,8 +53,7 @@ class StaffRoleSelector extends StatelessWidget {
                   isSelected: role == selected,
                   onSelected: () => onSelected(role),
                 ),
-                if (role != roles.last)
-                  const SizedBox(width: AppSizing.space8),
+                if (role != roles.last) const SizedBox(width: AppSizing.space8),
               ],
             ],
           ),

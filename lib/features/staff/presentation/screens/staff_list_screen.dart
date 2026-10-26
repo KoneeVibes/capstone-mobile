@@ -296,7 +296,9 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
 
   Widget _tile(Staff staff, StaffPermissions permissions) => StaffListTile(
     staff: staff,
-    onEdit: permissions.canEditStaff ? () => _openForm(staff: staff) : null,
+    onEdit: permissions.canEditStaffMember(staff.role)
+        ? () => _openForm(staff: staff)
+        : null,
     onRemove: permissions.canDeleteStaff ? () => _confirmRemove(staff) : null,
   );
 }

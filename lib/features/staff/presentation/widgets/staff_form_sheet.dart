@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_session.dart';
+import '../../../../core/session/staff_permissions.dart';
 import '../../../../core/session/staff_role.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -57,6 +59,11 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
   /// Photo chosen in this session, or null to leave the avatar as it is.
   String? _avatarPath;
 
+  /// The form as it opened; an edit that still matches it has nothing to save.
+  late final StaffDraft _seed;
+
+  late final Listenable _fields;
+
   /// Held locally rather than read from the shared mutation provider, so a
   /// failure from some earlier action cannot appear when the sheet opens.
   AppFailure? _failure;
@@ -76,8 +83,30 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
 
     // New staff default to the least-privileged role. An unrecognised role on
     // an existing record also lands here, since it cannot be sent back.
-    _role = staff != null && staff.role.isKnown ? staff.role : StaffRole.regular;
+    _role = staff != null && staff.role.isKnown
+        ? staff.role
+        : StaffRole.regular;
+
+    _seed = _draft();
+    _fields = Listenable.merge([
+      _firstName,
+      _middleName,
+      _lastName,
+      _email,
+      _phone,
+    ]);
   }
+
+  /// The form's values, trimmed as the data layer sends them.
+  StaffDraft _draft() => StaffDraft(
+    firstName: _firstName.text.trim(),
+    middleName: _middleName.text.trim(),
+    lastName: _lastName.text.trim(),
+    email: _email.text.trim(),
+    phone: _phone.text.trim(),
+    role: _role,
+    avatarPath: _avatarPath,
+  );
 
   @override
   void dispose() {
@@ -114,16 +143,7 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
 
     setState(() => _failure = null);
 
-    final draft = StaffDraft(
-      firstName: _firstName.text,
-      middleName: _middleName.text,
-      lastName: _lastName.text,
-      email: _email.text,
-      phone: _phone.text,
-      role: _role,
-      avatarPath: _avatarPath,
-    );
-
+    final draft = _draft();
     final notifier = ref.read(staffMutationProvider.notifier);
     final saved = _isEdit
         ? await notifier.updateStaff(id: widget.staff!.id, draft: draft)
@@ -143,6 +163,8 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
   @override
   Widget build(BuildContext context) {
     final isSaving = ref.watch(staffMutationProvider).isLoading;
+    final permissions =
+        ref.watch(sessionProvider)?.permissions ?? StaffPermissions.none;
 
     return Form(
       key: _formKey,
@@ -215,6 +237,7 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
           StaffRoleSelector(
             label: 'Role',
             selected: _role,
+            options: permissions.grantableRoles,
             onSelected: isSaving
                 ? (_) {}
                 : (role) => setState(() => _role = role),
@@ -224,10 +247,13 @@ class _StaffFormSheetState extends ConsumerState<StaffFormSheet> {
             _FormError(failure: _failure!),
           ],
           const SizedBox(height: AppSizing.space24),
-          AppButton(
-            label: _isEdit ? 'Save Changes' : 'Add Staff',
-            isLoading: isSaving,
-            onPressed: _submit,
+          ListenableBuilder(
+            listenable: _fields,
+            builder: (context, _) => AppButton(
+              label: _isEdit ? 'Save Changes' : 'Add Staff',
+              isLoading: isSaving,
+              onPressed: _isEdit && _draft() == _seed ? null : _submit,
+            ),
           ),
           const SizedBox(height: AppSizing.space12),
           AppButton(

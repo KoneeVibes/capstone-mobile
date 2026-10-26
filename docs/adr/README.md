@@ -15,7 +15,7 @@ They are kept so the reason survives the people who were in the room.
 | [0008](0008-session-from-jwt-claims.md) | The session is the JWT, read but not verified | Accepted; staff role superseded by 0011 |
 | [0009](0009-platform-plugins-behind-wrappers.md) | Platform plugins sit behind core wrappers | Accepted |
 | [0010](0010-unit-tests-only.md) | Unit tests only, plus a live check | Accepted |
-| [0011](0011-staff-role-from-own-record.md) | The staff role comes from the user's own staff record | Accepted |
+| [0011](0011-staff-role-from-own-record.md) | The staff role comes from the user's own staff record | Accepted; who may edit whom superseded by 0024 |
 | [0012](0012-property-search-follows-the-api.md) | Property search follows the API and the website, not the mockups | Accepted; payment superseded by 0014 |
 | [0013](0013-case-assignment-rules.md) | Who can take a case, and what an assignment writes | Accepted; assignable statuses superseded by 0019 |
 | [0014](0014-paystack-checkout-in-a-webview.md) | Pay through Paystack's hosted checkout in a WebView; the invoice is the proof | Accepted |
@@ -28,6 +28,7 @@ They are kept so the reason survives the people who were in the room.
 | [0021](0021-suspend-through-delete.md) | Suspend a case through `DELETE /case/{id}`; re-assign to lift it | Accepted |
 | [0022](0022-case-files-open-in-the-app.md) | Every case file opens in the app | Accepted |
 | [0023](0023-default-case-list-includes-closed.md) | The default case list includes closed cases | Accepted |
+| [0024](0024-who-may-edit-which-staff.md) | Who may edit which staff | Accepted |
 
 ## Writing one
 

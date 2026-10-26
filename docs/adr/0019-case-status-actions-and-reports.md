@@ -73,8 +73,9 @@ be re-assigned (ADR 0013). Disputes are still out of scope.
   `PATCH {status: suspended}` is refused (400 "Invalid status"); a client
   cannot see their own case once it is assigned (`GET /case` omits it,
   `GET /case/{id}` 404s); Cloudinary answers PDF links with 401 ("deny or ACL
-  failure"), so neither reports nor case documents open; and `POST /case`
-  fails (500 with files, 400 without). Each is with the backend.
+  failure"), so neither reports nor case documents open. Each is with the
+  backend. (A `POST /case` 500 seen that day came from hand-built test files,
+  not the backend.)
 - A super-admin can only re-assign a suspended case once suspend works.
 - Disputes remain mock (ADR 0017) and the dispute rules were not changed here.
 - `pdfx` is a new dependency. `pdfrx` was passed over because it needs a

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/sizing/app_sizing.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/extensions/context_extensions.dart';
@@ -157,7 +159,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: AppSizing.space16),
                 PasswordField(
                   label: 'Password',
-                  hint: 'must be 8 characters',
+                  hint:
+                      '${AppConstants.minPasswordLength}+ characters, a number '
+                      'and a symbol',
                   controller: _password,
                   autofillHints: const [AutofillHints.newPassword],
                   validator: Validators.password,
@@ -179,9 +183,46 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   isLoading: _busy,
                   onPressed: _submit,
                 ),
+                const SizedBox(height: AppSizing.space12),
+                _LegalNotice(enabled: !_busy),
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "By creating an account, you agree to our…", linking both legal pages.
+class _LegalNotice extends StatelessWidget {
+  const _LegalNotice({required this.enabled});
+
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: AppSizing.space4,
+      children: [
+        const Text(
+          'By creating an account, you agree to our',
+          style: AppTextStyles.bodyMedium,
+        ),
+        AuthLink(
+          label: 'Terms & Conditions',
+          onPressed: enabled
+              ? () => context.pushNamed(AppRoutes.termsName)
+              : null,
+        ),
+        const Text('and', style: AppTextStyles.bodyMedium),
+        AuthLink(
+          label: 'Privacy Policy',
+          onPressed: enabled
+              ? () => context.pushNamed(AppRoutes.privacyPolicyName)
+              : null,
         ),
       ],
     );

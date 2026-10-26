@@ -4,13 +4,13 @@
 
 ## **1. INTRODUCTION** 
 
-These Website and Mobile Application Terms and Conditions (" **Terms** ") govern your access to and use of the Capstone Property Intel website, mobile application and property due-diligence services (collectively, the " **Platform** " or " **Services** "). The Platform is operated by **Capstone PropertyIntel Limited** (" **Capstone** "), a company operating in Nigeria. 
+These Website and Mobile Application Terms and Conditions ("**Terms**") govern your access to and use of the Capstone Property Intel website, mobile application and property due-diligence services (collectively, the "**Platform**" or "**Services**"). The Platform is operated by **Capstone PropertyIntel Limited** ("**Capstone**"), a company operating in Nigeria. 
 
 Capstone provides technology-enabled property due-diligence services intended to assist individuals and other users in investigating and assessing information concerning properties they may be considering purchasing or otherwise transacting in relation to within Nigeria. 
 
 By accessing the Platform, creating an Account, submitting a Property details for due diligence, ordering a Service, uploading documents or making payment, you agree to be bound by these Terms. 
 
-If you do not agree to these Terms, you must not use the Platform or Services. These Terms should be read together with Capstone's **Privacy Policy** , which explains how we collect, use, store and protect personal data. 
+If you do not agree to these Terms, you must not use the Platform or Services. These Terms should be read together with Capstone's **Privacy Policy**, which explains how we collect, use, store and protect personal data. 
 
 ## **2. DEFINITIONS** 
 
@@ -18,7 +18,9 @@ For purposes of these Terms:
 
 **"Account"** means an account created by a User to access or use certain features of the Platform. 
 
-**"Capstone"** , " **we** ", " **us** " or " **our** " means Capstone PropertyIntel Limited. **"Due-Diligence Report"** means a report, assessment, search result, verification result or other written or electronic information provided by Capstone concerning a Property. 
+**"Capstone"**, "**we**", "**us**" or "**our**" means Capstone PropertyIntel Limited.
+
+**"Due-Diligence Report"** means a report, assessment, search result, verification result or other written or electronic information provided by Capstone concerning a Property. 
 
 **"Government Authority"** means any Nigerian ministry, department, agency, land registry, local government authority, public office, court, regulatory body or other governmental institution. 
 
@@ -30,7 +32,7 @@ For purposes of these Terms:
 
 **"Services"** means Capstone's property due-diligence, search, verification, information, reporting and related services. 
 
-**"User"** , " **you** " or " **your** " means any person accessing or using the Platform or Services. 
+**"User"**, "**you**" or "**your**" means any person accessing or using the Platform or Services. 
 
 ## **3. THE CAPSTONE PROPERTY DUE-DILIGENCE SERVICE** 
 
@@ -164,7 +166,9 @@ Capstone will use reasonable efforts to identify apparent discrepancies in infor
 
 ## **6.1** 
 
-## **A Capstone Due-Diligence Report is not a guarantee or certification of title. 6.2** 
+A Capstone Due-Diligence Report is not a guarantee or certification of title.
+
+## **6.2** 
 
 Completion of a Capstone search does not guarantee that: 
 
@@ -630,9 +634,7 @@ However, we do not guarantee that the Platform will:
 
 - be completely free from security vulnerabilities. 
 
-The Platform may be temporarily unavailable because of maintenance, 
-
-technical issues, cybersecurity incidents, network failures, power failures or circumstances beyond Capstone's reasonable control. 
+The Platform may be temporarily unavailable because of maintenance, technical issues, cybersecurity incidents, network failures, power failures or circumstances beyond Capstone's reasonable control. 
 
 ## **23. THIRD-PARTY SERVICES** 
 
@@ -816,11 +818,11 @@ We will make reasonable efforts to investigate and resolve complaints.
 
 ## **32. GOVERNING LAW AND JURISDICTION** 
 
-These Terms shall be governed by and interpreted in accordance with the laws of the **Federal Republic of Nigeria** . 
+These Terms shall be governed by and interpreted in accordance with the laws of the **Federal Republic of Nigeria**. 
 
 Subject to any mandatory dispute-resolution or consumer-protection requirements applicable to the User, the courts of competent jurisdiction in Nigeria shall have jurisdiction over disputes arising from or relating to these Terms or the Services. 
 
-**33. SEVERABILITY** 
+## **33. SEVERABILITY** 
 
 If any provision of these Terms is found to be unlawful, invalid or unenforceable, that provision shall be modified or interpreted to the minimum extent necessary to make it lawful and enforceable. 
 
@@ -838,9 +840,15 @@ These Terms, together with the Privacy Policy and any additional terms expressly
 
 ## **Capstone PropertyIntel Limited** 
 
-**Registered Address:** Abuja, Nigeria **Customer Service Email:** <u>info@capstoneglobalhq.com</u> **Website:** <u>www.capstoneglobalhq.com</u> 
+**Registered Address:** Abuja, Nigeria
 
-**Effective Date:** November, 2026 **Last Updated:** November, 2026 
+**Customer Service Email:** info@capstoneglobalhq.com
+
+**Website:** www.capstoneglobalhq.com 
+
+**Effective Date:** November, 2026
+
+**Last Updated:** November, 2026 
 
 ## **© 2026 Capstone PropertyIntel. All rights reserved.** 
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/utils/error/app_failures.dart';
@@ -81,7 +82,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               children: [
                 PasswordField(
                   label: 'New password',
-                  hint: 'must be 8 characters',
+                  hint:
+                      '${AppConstants.minPasswordLength}+ characters, a number '
+                      'and a symbol',
                   controller: _password,
                   autofillHints: const [AutofillHints.newPassword],
                   validator: (value) =>

@@ -58,6 +58,9 @@ dependencies:
   # PDF renderer. pdfrx needs a newer Flutter.
   pdfx: ^2.11.0
 
+  # The Terms and Privacy Policy, bundled as markdown in assets/legal/.
+  flutter_markdown_plus: ^1.0.12
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -39,7 +39,8 @@ Full screen, above the shells (no bottom bar):
   /client/disputes/:caseId/new           raise a dispute
   /client/disputes/:caseId/:disputeId    follow a dispute
 
-/legal/privacy-policy, /legal/terms   reserved for the legal screens
+/legal/privacy-policy, /legal/terms   the legal pages, full screen; linked
+                                      from Register and Profile
 ```
 
 Each shell is a `StatefulShellRoute.indexedStack`, so every tab keeps its own

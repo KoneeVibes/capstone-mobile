@@ -146,8 +146,7 @@ abstract final class AppRoutes {
   static const String staffProfileName = 'staffProfile';
   static const String staffProfilePath = '/staff/profile';
 
-  // Legal. Screens land with the legal-content task; the paths are fixed now so
-  // links from other screens can be written against them.
+  // Legal pages, open to signed-out users.
   static const String privacyPolicyName = 'privacyPolicy';
   static const String privacyPolicyPath = '/legal/privacy-policy';
 

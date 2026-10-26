@@ -10,6 +10,7 @@ import '../../features/auth/presentation/screens/password_changed_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_code_screen.dart';
+import '../../features/auth/presentation/widgets/auth_link_row.dart';
 import '../../features/auth/presentation/widgets/sign_out_button.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
@@ -21,12 +22,15 @@ import '../../features/dashboard/presentation/screens/client_home_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/staff_home_screen.dart';
 import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
+import '../../features/legal/domain/legal_document.dart';
+import '../../features/legal/presentation/screens/legal_screen.dart';
 import '../../features/payment/presentation/screens/invoice_screen.dart';
 import '../../features/property_search/presentation/screens/search_property_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
 import '../../shared/widgets/app_state_view.dart';
+import '../sizing/app_sizing.dart';
 import '../utils/error/app_failures.dart';
 import 'app_redirect.dart';
 import 'app_routes.dart';
@@ -172,6 +176,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.staffDisputePath,
         name: AppRoutes.staffDisputeName,
         builder: (context, state) => _dispute(state),
+      ),
+      // Open to everyone (`redirectFor`), so Register can link to them.
+      GoRoute(
+        path: AppRoutes.termsPath,
+        name: AppRoutes.termsName,
+        builder: (context, state) =>
+            const LegalScreen(document: LegalDocument.terms),
+      ),
+      GoRoute(
+        path: AppRoutes.privacyPolicyPath,
+        name: AppRoutes.privacyPolicyName,
+        builder: (context, state) =>
+            const LegalScreen(document: LegalDocument.privacyPolicy),
       ),
       // Branch order must match AppShell.clientTabs.
       StatefulShellRoute.indexedStack(
@@ -428,16 +445,35 @@ Widget _dispute(GoRouterState state) => DisputeDetailScreen(
 );
 
 /// Both roles' Profile tab until the profile screen is designed. Carries the
-/// only way to sign out meanwhile.
+/// legal links and the only way to sign out meanwhile.
 class _ProfilePlaceholder extends StatelessWidget {
   const _ProfilePlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    return const PlaceholderScreen(
+    return PlaceholderScreen(
       title: 'Profile',
       message: 'Your account details will appear here.',
-      action: SignOutButton(),
+      action: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AuthLink(
+                label: 'Terms & Conditions',
+                onPressed: () => context.pushNamed(AppRoutes.termsName),
+              ),
+              const SizedBox(width: AppSizing.space16),
+              AuthLink(
+                label: 'Privacy Policy',
+                onPressed: () => context.pushNamed(AppRoutes.privacyPolicyName),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizing.space16),
+          const SignOutButton(),
+        ],
+      ),
     );
   }
 }

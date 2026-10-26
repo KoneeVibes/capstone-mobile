@@ -4,11 +4,11 @@
 
 ## **1. INTRODUCTION** 
 
-Capstone PropertyIntel Limited (" **Capstone** ") is committed to protecting the privacy and personal data of individuals who use our website, mobile application and property due-diligence services (collectively, the " **Services** "). 
+Capstone PropertyIntel Limited ("**Capstone**") is committed to protecting the privacy and personal data of individuals who use our website, mobile application and property due-diligence services (collectively, the "**Services**"). 
 
 Capstone operates in Nigeria and provides technology-enabled property duediligence services designed to assist individuals and other users in obtaining and assessing relevant information concerning properties they are considering purchasing in Nigeria. 
 
-This Privacy Policy explains how we collect, use, store, disclose and protect personal data when you interact with Capstone, use our website or mobile application, or obtain our Services. We process personal data in accordance with applicable Nigerian data protection laws, including the **Nigeria Data Protection Act 2023 (NDP Act)** and applicable regulatory guidance issued by the Nigeria Data Protection Commission (" **NDPC** "). 
+This Privacy Policy explains how we collect, use, store, disclose and protect personal data when you interact with Capstone, use our website or mobile application, or obtain our Services. We process personal data in accordance with applicable Nigerian data protection laws, including the **Nigeria Data Protection Act 2023 (NDP Act)** and applicable regulatory guidance issued by the Nigeria Data Protection Commission ("**NDPC**"). 
 
 By using our Services, you acknowledge that you have read and understood this Privacy Policy. Where applicable law requires your consent for a particular processing activity, we will obtain that consent. 
 
@@ -18,9 +18,13 @@ Capstone PropertyIntel Limited is a company operating in Nigeria and providing p
 
 Our contact details are: 
 
-**Company:** Capstone PropertyIntel Limited **Registered Address:** Abuja, Nigeria 
+**Company:** Capstone PropertyIntel Limited
 
-**Email:** <u>info@capstoneglobalhq.com</u> **Website:** <u>www.capstoneglobalhq.com</u> 
+**Registered Address:** Abuja, Nigeria 
+
+**Email:** info@capstoneglobalhq.com
+
+**Website:** www.capstoneglobalhq.com 
 
 ## **3. PERSONAL DATA WE COLLECT** 
 
@@ -29,8 +33,6 @@ Depending on how you use our Services, we may collect and process different cate
 ## **3.1 Personal and Contact Information** 
 
 This may include: 
-
-1 
 
 - full name; 
 
@@ -82,8 +84,6 @@ Capstone does not intend to retain complete payment-card information where this 
 
 When you access our website or mobile application, we may automatically collect certain technical information, which may include: 
 
-2 
-
 - IP address; 
 
 - device type; 
@@ -108,7 +108,7 @@ We use this information primarily to operate, maintain, secure and improve our w
 
 ## **4. HOW WE COLLECT PERSONAL DATA** 
 
-## We may collect personal data: 
+We may collect personal data: 
 
 - directly from you when you create an account; 
 
@@ -146,8 +146,6 @@ To obtain, verify, analyse and assess information relating to a property from re
 
 To create and administer user accounts and maintain accurate records of our customers. 
 
-3 
-
 ## 4. **Processing payments** 
 
 To facilitate payment for our Services and administer transactions. 
@@ -168,7 +166,7 @@ To detect, investigate and prevent fraudulent, unauthorised or unlawful activity
 
 To comply with applicable laws, regulations, court orders, regulatory requirements and lawful requests from public authorities. 
 
-9. **Marketing** 
+## 9. **Marketing** 
 
 Where permitted by applicable law, we may use your contact information to send promotional communications about Capstone's products, services, updates and offers. You may opt out of promotional communications at any time. 
 
@@ -176,7 +174,7 @@ Where permitted by applicable law, we may use your contact information to send p
 
 To carry out any other purpose that is disclosed to you at the time your personal data is collected or otherwise permitted by applicable law. 
 
-## **6. LAWFUL BASES** **<u>FOR PROCESSING</u>** 
+## **6. LAWFUL BASES FOR PROCESSING** 
 
 We will only process personal data where we have a lawful basis for doing so. Depending on the circumstances, our lawful bases may include: 
 
@@ -188,15 +186,11 @@ We will only process personal data where we have a lawful basis for doing so. De
 
 - **Consent:** where we have obtained your consent for a particular processing activity; and 
 
-- **Other lawful bases recognised under applicable Nigerian data** 
-
-## **protection legislation.** 
+- **Other lawful bases recognised under applicable Nigerian data protection legislation.** 
 
 Where we rely on consent, you may withdraw your consent where applicable. Withdrawal of consent will not affect the lawfulness of processing carried out before withdrawal. 
 
-4 
-
-## **7. PROPERTY DOCUMENTS** **<u>AND INFORMATION OBTAINED FROM PUBLIC AUTHORITIES</u>** 
+## **7. PROPERTY DOCUMENTS AND INFORMATION OBTAINED FROM PUBLIC AUTHORITIES** 
 
 A central part of our Services involves investigating property records and related information. 
 
@@ -235,8 +229,6 @@ We do **not** sell your personal data to third parties.
 ## **9. DATA SECURITY** 
 
 We recognise the importance of protecting personal data entrusted to us. 
-
-5 
 
 We will implement appropriate technical and organisational measures designed to protect personal data against unauthorised access, unlawful processing, accidental loss, destruction, alteration, disclosure or other forms of misuse. Depending on the nature and sensitivity of the information, our safeguards may include: 
 
@@ -290,8 +282,6 @@ Subject to applicable law and any lawful restrictions, you may have rights in re
 
 - request restriction of certain processing activities; 
 
-6 
-
 - object to certain processing activities; 
 
 - withdraw consent where processing is based on consent; 
@@ -322,7 +312,7 @@ You may unsubscribe from promotional emails by:
 
 Please note that even if you opt out of promotional communications, we may continue to send you essential service-related or transactional communications, such as information concerning your account, payments, security or a property due-diligence request. 
 
-## **13. COOKIES** **<u>AND SIMILAR TECHNOLOGIES</u>** 
+## **13. COOKIES AND SIMILAR TECHNOLOGIES** 
 
 Our website and mobile application may use cookies, device identifiers and similar technologies to enable essential functionality, improve performance, understand usage and enhance the user experience. 
 
@@ -333,8 +323,6 @@ You may be able to control cookies through your browser or device settings. Disa
 A separate Cookie Notice may be provided where appropriate. 
 
 ## **14. CHILDREN'S PRIVACY** 
-
-7 
 
 Our Services are intended for persons who are legally capable of entering into the relevant transactions and agreements. 
 
@@ -354,7 +342,7 @@ We maintain procedures intended to identify, assess, manage and respond to perso
 
 Where a personal data breach occurs, we will take appropriate steps to contain and investigate the incident, mitigate potential harm and make any notifications required by applicable law or regulatory requirements. 
 
-## **17. THIRD-PARTY WEBSITES** **<u>AND SERVICES</u>** 
+## **17. THIRD-PARTY WEBSITES AND SERVICES** 
 
 Our website or mobile application may contain links to third-party websites, services or platforms. 
 
@@ -362,35 +350,33 @@ This Privacy Policy does not govern the privacy practices of third parties that 
 
 We encourage you to review the privacy policies of third-party services before providing personal information to them. 
 
-## **18. ACCURACY** **<u>OF PERSONAL DATA</u>** 
+## **18. ACCURACY OF PERSONAL DATA** 
 
 We seek to ensure that personal data in our possession is accurate, complete and reasonably up to date for the purposes for which it is processed. 
 
 You should notify us if information you have provided to us changes or if you believe that information we hold about you is inaccurate. 
 
-## **19. CHANGES** **<u>TO THIS PRIVACY POLICY</u>** 
+## **19. CHANGES TO THIS PRIVACY POLICY** 
 
 We may update this Privacy Policy from time to time to reflect changes in our Services, technology, business practices, legal requirements or regulatory guidance. 
 
-8 
-
 When we make material changes, we may provide an appropriate notice through our website, mobile application, email or other reasonable means. 
 
-The " **Last Updated** " date at the beginning of this Privacy Policy indicates when the policy was most recently revised. 
+The "**Last Updated**" date at the beginning of this Privacy Policy indicates when the policy was most recently revised. 
 
-## **20. COMPLAINTS** **<u>AND CONTACT US</u>** 
+## **20. COMPLAINTS AND CONTACT US** 
 
 If you have questions, concerns or complaints regarding how Capstone processes your personal data, please contact us: 
 
 ## **Capstone PropertyIntel** 
 
-**Email:** <u>info@capstoneglobalhq.com</u> 
+**Email:** info@capstoneglobalhq.com 
 
 **Address:** Abuja, Nigeria 
 
 We will investigate and respond to complaints in accordance with our internal procedures and applicable law. 
 
-Where you are dissatisfied with our response or where otherwise permitted by applicable law, you may also have the right to contact the **Nigeria Data Protection Commission (NDPC)** , Nigeria's data protection regulatory authority. 
+Where you are dissatisfied with our response or where otherwise permitted by applicable law, you may also have the right to contact the **Nigeria Data Protection Commission (NDPC)**, Nigeria's data protection regulatory authority. 
 
 ## **21. GOVERNING LAW** 
 
@@ -402,7 +388,7 @@ Where any provision of this Privacy Policy conflicts with a mandatory requiremen
 
 By using the Capstone PropertyIntel website, mobile application or Services, you acknowledge that you have had an opportunity to read this Privacy Policy and understand how Capstone may collect and process personal data. Where applicable law requires consent, Capstone will obtain the necessary consent before undertaking the relevant processing activity. 
 
-**Effective Date:** November, 2026 **Last Updated:** November, 2026 
+**Effective Date:** November, 2026
 
-9 
+**Last Updated:** November, 2026 
 

@@ -64,7 +64,8 @@ redirect rule. → [Navigation and auth](docs/navigation-and-auth.md)
 
 Main dependencies: `flutter_riverpod`, `go_router`, `dio`, `equatable`, `intl`,
 `flutter_secure_storage`, `shared_preferences`, `image_picker`, `file_picker`,
-`url_launcher`, `shimmer`. Tests use `mocktail` and `fake_async`.
+`url_launcher`, `shimmer`, `webview_flutter`, `pdfx`, `flutter_markdown_plus`.
+Tests use `mocktail` and `fake_async`.
 
 ## Debugging
 

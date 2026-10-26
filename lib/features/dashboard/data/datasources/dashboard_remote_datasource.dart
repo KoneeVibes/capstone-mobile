@@ -35,71 +35,41 @@ class DashboardRemoteDataSourceImpl implements DashboardDataSource {
     return tracked.withDetails(address: address, assigneeNames: names);
   }
 
-  /// The default list plus `filter=closed`, merged by id as the cases list
-  /// does. A client with no cases at all gets a 404 "Cases not found" — that
-  /// is zero, not a failure.
+  /// The default list, which includes closed cases (ADR 0023). A client with
+  /// no cases at all gets a 404 "Cases not found" — that is zero, not a
+  /// failure.
   @override
   Future<CaseOverview> fetchOverview() async {
-    // In turn, not `.wait`: a record wait wraps failures in a
-    // ParallelWaitError, which ErrorHandler cannot read.
-    final active = await _rowsOrNone(const {});
-    final closed = await _rowsOrNone(const {'filter': 'closed'});
-    final ids = <String>{};
-    final rows = [
-      ...active,
-      ...closed,
-    ].where((row) => row.id == null || ids.add(row.id!));
-    return CaseOverview.fromStatuses(rows.map((row) => row.status));
-  }
-
-  Future<List<CaseStatusRowModel>> _rowsOrNone(
-    Map<String, dynamic> query,
-  ) async {
     try {
-      return await _client.getAllPages<CaseStatusRowModel>(
+      final rows = await _client.getAllPages<CaseStatusRowModel>(
         ApiEndpoints.cases,
         CaseStatusRowModel.listFromJson,
-        query: query,
       );
+      return CaseOverview.fromStatuses(rows.map((row) => row.status));
     } on DioException catch (error) {
-      if (error.response?.statusCode == 404) return const [];
+      if (error.response?.statusCode == 404) {
+        return CaseOverview.fromStatuses(const []);
+      }
       rethrow;
     }
   }
 
   /// `GET /case/{_id}` 404s and the list ignores `trackingId`/`search`, so the
-  /// list is searched. Closed cases need their own `filter=closed` request.
+  /// list is searched.
   Future<String?> _addressOf(String trackingId) async {
     try {
-      final active = await _client.getAllPages<CaseAddressModel>(
+      final rows = await _client.getAllPages<CaseAddressModel>(
         ApiEndpoints.cases,
         CaseAddressModel.listFromJson,
       );
-      final match =
-          _find(active, trackingId) ?? _find(await _closedCases(), trackingId);
-      return match?.address;
+      return rows
+          .where((row) => row.trackingId == trackingId)
+          .firstOrNull
+          ?.address;
     } on Object {
       return null;
     }
   }
-
-  Future<List<CaseAddressModel>> _closedCases() async {
-    try {
-      return await _client.getAllPages<CaseAddressModel>(
-        ApiEndpoints.cases,
-        CaseAddressModel.listFromJson,
-        query: const {'filter': 'closed'},
-      );
-    } on DioException catch (error) {
-      if (error.response?.statusCode == 404) return const [];
-      rethrow;
-    }
-  }
-
-  static CaseAddressModel? _find(
-    List<CaseAddressModel> rows,
-    String trackingId,
-  ) => rows.where((row) => row.trackingId == trackingId).firstOrNull;
 
   Future<Map<String, String>> _staffNames() async {
     try {

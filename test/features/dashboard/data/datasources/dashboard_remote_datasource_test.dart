@@ -56,9 +56,7 @@ void main() {
     });
   }
 
-  /// [active] answers the unfiltered request; [closed] the `filter=closed` one,
-  /// which 404s when left null, as the live API does when nothing matches.
-  void stubCases(List<Object?> active, {List<Object?>? closed}) {
+  void stubCases(List<Object?> rows) {
     when(
       () => client.get<List<CaseAddressModel>>(
         any(),
@@ -66,16 +64,10 @@ void main() {
         decoder: any(named: 'decoder'),
       ),
     ).thenAnswer((invocation) async {
-      final query =
-          invocation.namedArguments[#queryParameters] as Map<String, dynamic>;
       final decoder =
           invocation.namedArguments[#decoder]
               as List<CaseAddressModel> Function(Object?);
-      if (query.containsKey('filter')) {
-        if (closed == null) throw _httpFailure(404);
-        return _page(decoder(closed));
-      }
-      return _page(decoder(active));
+      return _page(decoder(rows));
     });
   }
 
@@ -125,15 +117,6 @@ void main() {
     expect(tracked.history[3].assigneeName, isNull);
   });
 
-  test('finds the address among closed cases too', () async {
-    stubTracking(bareHistory);
-    stubCases(const [], closed: [caseRowJson()]);
-
-    final tracked = await source.trackCase('PI-URF8T7C2');
-
-    expect(tracked.address, '5 Kayode Abraham, Off Ligali Ayorinde');
-  });
-
   test('still returns the case when both joins fail', () async {
     stubTracking(trackingJson);
     when(
@@ -181,9 +164,8 @@ void main() {
   });
 
   group('fetchOverview', () {
-    /// Answers the unfiltered and `filter=closed` requests separately; a null
-    /// side answers 404, as the live list does when nothing matches.
-    void stubRows({List<Object?>? active, List<Object?>? closed}) {
+    /// A null [rows] answers 404, as the live list does for a client with none.
+    void stubRows([List<Object?>? rows]) {
       when(
         () => client.get<List<CaseStatusRowModel>>(
           any(),
@@ -191,9 +173,6 @@ void main() {
           decoder: any(named: 'decoder'),
         ),
       ).thenAnswer((invocation) async {
-        final query =
-            invocation.namedArguments[#queryParameters] as Map<String, dynamic>;
-        final rows = query.containsKey('filter') ? closed : active;
         if (rows == null) throw _httpFailure(404);
         final decoder =
             invocation.namedArguments[#decoder]
@@ -202,19 +181,15 @@ void main() {
       });
     }
 
-    test('counts each status into its card', () async {
-      stubRows(
-        active: [
-          {'id': 'a', 'status': 'submitted'},
-          {'id': 'b', 'status': 'pending-information'},
-          {'id': 'c', 'status': 'assigned'},
-          {'id': 'd', 'status': 'under-review'},
-          {'id': 'e', 'status': 'suspended'},
-        ],
-        closed: [
-          {'id': 'f', 'status': 'closed'},
-        ],
-      );
+    test('counts each status into its card, closed included', () async {
+      stubRows([
+        {'id': 'a', 'status': 'submitted'},
+        {'id': 'b', 'status': 'pending-information'},
+        {'id': 'c', 'status': 'assigned'},
+        {'id': 'd', 'status': 'under-review'},
+        {'id': 'e', 'status': 'suspended'},
+        {'id': 'f', 'status': 'closed'},
+      ]);
 
       expect(
         await source.fetchOverview(),
@@ -227,20 +202,7 @@ void main() {
       );
     });
 
-    test('counts a case both requests return once', () async {
-      stubRows(
-        active: [
-          {'id': 'a', 'status': 'closed'},
-        ],
-        closed: [
-          {'id': 'a', 'status': 'closed'},
-        ],
-      );
-
-      expect((await source.fetchOverview()).total, 1);
-    });
-
-    test('reads 404s as a client with no cases yet', () async {
+    test('reads a 404 as a client with no cases yet', () async {
       stubRows();
 
       expect(

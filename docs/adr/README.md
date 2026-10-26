@@ -10,7 +10,7 @@ They are kept so the reason survives the people who were in the room.
 | [0003](0003-backend-enums-are-truth.md) | The backend is the source of truth over the designs | Accepted |
 | [0004](0004-single-light-theme-portrait.md) | One light theme, portrait only | Accepted |
 | [0005](0005-one-app-two-role-shells.md) | One app, one tab shell per role | Accepted |
-| [0006](0006-cases-fetched-whole.md) | Fetch the case list whole and filter on the device | Accepted |
+| [0006](0006-cases-fetched-whole.md) | Fetch the case list whole and filter on the device | Accepted; closed-cases request superseded by 0023 |
 | [0007](0007-auth-through-core-seams.md) | Auth plugs into core through provider seams | Accepted |
 | [0008](0008-session-from-jwt-claims.md) | The session is the JWT, read but not verified | Accepted; staff role superseded by 0011 |
 | [0009](0009-platform-plugins-behind-wrappers.md) | Platform plugins sit behind core wrappers | Accepted |
@@ -27,6 +27,7 @@ They are kept so the reason survives the people who were in the room.
 | [0020](0020-search-through-the-search-endpoint.md) | Search cases and staff through `GET /search`, one tab at a time | Accepted |
 | [0021](0021-suspend-through-delete.md) | Suspend a case through `DELETE /case/{id}`; re-assign to lift it | Accepted |
 | [0022](0022-case-files-open-in-the-app.md) | Every case file opens in the app | Accepted |
+| [0023](0023-default-case-list-includes-closed.md) | The default case list includes closed cases | Accepted |
 
 ## Writing one
 

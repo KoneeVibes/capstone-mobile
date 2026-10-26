@@ -1,6 +1,6 @@
 # 0011 — The staff role comes from the user's own staff record
 
-- **Status:** Accepted
+- **Status:** Accepted; who may edit whom superseded by [0024](0024-who-may-edit-which-staff.md)
 - **Recorded:** 2026-10-06
 - **Supersedes:** the staff-role consequence of [0008](0008-session-from-jwt-claims.md)
 

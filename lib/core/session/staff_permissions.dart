@@ -20,9 +20,23 @@ class StaffPermissions {
   bool get canCreateStaff =>
       _isAny(const {StaffRole.superAdmin, StaffRole.admin});
 
-  /// Editing includes changing the member's role.
-  bool get canEditStaff =>
-      _isAny(const {StaffRole.superAdmin, StaffRole.admin, StaffRole.manager});
+  /// Whether [target]'s row offers Edit, which includes changing their role.
+  /// Only a super-admin edits a super-admin; a manager edits regular and
+  /// manager rows only (ADR 0024).
+  bool canEditStaffMember(StaffRole target) => switch (role) {
+    StaffRole.superAdmin => true,
+    StaffRole.admin => target != StaffRole.superAdmin,
+    StaffRole.manager => grantableRoles.contains(target),
+    _ => false,
+  };
+
+  /// The roles this user may give someone in the staff form, so nobody can
+  /// move a member to a row they could not then edit.
+  List<StaffRole> get grantableRoles => switch (role) {
+    StaffRole.superAdmin || StaffRole.admin => StaffRole.assignable,
+    StaffRole.manager => const [StaffRole.manager, StaffRole.regular],
+    _ => const [],
+  };
 
   bool get canDeleteStaff => role == StaffRole.superAdmin;
 

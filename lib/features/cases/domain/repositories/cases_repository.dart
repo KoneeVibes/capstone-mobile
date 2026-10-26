@@ -37,12 +37,16 @@ abstract class CasesRepository {
     required String assigneeId,
   });
 
-  /// Moves [caseId] to [status] — accept, suspend, or close — returning the
-  /// updated case. The backend decides whether the move is allowed.
+  /// Moves [caseId] to [status] — accept or close — returning the updated
+  /// case. The backend decides whether the move is allowed.
   Future<Result<Case>> updateStatus({
     required String caseId,
     required CaseStatus status,
   });
+
+  /// Suspends [caseId], returning the updated case. A write of its own, not a
+  /// [updateStatus]: the API suspends through `DELETE /case/{id}` (ADR 0021).
+  Future<Result<Case>> suspendCase({required String caseId});
 
   /// Submits or replaces the report on [caseId]; it moves to `under-review`.
   Future<Result<Case>> submitReport({

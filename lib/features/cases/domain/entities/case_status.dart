@@ -93,8 +93,9 @@ enum CaseStatus {
 
   /// Whether assigning also moves the case along its lifecycle.
   ///
-  /// Only [paymentValidated] does: that is the hand-off assigning actually
-  /// causes. Re-assigning anything further on is a change of hands, and sending
+  /// [paymentValidated] is the hand-off assigning causes, and re-assigning a
+  /// [suspended] case lifts the suspension (backend lead, 26 Oct 2026; ADR
+  /// 0021). Re-assigning anything else is a change of hands, and sending
   /// `assigned` alongside it would knock the case backwards.
-  bool get advancesOnAssign => this == paymentValidated;
+  bool get advancesOnAssign => this == paymentValidated || this == suspended;
 }

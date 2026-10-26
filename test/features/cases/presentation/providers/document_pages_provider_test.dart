@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:propertyintelmobileapp/core/utils/document_preview.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failures.dart';
 import 'package:propertyintelmobileapp/core/utils/error/async_value_x.dart';
-import 'package:propertyintelmobileapp/features/cases/presentation/providers/report_pages_provider.dart';
+import 'package:propertyintelmobileapp/features/cases/presentation/providers/document_pages_provider.dart';
 
-const _url = 'https://x/report.png';
+const _url = 'https://x/plan.png';
 
 /// Serves [bytes], or refuses with a 401 when [refuse] is set.
 class _Backend implements DocumentPreviewBackend {
@@ -53,7 +53,7 @@ void main() {
   Future<AsyncValue<List<Uint8List>>> settle(
     ProviderContainer container,
   ) async {
-    final sub = container.listen(reportPagesProvider(_url), (_, _) {});
+    final sub = container.listen(documentPagesProvider(_url), (_, _) {});
     addTearDown(sub.close);
     for (var i = 0; i < 20 && sub.read().isLoading; i++) {
       await Future<void>.delayed(Duration.zero);

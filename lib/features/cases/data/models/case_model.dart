@@ -82,12 +82,12 @@ class CaseModel extends Case {
   /// The `PATCH /case/{id}` fields for an assignment. Sent as multipart, like
   /// every `PATCH /case` (see [form]).
   ///
-  /// The status is sent only for a `payment-validated` case, because that is
-  /// the one transition assigning actually causes. Re-assigning an `accepted`
-  /// case is a change of hands, not progress, and sending `assigned` alongside
-  /// it would knock the case backwards through its own lifecycle. A
-  /// `submitted` case never reaches here — it cannot be assigned until its
-  /// payment has been validated.
+  /// The status is sent only where assigning moves the case on: from
+  /// `payment-validated`, and from `suspended`, where it lifts the suspension.
+  /// Re-assigning an `accepted` case is a change of hands, not progress, and
+  /// sending `assigned` alongside it would knock the case backwards through its
+  /// own lifecycle. A `submitted` case never reaches here — it cannot be
+  /// assigned until its payment has been validated.
   ///
   /// Visible for testing.
   static Map<String, dynamic> assignmentBody({

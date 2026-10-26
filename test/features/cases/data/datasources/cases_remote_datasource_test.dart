@@ -634,6 +634,29 @@ void main() {
       expect(updated.assignee?.fullName, 'Tunde Bello');
     });
 
+    test('re-assigning a suspended case lifts the suspension', () async {
+      stubSingleCase({
+        ...caseJson,
+        'status': 'suspended',
+        'assigneeId': 'staff-1',
+      });
+      stubPatch({...caseJson, 'status': 'assigned', 'assigneeId': 'staff-2'});
+      stubSingleStaff(
+        staffJson(id: 'staff-2', firstName: 'Tunde', lastName: 'Bello'),
+      );
+
+      final updated = await source.assignCase(
+        caseId: 'case-1',
+        assigneeId: 'staff-2',
+      );
+
+      expect(capturedPatchBody(), {
+        'assigneeId': 'staff-2',
+        'status': 'assigned',
+      });
+      expect(updated.status, CaseStatus.assigned);
+    });
+
     test('returns the record even when the name lookup fails', () async {
       stubSingleCase({...caseJson, 'status': 'payment-validated'});
       stubPatch({...caseJson, 'assigneeId': 'staff-1', 'status': 'assigned'});
@@ -710,6 +733,71 @@ void main() {
 
       expect(
         () => source.updateStatus(caseId: 'case-1', status: CaseStatus.closed),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
+
+  group('suspendCase', () {
+    void stubDelete(Map<String, dynamic> json) {
+      when(
+        () => client.delete<Case>(any(), decoder: any(named: 'decoder')),
+      ).thenAnswer((invocation) async {
+        final decoder =
+            invocation.namedArguments[#decoder] as Case Function(Object?);
+        return ApiResponse<Case>(
+          status: 'success',
+          message: 'Case suspended successfully.',
+          data: decoder(json),
+        );
+      });
+    }
+
+    test('DELETEs the case and returns the suspended record', () async {
+      stubDelete({
+        ...caseJson,
+        'status': 'suspended',
+        'assigneeId': 'staff-1',
+        'inquiryReport': null,
+      });
+      stubSingleStaff(staffJson());
+
+      final updated = await source.suspendCase(caseId: 'case-1');
+
+      verify(
+        () =>
+            client.delete<Case>('/case/case-1', decoder: any(named: 'decoder')),
+      ).called(1);
+      verifyNever(
+        () => client.patch<Case>(
+          any(),
+          data: any(named: 'data'),
+          decoder: any(named: 'decoder'),
+        ),
+      );
+      expect(updated.status, CaseStatus.suspended);
+      expect(updated.assignee?.fullName, 'Ada Okafor');
+    });
+
+    test('skips the name for a role that cannot read staff', () async {
+      source = CasesRemoteDataSourceImpl(client, resolveAssignees: false);
+      stubDelete({...caseJson, 'status': 'suspended', 'assigneeId': 'staff-1'});
+
+      final updated = await source.suspendCase(caseId: 'case-1');
+
+      expect(updated.assignee, isNull);
+      verifyNever(
+        () => client.get<CaseAssignee>(any(), decoder: any(named: 'decoder')),
+      );
+    });
+
+    test('lets a refusal propagate', () async {
+      when(
+        () => client.delete<Case>(any(), decoder: any(named: 'decoder')),
+      ).thenThrow(_httpFailure(403));
+
+      expect(
+        () => source.suspendCase(caseId: 'case-1'),
         throwsA(isA<DioException>()),
       );
     });

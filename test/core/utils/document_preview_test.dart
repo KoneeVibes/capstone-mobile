@@ -68,6 +68,16 @@ final _page1 = Uint8List.fromList([1]);
 final _page2 = Uint8List.fromList([2]);
 
 void main() {
+  group('extensionOf', () {
+    test('lower-cases the extension and ignores the query', () {
+      expect(DocumentPreview.extensionOf('https://x/plan%201.PDF?v=2'), 'pdf');
+    });
+
+    test('is empty when the URL names no format', () {
+      expect(DocumentPreview.extensionOf('https://x/report'), '');
+    });
+  });
+
   group('kindOf', () {
     test('reads the extension, ignoring case and query', () {
       expect(

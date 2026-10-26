@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/document_preview.dart';
 import '../../../../core/utils/link_opener.dart';
 import '../../../../shared/extensions/context_extensions.dart';
+import 'case_document_view.dart';
 
 /// Files as tiles, two to a row: the request's documents, or a report.
 class CaseDocumentGrid extends StatelessWidget {
@@ -51,7 +53,8 @@ class CaseDocumentGrid extends StatelessWidget {
   }
 }
 
-/// A file tile: its type icon, name and format. Opens outside the app.
+/// A file tile: its type icon, name and format. Opens in the app, or outside
+/// it for a type the app cannot draw (ADR 0022).
 class CaseDocumentTile extends ConsumerWidget {
   const CaseDocumentTile({required this.label, required this.url, super.key});
 
@@ -59,6 +62,10 @@ class CaseDocumentTile extends ConsumerWidget {
   final String url;
 
   Future<void> _open(BuildContext context, WidgetRef ref) async {
+    if (DocumentPreview.kindOf(url) != null) {
+      return showCaseDocumentView(context: context, label: label, url: url);
+    }
+
     final result = await ref.read(linkOpenerProvider).open(url);
     if (!context.mounted) return;
 
@@ -71,7 +78,7 @@ class CaseDocumentTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final radius = BorderRadius.circular(AppSizing.radiusSm);
-    final extension = _extension(url);
+    final extension = DocumentPreview.extensionOf(url);
     final isPdf = extension == 'pdf';
 
     return Material(
@@ -121,13 +128,5 @@ class CaseDocumentTile extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  /// `pdf` from `…/plan.pdf?x=1`, or empty when the URL names no format.
-  static String _extension(String url) {
-    final path = Uri.tryParse(url)?.path ?? url;
-    final name = path.split('/').last;
-    final dot = name.lastIndexOf('.');
-    return dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
   }
 }

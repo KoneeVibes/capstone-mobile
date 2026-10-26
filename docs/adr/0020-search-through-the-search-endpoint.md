@@ -43,6 +43,8 @@ shared for search.
 
 - A client's search returns assigned and closed cases that `GET /case` hides.
   Opening one 404s until the backend fixes client visibility (ADR 0019).
+  *Fixed on the backend; checked live 26 Oct 2026 (ADR 0021).*
 - Regular staff may search staff, though `GET /staff` refuses them. It is
-  harmless: they have no Staff tab.
+  harmless: they have no Staff tab. *Intended, the backend lead confirmed
+  (26 Oct 2026): a future feature needs it.*
 - Client search, or a global search, can be added later on the same endpoint.

@@ -188,26 +188,55 @@ void main() {
         when(
           () => source.updateStatus(
             caseId: any(named: 'caseId'),
-            status: CaseStatus.suspended,
+            status: CaseStatus.closed,
           ),
         ).thenThrow(
           _httpFailure(
             409,
             body: const {
               'status': 'fail',
-              'message': 'This case cannot be suspended.',
+              'message': 'This case cannot be closed.',
             },
           ),
         );
 
         final result = await repository.updateStatus(
           caseId: 'case-101',
-          status: CaseStatus.suspended,
+          status: CaseStatus.closed,
         );
 
-        expect(result.failureOrNull!.message, 'This case cannot be suspended.');
+        expect(result.failureOrNull!.message, 'This case cannot be closed.');
       },
     );
+  });
+
+  group('suspendCase', () {
+    test('returns Ok with the suspended case', () async {
+      final suspended = buildCase(id: 'case-101', status: CaseStatus.suspended);
+      when(
+        () => source.suspendCase(caseId: 'case-101'),
+      ).thenAnswer((_) async => suspended);
+
+      final result = await repository.suspendCase(caseId: 'case-101');
+
+      expect(result.valueOrNull, suspended);
+    });
+
+    test('a refusal is an Err carrying the server message', () async {
+      when(() => source.suspendCase(caseId: any(named: 'caseId'))).thenThrow(
+        _httpFailure(
+          409,
+          body: const {
+            'status': 'fail',
+            'message': 'This case cannot be suspended.',
+          },
+        ),
+      );
+
+      final result = await repository.suspendCase(caseId: 'case-101');
+
+      expect(result.failureOrNull!.message, 'This case cannot be suspended.');
+    });
   });
 
   group('submitReport', () {

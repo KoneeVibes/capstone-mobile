@@ -27,6 +27,8 @@ abstract class CasesDataSource {
     required CaseStatus status,
   });
 
+  Future<Case> suspendCase({required String caseId});
+
   Future<Case> submitReport({
     required String caseId,
     required List<PickedMedia> files,

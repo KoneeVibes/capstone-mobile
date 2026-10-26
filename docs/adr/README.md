@@ -23,8 +23,10 @@ They are kept so the reason survives the people who were in the room.
 | [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted; queue superseded by 0019 |
 | [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018, actions by 0019 |
 | [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted; cap and upload superseded by 0019 |
-| [0019](0019-case-status-actions-and-reports.md) | Case status actions and reports write for real | Accepted |
+| [0019](0019-case-status-actions-and-reports.md) | Case status actions and reports write for real | Accepted; suspend and lifting it superseded by 0021, file tiles by 0022 |
 | [0020](0020-search-through-the-search-endpoint.md) | Search cases and staff through `GET /search`, one tab at a time | Accepted |
+| [0021](0021-suspend-through-delete.md) | Suspend a case through `DELETE /case/{id}`; re-assign to lift it | Accepted |
+| [0022](0022-case-files-open-in-the-app.md) | Every case file opens in the app | Accepted |
 
 ## Writing one
 

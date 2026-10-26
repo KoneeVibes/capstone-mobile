@@ -31,12 +31,17 @@ class DocumentPreview {
 
   final DocumentPreviewBackend _backend;
 
-  /// What [url] holds, from its extension; null for a type the app cannot draw.
-  static DocumentKind? kindOf(String url) {
+  /// `pdf` from `…/plan.PDF?x=1`, or empty when the URL names no format.
+  static String extensionOf(String url) {
     final path = Uri.tryParse(url)?.path ?? url;
     final name = path.split('/').last;
     final dot = name.lastIndexOf('.');
-    final extension = dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
+    return dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
+  }
+
+  /// What [url] holds, from its extension; null for a type the app cannot draw.
+  static DocumentKind? kindOf(String url) {
+    final extension = extensionOf(url);
     if (extension == 'pdf') return DocumentKind.pdf;
     if (AppConstants.allowedImageExtensions.contains(extension)) {
       return DocumentKind.image;

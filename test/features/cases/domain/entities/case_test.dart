@@ -93,11 +93,14 @@ void main() {
       expect(unknown.takesReport, isFalse);
     });
 
-    test('only payment-validated advances when assigned', () {
-      expect(CaseStatus.paymentValidated.advancesOnAssign, isTrue);
+    test('only payment-validated and suspended advance when assigned', () {
+      const advancing = {CaseStatus.paymentValidated, CaseStatus.suspended};
       for (final status in CaseStatus.values) {
-        if (status == CaseStatus.paymentValidated) continue;
-        expect(status.advancesOnAssign, isFalse, reason: status.name);
+        expect(
+          status.advancesOnAssign,
+          advancing.contains(status),
+          reason: status.name,
+        );
       }
     });
   });

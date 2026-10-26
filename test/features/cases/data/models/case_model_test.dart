@@ -175,11 +175,21 @@ void main() {
 
   group('CaseModel.assignmentBody', () {
     test('advances a payment-validated case to assigned', () {
-      // The one status the app writes, on the one hand-off it performs.
       expect(
         CaseModel.assignmentBody(
           assigneeId: 'staff-1',
           currentStatus: CaseStatus.paymentValidated,
+        ),
+        {'assigneeId': 'staff-1', 'status': 'assigned'},
+      );
+    });
+
+    test('lifts a suspension: assigned travels with the assignee', () {
+      // The assignee alone leaves the case suspended (backend lead, 26 Oct).
+      expect(
+        CaseModel.assignmentBody(
+          assigneeId: 'staff-1',
+          currentStatus: CaseStatus.suspended,
         ),
         {'assigneeId': 'staff-1', 'status': 'assigned'},
       );
@@ -197,7 +207,6 @@ void main() {
         CaseStatus.pendingInformation,
         CaseStatus.underReview,
         CaseStatus.closed,
-        CaseStatus.suspended,
         CaseStatus.disputed,
       ]) {
         expect(

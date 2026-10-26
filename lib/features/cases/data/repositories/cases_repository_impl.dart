@@ -58,6 +58,10 @@ class CasesRepositoryImpl implements CasesRepository {
   }) => _guard(() => _source.updateStatus(caseId: caseId, status: status));
 
   @override
+  Future<Result<Case>> suspendCase({required String caseId}) =>
+      _guard(() => _source.suspendCase(caseId: caseId));
+
+  @override
   Future<Result<Case>> submitReport({
     required String caseId,
     required List<PickedMedia> files,

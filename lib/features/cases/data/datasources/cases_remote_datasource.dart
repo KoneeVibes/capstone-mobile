@@ -139,10 +139,10 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     required String caseId,
     required String assigneeId,
   }) async {
-    // Read first, so the body can carry a status only for a payment-validated
-    // case. That hand-off is what assigning moves along; re-assigning anything
-    // further on is a change of hands, and sending a status there would knock
-    // the case backwards.
+    // Read first, so the body carries a status only where assigning moves the
+    // case on: a payment-validated case, or lifting a suspension. Re-assigning
+    // anything else is a change of hands, and sending a status there would
+    // knock the case backwards.
     final current = await _client.get<Case>(
       ApiEndpoints.caseById(caseId),
       decoder: CaseModel.fromData,
@@ -170,6 +170,17 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     final response = await _client.patch<Case>(
       ApiEndpoints.caseById(caseId),
       data: CaseModel.form(CaseModel.statusBody(status)),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
+  }
+
+  /// `DELETE /case/{id}` suspends the case, it does not remove it (backend
+  /// lead, 26 Oct 2026); the response is the suspended case.
+  @override
+  Future<Case> suspendCase({required String caseId}) async {
+    final response = await _client.delete<Case>(
+      ApiEndpoints.caseById(caseId),
       decoder: CaseModel.fromData,
     );
     return resolveAssignees ? _withAssigneeName(response.data) : response.data;

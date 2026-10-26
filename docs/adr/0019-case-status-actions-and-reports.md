@@ -1,6 +1,6 @@
 # 0019 — Case status actions and reports write for real
 
-- **Status:** Accepted
+- **Status:** Accepted; suspend and lifting it superseded by [0021](0021-suspend-through-delete.md), file tiles by [0022](0022-case-files-open-in-the-app.md)
 - **Recorded:** 2026-10-24
 
 ## Context

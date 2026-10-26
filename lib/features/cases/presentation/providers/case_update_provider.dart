@@ -19,7 +19,10 @@ class CaseUpdateNotifier extends AsyncNotifier<void> {
 
   Future<bool> accept(String caseId) => _move(caseId, CaseStatus.accepted);
 
-  Future<bool> suspend(String caseId) => _move(caseId, CaseStatus.suspended);
+  Future<bool> suspend(String caseId) => _write(
+    caseId,
+    () => ref.read(casesRepositoryProvider).suspendCase(caseId: caseId),
+  );
 
   /// Accepting a report closes the case and releases the report to the client.
   Future<bool> close(String caseId) => _move(caseId, CaseStatus.closed);

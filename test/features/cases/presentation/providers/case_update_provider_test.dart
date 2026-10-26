@@ -70,23 +70,41 @@ void main() {
     ).thenAnswer((_) async => result);
   }
 
-  test('each action sends its own status', () async {
+  void stubSuspend(Result<Case> result) {
+    when(
+      () => repository.suspendCase(caseId: any(named: 'caseId')),
+    ).thenAnswer((_) async => result);
+  }
+
+  test('accept and close each send their own status', () async {
     stubStatus(Ok(_accepted));
     final notifier = makeContainer().read(caseUpdateProvider.notifier);
 
     await notifier.accept('case-101');
-    await notifier.suspend('case-101');
     await notifier.close('case-101');
 
-    for (final status in [
-      CaseStatus.accepted,
-      CaseStatus.suspended,
-      CaseStatus.closed,
-    ]) {
+    for (final status in [CaseStatus.accepted, CaseStatus.closed]) {
       verify(
         () => repository.updateStatus(caseId: 'case-101', status: status),
       ).called(1);
     }
+  });
+
+  test('suspend is its own write, not a status update', () async {
+    stubSuspend(Ok(buildCase(id: 'case-101', status: CaseStatus.suspended)));
+
+    final suspended = await makeContainer()
+        .read(caseUpdateProvider.notifier)
+        .suspend('case-101');
+
+    expect(suspended, isTrue);
+    verify(() => repository.suspendCase(caseId: 'case-101')).called(1);
+    verifyNever(
+      () => repository.updateStatus(
+        caseId: any(named: 'caseId'),
+        status: any(named: 'status'),
+      ),
+    );
   });
 
   test('puts the returned case into the list, without re-reading', () async {
@@ -148,7 +166,7 @@ void main() {
   });
 
   test('a refusal returns false and holds the AppFailure', () async {
-    stubStatus(const Err(_refused));
+    stubSuspend(const Err(_refused));
 
     final container = makeContainer();
     final suspended = await container

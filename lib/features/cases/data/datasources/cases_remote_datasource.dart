@@ -15,10 +15,9 @@ import 'cases_datasource.dart';
 /// Network access for cases.
 ///
 /// Throws on failure — `DioException` propagates untouched so
-/// `CasesRepositoryImpl` can convert it in one place. Two reads are allowed to
-/// fail quietly, both secondary and both documented where they are: the closed
-/// cases merged into the list ([_closedCases], on a 404 only) and an assignee's
-/// name ([_assigneesById]).
+/// `CasesRepositoryImpl` can convert it in one place. One read is allowed to
+/// fail quietly, as documented where it is: an assignee's name
+/// ([_assigneesById]).
 ///
 /// [resolveAssignees] is off for clients, and for staff roles that cannot read
 /// `GET /staff` (regular): the request would only 403, and their rows show the
@@ -41,39 +40,16 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
   /// cases stopped being requested at all, and the six-status request now
   /// answers 404 while a case sits there. A status this build does not
   /// recognise has to arrive and render as an absent pill, not vanish. The
-  /// endpoint's default is documented as "all active case statuses", which
-  /// reads as excluding `closed`, so closed cases are fetched alongside and
-  /// merged in.
+  /// default includes closed cases, for every role (checked live 26 Oct 2026,
+  /// ADR 0023).
   @override
   Future<List<Case>> fetchCases() async {
-    final active = await _noneOn404(
+    final cases = await _noneOn404(
       () =>
           _client.getAllPages<Case>(ApiEndpoints.cases, CaseModel.listFromJson),
     );
-    final closed = await _closedCases();
-
-    // De-duped by id, so the merge costs nothing if the default turns out to
-    // include closed cases after all — which the wording leaves ambiguous.
-    final ids = active.map((value) => value.id).toSet();
-    final cases = [...active, ...closed.where((value) => ids.add(value.id))];
-
     return resolveAssignees ? _withAssigneeNames(cases) : cases;
   }
-
-  /// The closed cases, or none when the endpoint says there are none.
-  ///
-  /// A 404 is that answer — the same "Cases not found" the list endpoint gives
-  /// for any filter that matches nothing — and having no closed cases is the
-  /// ordinary state, not a failure. Anything else propagates: a Closed tab that
-  /// is quietly empty because a request failed is the exact bug this merge
-  /// exists to prevent, and the list screen already offers a retry.
-  Future<List<Case>> _closedCases() => _noneOn404(
-    () => _client.getAllPages<Case>(
-      ApiEndpoints.cases,
-      CaseModel.listFromJson,
-      query: {'filter': CaseStatus.closed.apiValue},
-    ),
-  );
 
   /// The list endpoint's "Cases not found" 404 is an empty answer, not a
   /// failure — the unfiltered request gives it too, to a client who has filed

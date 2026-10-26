@@ -41,17 +41,8 @@ void main() {
   /// Stubs the paginated cases endpoint, running the decoder the datasource
   /// supplied so the decoding wiring is exercised rather than bypassed.
   ///
-  /// [pages] maps a page number to the raw `data` array the unfiltered request
-  /// returns; [closedPages] does the same for the `filter=closed` request the
-  /// datasource makes alongside it. Left unset, that second request answers a
-  /// 404 — what the live endpoint does when a filter matches nothing — so
-  /// every test here also proves the 404 guard leaves the list intact.
-  void stubCasePages(
-    Map<int, List<Object?>> pages, {
-    int? totalPages,
-    Map<int, List<Object?>>? closedPages,
-    DioException? closedFailure,
-  }) {
+  /// [pages] maps a page number to the raw `data` array the request returns.
+  void stubCasePages(Map<int, List<Object?>> pages, {int? totalPages}) {
     when(
       () => client.get<List<Case>>(
         any(),
@@ -64,23 +55,16 @@ void main() {
       final page = query['page'] as int;
       final decoder =
           invocation.namedArguments[#decoder] as List<Case> Function(Object?);
-      final isClosedRequest = query.containsKey('filter');
-
-      if (isClosedRequest && closedPages == null) {
-        throw closedFailure ?? _httpFailure(404);
-      }
-
-      final rows = isClosedRequest ? closedPages! : pages;
 
       return ApiResponse<List<Case>>(
         status: 'success',
         message: 'success',
-        data: decoder(rows[page] ?? const []),
+        data: decoder(pages[page] ?? const []),
         meta: PageMeta(
           page: page,
           perPage: 100,
-          total: rows.values.fold(0, (sum, batch) => sum + batch.length),
-          totalPages: totalPages ?? rows.length,
+          total: pages.values.fold(0, (sum, batch) => sum + batch.length),
+          totalPages: totalPages ?? pages.length,
         ),
       );
     });
@@ -223,57 +207,20 @@ void main() {
       expect(queries.first['perPage'], 100);
     });
 
-    test(
-      'asks for closed cases separately, in case the default drops them',
-      () async {
-        // "Defaults to all active case statuses" reads as excluding `closed`, and
-        // a Closed tab that is always empty would look like a working filter
-        // rather than a bug.
-        stubCasePages(
-          {
-            1: [caseJson],
-          },
-          closedPages: {
-            1: [
-              {...caseJson, 'id': 'case-closed', 'status': 'closed'},
-            ],
-          },
-        );
-
-        final cases = await source.fetchCases();
-
-        expect(capturedListQueries().last['filter'], 'closed');
-        expect(cases.map((c) => c.id), [
-          '914ae488-1b1c-4eb8-8798-bc511b175d9f',
-          'case-closed',
-        ]);
-      },
-    );
-
-    test('does not repeat a closed case the default already returned', () async {
-      // The merge has to cost nothing if "active" turns out to include closed.
-      final closed = {...caseJson, 'status': 'closed'};
-      stubCasePages(
-        {
-          1: [closed],
-        },
-        closedPages: {
-          1: [closed],
-        },
-      );
+    test('takes closed cases from the same request', () async {
+      // The default includes closed cases for every role (ADR 0023), so there
+      // is no separate `filter=closed` request.
+      stubCasePages({
+        1: [
+          caseJson,
+          {...caseJson, 'id': 'case-closed', 'status': 'closed'},
+        ],
+      });
 
       final cases = await source.fetchCases();
 
-      expect(cases, hasLength(1));
-      expect(cases.single.status, CaseStatus.closed);
-    });
-
-    test('treats a 404 on the closed request as no closed cases', () async {
-      stubCasePages({
-        1: [caseJson],
-      });
-
-      expect(await source.fetchCases(), hasLength(1));
+      expect(capturedListQueries(), hasLength(1));
+      expect(cases.last.status, CaseStatus.closed);
     });
 
     test('reads a 404 on the main request as no cases at all', () async {
@@ -288,16 +235,6 @@ void main() {
       ).thenThrow(_httpFailure(404));
 
       expect(await source.fetchCases(), isEmpty);
-    });
-
-    test('lets any other failure on the closed request through', () async {
-      // A Closed tab quietly empty because a request failed is the exact bug
-      // the second request exists to prevent, so only a 404 is swallowed.
-      stubCasePages({
-        1: [caseJson],
-      }, closedFailure: _httpFailure(503));
-
-      expect(source.fetchCases(), throwsA(isA<DioException>()));
     });
 
     test('walks every page rather than truncating at the first', () async {
@@ -322,14 +259,7 @@ void main() {
         'case-3',
         'case-4',
       ]);
-      // Counted by page rather than by call: the closed request shares this
-      // endpoint and would otherwise be mistaken for a fourth page.
-      expect(
-        capturedListQueries()
-            .where((query) => !query.containsKey('filter'))
-            .map((query) => query['page']),
-        [1, 2, 3],
-      );
+      expect(capturedListQueries().map((query) => query['page']), [1, 2, 3]);
     });
 
     test('stops after one page when meta is missing', () async {

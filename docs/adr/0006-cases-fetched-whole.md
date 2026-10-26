@@ -1,6 +1,6 @@
 # 0006 — Fetch the case list whole and filter on the device
 
-- **Status:** Accepted
+- **Status:** Accepted; the closed-cases request superseded by [0023](0023-default-case-list-includes-closed.md)
 - **Recorded:** 2026-10-04 (decided 2026-08-31)
 
 ## Context

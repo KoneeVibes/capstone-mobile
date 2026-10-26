@@ -48,8 +48,8 @@ changed and still wants the invoice's own id).
 - An extra invoice read happens on opening the screen and again at the moment of
   paying (the authoritative re-read). Acceptable, and the same shape as the
   search flow.
-- Abandoned transactions still pile up, one per Pay tap (backlog), unchanged by
-  this.
+- Abandoned transactions still pile up, one per Pay tap, unchanged by this;
+  the backend does not plan to reuse them (26 Oct 2026).
 - If the backend ever stops resolving a case id on `GET /invoice/{id}`, Cases
   "Pay now" breaks while the search flow keeps working; the invoice read would
   404 into the normal failure screen with a retry.

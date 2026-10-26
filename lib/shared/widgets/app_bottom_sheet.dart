@@ -15,6 +15,7 @@ Future<T?> showAppBottomSheet<T>({
   required Widget child,
   bool isDismissible = true,
 }) {
+  context.hideKeyboard();
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
@@ -22,11 +23,8 @@ Future<T?> showAppBottomSheet<T>({
     enableDrag: isDismissible,
     backgroundColor: AppColors.surface,
     barrierColor: AppColors.overlay,
-    builder: (context) => AppBottomSheet(
-      title: title,
-      showClose: isDismissible,
-      child: child,
-    ),
+    builder: (context) =>
+        AppBottomSheet(title: title, showClose: isDismissible, child: child),
   );
 }
 
@@ -81,9 +79,7 @@ class AppBottomSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(title, style: AppTextStyles.titleLarge),
-                  ),
+                  Expanded(child: Text(title, style: AppTextStyles.titleLarge)),
                   if (showClose)
                     _CloseButton(onPressed: () => Navigator.of(context).pop()),
                 ],
@@ -94,8 +90,7 @@ class AppBottomSheet extends StatelessWidget {
                 padding: EdgeInsets.only(
                   left: AppSizing.space20,
                   right: AppSizing.space20,
-                  bottom:
-                      AppSizing.space24 + context.screenPadding.bottom,
+                  bottom: AppSizing.space24 + context.screenPadding.bottom,
                 ),
                 child: child,
               ),

@@ -29,14 +29,18 @@ extension BuildContextX on BuildContext {
   /// System insets — status bar, notch, home indicator.
   EdgeInsets get screenPadding => MediaQuery.paddingOf(this);
 
-  /// Dismisses the keyboard by unfocusing the current field.
-  void hideKeyboard() => FocusScope.of(this).unfocus();
+  /// Dismisses the keyboard by unfocusing the current field. Unlike
+  /// `FocusScope.of(this).unfocus()`, the screen also forgets the field, so a
+  /// sheet or dialog closing later does not hand focus back to it.
+  void hideKeyboard() => FocusManager.instance.primaryFocus?.unfocus();
 
   /// Neutral confirmation message.
   void showMessage(String message) {
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: AppColors.primary));
+      ..showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppColors.primary),
+      );
   }
 
   /// Renders a failure the only way it is allowed to be rendered: through
@@ -44,6 +48,11 @@ extension BuildContextX on BuildContext {
   void showFailure(AppFailure failure) {
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(failure.message), backgroundColor: AppColors.destructive));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(failure.message),
+          backgroundColor: AppColors.destructive,
+        ),
+      );
   }
 }

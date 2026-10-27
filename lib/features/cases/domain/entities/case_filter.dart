@@ -16,7 +16,8 @@ enum CaseFilter {
   pendingInformation(CaseStatus.pendingInformation),
   underReview(CaseStatus.underReview),
   closed(CaseStatus.closed),
-  suspended(CaseStatus.suspended);
+  suspended(CaseStatus.suspended),
+  disputed(CaseStatus.disputed);
 
   const CaseFilter(this.status);
 

@@ -1,34 +1,37 @@
 /// Where a case sits in its lifecycle.
 ///
-/// Owned by the backend: these are the eight values `GET /api/v1/case` returns.
-/// The app reads a status freely but writes only one — `assigned`, when it
-/// hands a payment-validated case to someone. Accept and suspend are offered
-/// but mock (ADR 0017); every other transition happens elsewhere.
+/// Owned by the backend: these are the nine values `GET /api/v1/case` returns.
+/// The getters below say what a status allows, from the Case Status Matrix
+/// (ADR 0019); who may do it is decided in `case_actions.dart`.
 enum CaseStatus {
-  /// Raised by an applicant, with payment not yet validated. The one status
-  /// the app cannot assign from.
+  /// Raised by an applicant, with payment not yet validated.
   submitted('submitted'),
 
   /// Payment cleared, waiting for someone to be given it.
   paymentValidated('payment-validated'),
 
-  /// Given to a team member, who has not picked it up yet.
+  /// Given to a team member, who has not accepted it yet.
   assigned('assigned'),
 
-  /// Picked up by the team member it was given to.
+  /// Accepted by the team member it was given to.
   accepted('accepted'),
 
-  /// Stalled: the team is waiting on something from the applicant.
+  /// Waiting on more information through an open conversation.
   pendingInformation('pending-information'),
 
-  /// Being worked through.
+  /// A report is in and waits for a super-admin to accept it. The client
+  /// cannot see the report yet.
   underReview('under-review'),
 
-  /// Finished. Still readable, and still re-assignable.
+  /// The report was accepted and released to the client.
   closed('closed'),
 
-  /// Halted before finishing. Still readable, and still re-assignable.
+  /// Halted by a super-admin.
   suspended('suspended'),
+
+  /// The client disputed the outcome and it was taken in; the report has to
+  /// be submitted again.
+  disputed('disputed'),
 
   /// A status the API returned that this build does not know about.
   ///
@@ -53,33 +56,46 @@ enum CaseStatus {
 
   bool get isKnown => this != unknown;
 
-  /// Whether the case can be handed to someone, or handed on.
-  ///
-  /// Everything except [submitted]: a case whose payment has not been validated
-  /// is not the team's to pick up yet. Every later status is fair game,
-  /// [closed] and [suspended] included — re-assigning one is a change of hands,
-  /// not a change of state.
-  ///
-  /// An [unknown] status is assignable. Refusing there would mean a status
-  /// added server-side silently disables the one action this screen has, which
-  /// is a worse failure than assigning something we cannot name.
-  bool get canBeAssigned => this != submitted;
+  /// Whether the case can change hands: given out from [paymentValidated],
+  /// handed on from [assigned] or [accepted], or (super-admin only) taken off
+  /// a [suspended] case. Anything else is mid-review or finished, and the
+  /// backend refuses it.
+  bool get canBeAssigned =>
+      this == paymentValidated ||
+      this == assigned ||
+      this == accepted ||
+      this == suspended;
 
   /// Filed but not paid for: `payment-validated` is the step after.
   bool get isAwaitingPayment => this == submitted;
 
-  /// Only a paid, running case can be suspended — not one awaiting payment,
-  /// nor one already closed or suspended.
+  /// Paid and still running. Not a disputed, closed or suspended case.
   bool get canBeSuspended =>
-      this != submitted && this != closed && this != suspended;
+      this == paymentValidated ||
+      this == assigned ||
+      this == accepted ||
+      this == pendingInformation ||
+      this == underReview;
+
+  /// Whether information can be requested through the case conversation.
+  bool get opensConversation =>
+      this == accepted || this == pendingInformation || this == disputed;
+
+  /// Whether the assignee can submit a report, or replace the one under review.
+  bool get takesReport =>
+      this == accepted || this == underReview || this == disputed;
+
+  /// Whether the client may see the report: only once it has been accepted.
+  bool get releasesReport => this == closed;
 
   /// A client may raise a dispute on anything they have paid for.
   bool get canBeDisputed => this != submitted;
 
   /// Whether assigning also moves the case along its lifecycle.
   ///
-  /// Only [paymentValidated] does: that is the hand-off assigning actually
-  /// causes. Re-assigning anything further on is a change of hands, and sending
+  /// [paymentValidated] is the hand-off assigning causes, and re-assigning a
+  /// [suspended] case lifts the suspension (backend lead, 26 Oct 2026; ADR
+  /// 0021). Re-assigning anything else is a change of hands, and sending
   /// `assigned` alongside it would knock the case backwards.
-  bool get advancesOnAssign => this == paymentValidated;
+  bool get advancesOnAssign => this == paymentValidated || this == suspended;
 }

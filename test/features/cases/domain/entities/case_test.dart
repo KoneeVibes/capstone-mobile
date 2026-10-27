@@ -24,6 +24,7 @@ void main() {
       expect(CaseStatus.fromApi('under-review'), CaseStatus.underReview);
       expect(CaseStatus.fromApi('closed'), CaseStatus.closed);
       expect(CaseStatus.fromApi('suspended'), CaseStatus.suspended);
+      expect(CaseStatus.fromApi('disputed'), CaseStatus.disputed);
     });
 
     test('is forgiving about case and padding', () {
@@ -35,26 +36,71 @@ void main() {
       expect(CaseStatus.fromApi(null), CaseStatus.unknown);
       expect(CaseStatus.unknown.isKnown, isFalse);
     });
+  });
 
-    test('submitted is the only status that cannot be assigned', () {
-      expect(CaseStatus.submitted.canBeAssigned, isFalse);
-      for (final status in CaseStatus.values) {
-        if (status == CaseStatus.submitted) continue;
-        expect(status.canBeAssigned, isTrue, reason: status.name);
-      }
+  // The Case Status Matrix, as each getter reads it (ADR 0019).
+  group('CaseStatus rules', () {
+    Set<CaseStatus> where(bool Function(CaseStatus) rule) =>
+        CaseStatus.values.where(rule).toSet();
+
+    test('only a paid, held or suspended case changes hands', () {
+      expect(where((s) => s.canBeAssigned), {
+        CaseStatus.paymentValidated,
+        CaseStatus.assigned,
+        CaseStatus.accepted,
+        CaseStatus.suspended,
+      });
     });
 
-    test('a status this build does not know stays assignable', () {
-      // Deliberate: refusing here would let a status added server-side
-      // silently disable the one action the detail screen has.
-      expect(CaseStatus.unknown.canBeAssigned, isTrue);
+    test('a paid case can be suspended until it is finished or disputed', () {
+      expect(where((s) => s.canBeSuspended), {
+        CaseStatus.paymentValidated,
+        CaseStatus.assigned,
+        CaseStatus.accepted,
+        CaseStatus.pendingInformation,
+        CaseStatus.underReview,
+      });
     });
 
-    test('only payment-validated advances when assigned', () {
-      expect(CaseStatus.paymentValidated.advancesOnAssign, isTrue);
+    test(
+      'information is requested on an accepted, pending or disputed case',
+      () {
+        expect(where((s) => s.opensConversation), {
+          CaseStatus.accepted,
+          CaseStatus.pendingInformation,
+          CaseStatus.disputed,
+        });
+      },
+    );
+
+    test('a report goes in on an accepted, under-review or disputed case', () {
+      expect(where((s) => s.takesReport), {
+        CaseStatus.accepted,
+        CaseStatus.underReview,
+        CaseStatus.disputed,
+      });
+    });
+
+    test('the client sees a report only once the case is closed', () {
+      expect(where((s) => s.releasesReport), {CaseStatus.closed});
+    });
+
+    test('an unknown status allows nothing', () {
+      const unknown = CaseStatus.unknown;
+      expect(unknown.canBeAssigned, isFalse);
+      expect(unknown.canBeSuspended, isFalse);
+      expect(unknown.opensConversation, isFalse);
+      expect(unknown.takesReport, isFalse);
+    });
+
+    test('only payment-validated and suspended advance when assigned', () {
+      const advancing = {CaseStatus.paymentValidated, CaseStatus.suspended};
       for (final status in CaseStatus.values) {
-        if (status == CaseStatus.paymentValidated) continue;
-        expect(status.advancesOnAssign, isFalse, reason: status.name);
+        expect(
+          status.advancesOnAssign,
+          advancing.contains(status),
+          reason: status.name,
+        );
       }
     });
   });
@@ -227,6 +273,11 @@ void main() {
     test('can clear the name, which copyWith could not express', () {
       final value = buildCase(assignee: ada);
       expect(value.withAssignee(null).assignee, isNull);
+    });
+
+    test('keeps the report', () {
+      final value = buildCase(assigneeId: 'staff-1', reports: ['r.pdf']);
+      expect(value.withAssignee(ada).reports, ['r.pdf']);
     });
   });
 

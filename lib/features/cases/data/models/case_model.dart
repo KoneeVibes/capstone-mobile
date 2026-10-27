@@ -1,4 +1,8 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/formatting/app_formatters.dart';
+import '../../../../core/network/api_multipart.dart';
+import '../../../../core/utils/media_picker.dart';
 import '../../../../shared/extensions/string_extensions.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_applicant.dart';
@@ -22,6 +26,7 @@ class CaseModel extends Case {
     super.inquiryPurpose,
     super.assigneeId,
     super.assignee,
+    super.reports,
     super.createdAt,
     super.updatedAt,
   });
@@ -51,6 +56,8 @@ class CaseModel extends Case {
     status: CaseStatus.fromApi(_string(json['status'])),
     // Null is the API's way of saying nobody holds this case.
     assigneeId: _string(json['assigneeId']),
+    // Absent, not null, until a report is submitted.
+    reports: _strings(json['inquiryReport']),
     createdAt: AppFormatters.parseIso(_string(json['createdAt'])),
     updatedAt: AppFormatters.parseIso(_string(json['updatedAt'])),
   );
@@ -72,14 +79,15 @@ class CaseModel extends Case {
     return CaseModel.fromJson(data);
   }
 
-  /// The `PATCH /case/{id}` body for an assignment.
+  /// The `PATCH /case/{id}` fields for an assignment. Sent as multipart, like
+  /// every `PATCH /case` (see [form]).
   ///
-  /// The status is sent only for a `payment-validated` case, because that is
-  /// the one transition assigning actually causes. Re-assigning an
-  /// `under-review` case is a change of hands, not progress, and sending
-  /// `assigned` alongside it would knock the case backwards through its own
-  /// lifecycle. A `submitted` case never reaches here — it cannot be assigned
-  /// until its payment has been validated.
+  /// The status is sent only where assigning moves the case on: from
+  /// `payment-validated`, and from `suspended`, where it lifts the suspension.
+  /// Re-assigning an `accepted` case is a change of hands, not progress, and
+  /// sending `assigned` alongside it would knock the case backwards through its
+  /// own lifecycle. A `submitted` case never reaches here — it cannot be
+  /// assigned until its payment has been validated.
   ///
   /// Visible for testing.
   static Map<String, dynamic> assignmentBody({
@@ -89,6 +97,25 @@ class CaseModel extends Case {
     'assigneeId': assigneeId,
     if (currentStatus.advancesOnAssign) 'status': CaseStatus.assigned.apiValue,
   };
+
+  /// The `PATCH /case/{id}` fields that move a case to [status].
+  static Map<String, dynamic> statusBody(CaseStatus status) =>
+      <String, dynamic>{'status': status.apiValue};
+
+  /// [fields] as the multipart body `PATCH /case/{id}` documents.
+  static FormData form(Map<String, dynamic> fields) => FormData.fromMap(fields);
+
+  /// The `PUT /case/{id}` body: every file under the one repeated
+  /// `inquiryReport` key.
+  static Future<FormData> reportFormData(List<PickedMedia> files) async {
+    final form = FormData();
+    for (final file in files) {
+      form.files.add(
+        MapEntry('inquiryReport', await ApiMultipart.fileOf(file)),
+      );
+    }
+    return form;
+  }
 
   /// Reads a value as a non-blank string, collapsing `""` and non-strings to
   /// null so optional fields stay genuinely optional.
@@ -100,9 +127,6 @@ class CaseModel extends Case {
   /// Reads a JSON array as a list of non-blank strings, dropping anything else.
   static List<String> _strings(Object? value) {
     if (value is! List) return const [];
-    return value
-        .map(_string)
-        .whereType<String>()
-        .toList(growable: false);
+    return value.map(_string).whereType<String>().toList(growable: false);
   }
 }

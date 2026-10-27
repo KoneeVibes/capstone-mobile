@@ -1,6 +1,6 @@
 # 0013 — Who can take a case, and what an assignment writes
 
-- **Status:** Accepted
+- **Status:** Accepted; which statuses can be assigned superseded by [0019](0019-case-status-actions-and-reports.md)
 - **Recorded:** 2026-10-07 (decided 2026-08-31, while building Cases)
 
 ## Context

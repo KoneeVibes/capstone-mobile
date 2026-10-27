@@ -63,7 +63,8 @@ void main() {
   ApiResponse<Staff> Function(Invocation) singleAnswer(
     Map<String, dynamic> json,
   ) => (invocation) {
-    final decoder = invocation.namedArguments[#decoder] as Staff Function(Object?);
+    final decoder =
+        invocation.namedArguments[#decoder] as Staff Function(Object?);
     return ApiResponse<Staff>(
       status: 'success',
       message: 'success',
@@ -141,7 +142,8 @@ void main() {
 
       expect(staff.id, 'staff-1');
       verify(
-        () => client.get<Staff>('/staff/staff-1', decoder: any(named: 'decoder')),
+        () =>
+            client.get<Staff>('/staff/staff-1', decoder: any(named: 'decoder')),
       ).called(1);
     });
   });
@@ -239,5 +241,46 @@ void main() {
         ),
       ).called(1);
     });
+  });
+
+  group('searchStaff', () {
+    test(
+      'asks /search for staff, one large page, and decodes data.staff',
+      () async {
+        when(
+          () => client.get<List<Staff>>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            decoder: any(named: 'decoder'),
+          ),
+        ).thenAnswer((invocation) async {
+          final decoder =
+              invocation.namedArguments[#decoder]
+                  as List<Staff> Function(Object?);
+          return ApiResponse<List<Staff>>(
+            status: 'success',
+            message: 'Search completed successfully.',
+            data: decoder({
+              'staff': [
+                {..._staffJson, 'type': 'staff'},
+              ],
+            }),
+          );
+        });
+
+        final found = await dataSource.searchStaff('Ada');
+
+        expect(found.single.fullName, contains('Okafor'));
+        final captured = verify(
+          () => client.get<List<Staff>>(
+            captureAny(),
+            queryParameters: captureAny(named: 'queryParameters'),
+            decoder: any(named: 'decoder'),
+          ),
+        ).captured;
+        expect(captured[0], '/search');
+        expect(captured[1], {'q': 'Ada', 'flag': 'staff', 'perPage': 100});
+      },
+    );
   });
 }

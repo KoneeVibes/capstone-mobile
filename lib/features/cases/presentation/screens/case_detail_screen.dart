@@ -15,6 +15,7 @@ import '../../domain/case_actions.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_applicant.dart';
 import '../../domain/entities/case_dispute.dart';
+import '../../domain/entities/case_status.dart';
 import '../case_action_runner.dart';
 import '../providers/case_detail_provider.dart';
 import '../providers/case_disputes_provider.dart';
@@ -24,7 +25,8 @@ import '../widgets/case_request_card.dart';
 import '../widgets/case_status_chip.dart';
 
 /// One case in full. Staff get the ⋮ actions, assign and Add Report; clients
-/// get Pay now or Track Progress, the chat and their disputes.
+/// get Pay now or Track Progress, the chat, the accepted report and their
+/// disputes.
 class CaseDetailScreen extends ConsumerWidget {
   const CaseDetailScreen({
     required this.caseId,
@@ -78,18 +80,23 @@ class CaseDetailScreen extends ConsumerWidget {
               centerTitle: true,
               title: const Text('PropertyIntel'),
               actions: [
+                // Greyed out while the case cannot take a conversation.
                 if (value != null)
                   IconButton(
-                    onPressed: () => context.pushNamed(
-                      chatRouteName,
-                      pathParameters: {'caseId': caseId},
-                      queryParameters: {'ref': value.trackingId ?? ''},
-                    ),
+                    onPressed: value.status.opensConversation
+                        ? () => context.pushNamed(
+                            chatRouteName,
+                            pathParameters: {'caseId': caseId},
+                            queryParameters: {'ref': value.trackingId ?? ''},
+                          )
+                        : null,
                     tooltip: 'Open conversation',
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.chat_bubble_outline,
                       size: AppSizing.iconMd,
-                      color: AppColors.textSecondary,
+                      color: value.status.opensConversation
+                          ? AppColors.textSecondary
+                          : AppColors.disabledText,
                     ),
                   ),
                 const SizedBox(width: AppSizing.space8),
@@ -119,8 +126,8 @@ class CaseDetailScreen extends ConsumerWidget {
       );
 }
 
-/// The staff layout: the case card with its ⋮, any disputes to answer, then
-/// assign beside Add Report.
+/// The staff layout: the case card with its ⋮, the report and any disputes,
+/// then assign (for assigners) beside Add Report (for the assignee).
 class _StaffBody extends ConsumerWidget {
   const _StaffBody({required this.value, required this.screen});
 
@@ -140,80 +147,94 @@ class _StaffBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = caseViewerOf(ref);
     final canAssign = viewer.permissions.canAssignCases;
+    // Only the assignee ever submits a report, so nobody else sees the button.
+    final isAssignee = viewer.isAssigneeOf(value);
     final disputes = ref.watch(caseDisputesProvider(value.id));
     final menu = menuActionsFor(value, viewer);
-    final awaitingPayment = value.status.isAwaitingPayment;
+
+    // Buttons grey out rather than vanishing; these say why.
+    final reason = switch (value.status) {
+      CaseStatus.submitted when canAssign =>
+        'Work on this case starts once its payment is validated.',
+      CaseStatus.assigned when isAssignee =>
+        'Accept the assignment to start the report.',
+      _ => null,
+    };
 
     return _Layout(
       content: [
         CaseRequestCard(
           value: value,
           showAssignment: true,
-          menu: PopupMenuButton<CaseAction>(
-            tooltip: 'Case actions',
-            icon: const Icon(
-              Icons.more_vert,
-              size: AppSizing.iconMd,
-              color: AppColors.textPrimary,
-            ),
-            color: AppColors.surface,
-            onSelected: (action) => _run(context, ref, action),
-            itemBuilder: (_) => [
-              for (final action in menu)
-                PopupMenuItem(
-                  value: action,
-                  child: Text(
-                    caseMenuLabel(action),
-                    style: AppTextStyles.label,
+          menu: menu.isEmpty
+              ? null
+              : PopupMenuButton<CaseAction>(
+                  tooltip: 'Case actions',
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: AppSizing.iconMd,
+                    color: AppColors.textPrimary,
                   ),
+                  color: AppColors.surface,
+                  onSelected: (action) => _run(context, ref, action),
+                  itemBuilder: (_) => [
+                    for (final action in menu)
+                      PopupMenuItem(
+                        value: action,
+                        child: Text(
+                          caseMenuLabel(action),
+                          style: AppTextStyles.label,
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
         ),
-        if (disputes.isNotEmpty) ...[
+        if (value.hasReport || disputes.isNotEmpty) ...[
           const SizedBox(height: AppSizing.space16),
           CasePropertyUpdate(
+            reports: value.reports,
             disputes: disputes,
             onView: (dispute) => screen._openDispute(context, dispute),
           ),
         ],
       ],
       footer: [
-        Row(
-          children: [
-            if (canAssign) ...[
-              Expanded(
-                child: AppButton(
-                  label: value.isAssigned ? 'Re-assign case' : 'Assign case',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: value.status.canBeAssigned
-                      ? () => _run(
-                          context,
-                          ref,
-                          value.isAssigned
-                              ? CaseAction.reassign
-                              : CaseAction.assign,
-                        )
-                      : null,
+        if (canAssign || isAssignee)
+          Row(
+            children: [
+              if (canAssign)
+                Expanded(
+                  child: AppButton(
+                    label: value.isAssigned ? 'Re-assign case' : 'Assign case',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: viewer.canHandOver(value)
+                        ? () => _run(
+                            context,
+                            ref,
+                            value.isAssigned
+                                ? CaseAction.reassign
+                                : CaseAction.assign,
+                          )
+                        : null,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSizing.space12),
+              if (canAssign && isAssignee)
+                const SizedBox(width: AppSizing.space12),
+              if (isAssignee)
+                Expanded(
+                  child: AppButton(
+                    label: 'Add Report',
+                    onPressed: viewer.canAddReport(value)
+                        ? () => _run(context, ref, CaseAction.addReport)
+                        : null,
+                  ),
+                ),
             ],
-            Expanded(
-              child: AppButton(
-                label: 'Add Report',
-                onPressed: awaitingPayment
-                    ? null
-                    : () => _run(context, ref, CaseAction.addReport),
-              ),
-            ),
-          ],
-        ),
-        // Both buttons grey out rather than vanishing; this says why.
-        if (awaitingPayment) ...[
+          ),
+        if (reason != null) ...[
           const SizedBox(height: AppSizing.space8),
-          const Text(
-            'Work on this case starts once its payment is validated.',
+          Text(
+            reason,
             style: AppTextStyles.bodySmall,
             textAlign: TextAlign.center,
           ),
@@ -246,15 +267,20 @@ class _ClientBody extends ConsumerWidget {
 
     final showPay =
         canPay && payRoute != null && value.status.isAwaitingPayment;
+    // The client sees the report only once it has been accepted.
+    final reports = value.status.releasesReport
+        ? value.reports
+        : const <String>[];
 
     return _Layout(
       content: [
         _PropertyHeader(value: value),
         const SizedBox(height: AppSizing.space16),
         CaseRequestCard(value: value, showAssignment: false),
-        if (canDispute || disputes.isNotEmpty) ...[
+        if (reports.isNotEmpty || canDispute || disputes.isNotEmpty) ...[
           const SizedBox(height: AppSizing.space16),
           CasePropertyUpdate(
+            reports: reports,
             disputes: disputes,
             onView: (dispute) => screen._openDispute(context, dispute),
             onRaise: canDispute ? raise : null,

@@ -21,10 +21,7 @@ void main() {
       expect(value.property.city, 'Victoria Island');
       expect(value.property.lga, 'Eti-Osa');
       expect(value.property.state, 'Lagos');
-      expect(value.inquiryPurpose, [
-        'due-diligence',
-        'physical-inspection',
-      ]);
+      expect(value.inquiryPurpose, ['due-diligence', 'physical-inspection']);
       expect(value.property.titleTypes, hasLength(4));
       expect(value.property.surveyPlans, hasLength(1));
       expect(value.property.titleDocuments, hasLength(1));
@@ -85,18 +82,21 @@ void main() {
       expect(value.createdAt, isNull);
     });
 
-    test('collapses blank strings to null so optional fields stay optional', () {
-      final value = CaseModel.fromJson({
-        ...caseJson,
-        'applicantEmail': '',
-        'propertyLGA': '   ',
-        'source': '',
-      });
+    test(
+      'collapses blank strings to null so optional fields stay optional',
+      () {
+        final value = CaseModel.fromJson({
+          ...caseJson,
+          'applicantEmail': '',
+          'propertyLGA': '   ',
+          'source': '',
+        });
 
-      expect(value.applicant.email, isNull);
-      expect(value.property.lga, isNull);
-      expect(value.source, isNull);
-    });
+        expect(value.applicant.email, isNull);
+        expect(value.property.lga, isNull);
+        expect(value.source, isNull);
+      },
+    );
 
     test('drops non-string entries from a list field', () {
       final value = CaseModel.fromJson({
@@ -135,13 +135,61 @@ void main() {
     });
   });
 
+  group('inquiryReport', () {
+    test('absent, as on every record before a report, is no report', () {
+      final value = CaseModel.fromJson(caseJson);
+      expect(value.reports, isEmpty);
+      expect(value.hasReport, isFalse);
+    });
+
+    test('null is no report', () {
+      expect(
+        CaseModel.fromJson({...caseJson, 'inquiryReport': null}).reports,
+        isEmpty,
+      );
+    });
+
+    test('reads the file URLs, dropping blanks', () {
+      final value = CaseModel.fromJson({
+        ...caseJson,
+        'inquiryReport': ['https://x/a.pdf', '', 'https://x/b.png'],
+      });
+      expect(value.reports, ['https://x/a.pdf', 'https://x/b.png']);
+    });
+  });
+
+  group('CaseModel.statusBody', () {
+    test('sends the API value alone', () {
+      expect(CaseModel.statusBody(CaseStatus.closed), {'status': 'closed'});
+      expect(CaseModel.statusBody(CaseStatus.suspended), {
+        'status': 'suspended',
+      });
+    });
+
+    test('goes out as multipart fields', () {
+      final form = CaseModel.form(CaseModel.statusBody(CaseStatus.accepted));
+      expect(Map.fromEntries(form.fields), {'status': 'accepted'});
+      expect(form.files, isEmpty);
+    });
+  });
+
   group('CaseModel.assignmentBody', () {
     test('advances a payment-validated case to assigned', () {
-      // The one status the app writes, on the one hand-off it performs.
       expect(
         CaseModel.assignmentBody(
           assigneeId: 'staff-1',
           currentStatus: CaseStatus.paymentValidated,
+        ),
+        {'assigneeId': 'staff-1', 'status': 'assigned'},
+      );
+    });
+
+    test('lifts a suspension: assigned travels with the assignee', () {
+      // The assignee alone leaves the case suspended (backend lead, 26 Oct).
+      expect(
+        CaseModel.assignmentBody(
+          assigneeId: 'staff-1',
+          currentStatus: CaseStatus.suspended,
         ),
         {'assigneeId': 'staff-1', 'status': 'assigned'},
       );
@@ -159,7 +207,7 @@ void main() {
         CaseStatus.pendingInformation,
         CaseStatus.underReview,
         CaseStatus.closed,
-        CaseStatus.suspended,
+        CaseStatus.disputed,
       ]) {
         expect(
           CaseModel.assignmentBody(

@@ -83,4 +83,8 @@ abstract final class AppSizing {
 
   /// Square side of the illustration block in empty and error states.
   static const double stateIconBox = 72;
+
+  /// Width over height of an A4 page — the placeholder a document page loads
+  /// into.
+  static const double documentPageAspectRatio = 210 / 297;
 }

@@ -82,7 +82,9 @@ Case buildCase({
   String? source = 'website',
   String? assigneeId,
   CaseAssignee? assignee,
+  List<String> reports = const [],
   DateTime? createdAt,
+  DateTime? updatedAt,
 }) => Case(
   id: id,
   trackingId: trackingId,
@@ -106,7 +108,9 @@ Case buildCase({
   status: status,
   assigneeId: assigneeId ?? assignee?.id,
   assignee: assignee,
+  reports: reports,
   createdAt: createdAt,
+  updatedAt: updatedAt,
 );
 
 const ada = CaseAssignee(id: 'staff-1', firstName: 'Ada', lastName: 'Okafor');

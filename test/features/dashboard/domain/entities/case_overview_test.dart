@@ -8,8 +8,8 @@ void main() {
 
     expect(overview.total, TrackingStatus.values.length);
     expect(overview.reportsReady, 1); // closed
-    // payment-validated, assigned, accepted, under-review.
-    expect(overview.inProgress, 4);
+    // payment-validated, assigned, accepted, under-review, disputed.
+    expect(overview.inProgress, 5);
     // submitted (unpaid) and pending-information.
     expect(overview.needsInput, 2);
   });

@@ -27,7 +27,7 @@ void main() {
     });
   });
 
-  test('a report carries at most three files', () {
-    expect(CaseReportSheet.maxFiles, 3);
+  test('a report carries at most five files, the PUT /case limit', () {
+    expect(CaseReportSheet.maxFiles, 5);
   });
 }

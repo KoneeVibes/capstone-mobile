@@ -3,19 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/sizing/app_sizing.dart';
+import '../../../../core/utils/error/app_failure.dart';
+import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../core/utils/media_picker.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_upload_field.dart';
+import '../providers/case_update_provider.dart';
+import 'case_error_banner.dart';
 
-/// Opens the Add Report sheet. Resolves to true when the report was uploaded.
-Future<bool?> showCaseReportSheet({required BuildContext context}) =>
-    showAppBottomSheet<bool>(
-      context: context,
-      title: 'Add Report',
-      child: const CaseReportSheet(),
-    );
+/// Opens the Add Report sheet. Resolves to true once the report is submitted.
+Future<bool?> showCaseReportSheet({
+  required BuildContext context,
+  required String caseId,
+}) => showAppBottomSheet<bool>(
+  context: context,
+  title: 'Add Report',
+  child: CaseReportSheet(caseId: caseId),
+);
 
 /// [current] plus the new files in [picked], skipping any already there.
 List<PickedMedia> mergeReportFiles(
@@ -26,15 +32,15 @@ List<PickedMedia> mergeReportFiles(
   return [...current, ...picked.where((file) => paths.add(file.path))];
 }
 
-/// Collects up to [maxFiles] documents for one report.
-///
-/// Mock: Upload only closes the sheet; nothing is kept (ADR 0017).
-/// TODO(backend): upload through the report endpoint once it exists.
+/// Collects up to [maxFiles] documents and submits them as the case's report,
+/// which sends the case for review (ADR 0019).
 class CaseReportSheet extends ConsumerStatefulWidget {
-  const CaseReportSheet({super.key});
+  const CaseReportSheet({required this.caseId, super.key});
 
-  /// Most files one report carries.
-  static const int maxFiles = 3;
+  final String caseId;
+
+  /// Most files one report carries: the `PUT /case/{id}` limit.
+  static const int maxFiles = 5;
 
   @override
   ConsumerState<CaseReportSheet> createState() => _CaseReportSheetState();
@@ -43,8 +49,13 @@ class CaseReportSheet extends ConsumerStatefulWidget {
 class _CaseReportSheetState extends ConsumerState<CaseReportSheet> {
   List<PickedMedia> _files = const [];
 
-  /// Shown inline: a snackbar would sit behind the sheet.
+  /// Picker problems, shown under the upload box. Inline: a snackbar would sit
+  /// behind the sheet.
   String? _error;
+
+  /// The upload's failure. Held locally so an earlier one cannot show when the
+  /// sheet opens.
+  AppFailure? _failure;
 
   Future<void> _pick() async {
     final room = CaseReportSheet.maxFiles - _files.length;
@@ -78,15 +89,32 @@ class _CaseReportSheetState extends ConsumerState<CaseReportSheet> {
     });
   }
 
+  Future<void> _upload() async {
+    setState(() => _failure = null);
+
+    final submitted = await ref
+        .read(caseUpdateProvider.notifier)
+        .submitReport(widget.caseId, _files);
+    if (!mounted) return;
+
+    if (submitted) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    setState(() => _failure = ref.read(caseUpdateProvider).failure);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isUploading = ref.watch(caseUpdateProvider).isLoading;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppUploadField(
           label: 'Report documents',
           helper:
-              'Adds documents to the case file. '
+              'Sends the case for review, replacing any earlier report. '
               'Up to ${CaseReportSheet.maxFiles} files.',
           files: _files,
           errorText: _error,
@@ -99,12 +127,15 @@ class _CaseReportSheetState extends ConsumerState<CaseReportSheet> {
             _error = null;
           }),
         ),
+        if (_failure != null) ...[
+          const SizedBox(height: AppSizing.space16),
+          CaseErrorBanner(failure: _failure!),
+        ],
         const SizedBox(height: AppSizing.space24),
         AppButton(
           label: 'Upload',
-          onPressed: _files.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(true),
+          isLoading: isUploading,
+          onPressed: _files.isEmpty ? null : _upload,
         ),
       ],
     );

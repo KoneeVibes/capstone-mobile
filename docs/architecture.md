@@ -16,7 +16,8 @@ lib/
     sizing/            AppSizing
     storage/           SecureStore, PreferencesStore
     theme/             AppColors, AppTextStyles, AppTheme
-    utils/             Result, error handling, Validators, MediaPicker, LinkOpener
+    utils/             Result, error handling, Validators, MediaPicker, LinkOpener,
+                       DocumentPreview
   features/<name>/
     data/              datasources (IO, throw), models (DTOs), repository impls
     domain/            entities, repository interfaces, usecases (only with real logic)
@@ -46,7 +47,9 @@ presentation  ──▶  domain  ◀──  data
   to `core/` (non-visual) or `shared/` (visual).
 - **`core/` never imports a feature** — with one deliberate exception: the
   router (`core/navigation/app_router.dart`) imports feature screens, because it
-  is where screens are mounted.
+  is where screens are mounted. It may also hand one feature's widget to
+  another's screen as a parameter — the staff home's "My queue" is the cases
+  feature's `CaseQueueSection`, passed in this way (ADR 0019).
 
 The `dashboard` feature's `TrackingStatus` is a deliberate copy of the cases
 feature's `CaseStatus` for exactly this reason — keep their values and pill

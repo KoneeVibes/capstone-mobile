@@ -118,10 +118,13 @@ void main() {
 
     test('surfaces the API message on a duplicate email', () async {
       when(() => remote.createStaff(any())).thenThrow(
-        _httpFailure(409, body: {
-          'status': 'fail',
-          'message': 'A staff member with this email already exists.',
-        }),
+        _httpFailure(
+          409,
+          body: {
+            'status': 'fail',
+            'message': 'A staff member with this email already exists.',
+          },
+        ),
       );
 
       final result = await repository.createStaff(_draft);
@@ -147,7 +150,10 @@ void main() {
   group('updateStaff', () {
     test('returns Ok with the updated record', () async {
       when(
-        () => remote.updateStaff(id: 'staff-1', draft: any(named: 'draft')),
+        () => remote.updateStaff(
+          id: 'staff-1',
+          draft: any(named: 'draft'),
+        ),
       ).thenAnswer((_) async => _staff);
 
       final result = await repository.updateStaff(id: 'staff-1', draft: _draft);
@@ -157,7 +163,10 @@ void main() {
 
     test('returns Err when the record no longer exists', () async {
       when(
-        () => remote.updateStaff(id: 'gone', draft: any(named: 'draft')),
+        () => remote.updateStaff(
+          id: 'gone',
+          draft: any(named: 'draft'),
+        ),
       ).thenThrow(_httpFailure(404));
 
       final result = await repository.updateStaff(id: 'gone', draft: _draft);
@@ -211,5 +220,31 @@ void main() {
       expect(failure.message.toLowerCase(), isNot(contains('internal detail')));
       expect(failure.message, isNotEmpty);
     }
+  });
+
+  group('searchStaff', () {
+    test('returns Ok with the matches', () async {
+      when(() => remote.searchStaff('Ada')).thenAnswer((_) async => [_staff]);
+
+      final result = await repository.searchStaff('Ada');
+
+      expect(result.valueOrNull, [_staff]);
+    });
+
+    test('reads "No matching records found." (404) as none', () async {
+      when(() => remote.searchStaff(any())).thenThrow(_httpFailure(404));
+
+      final result = await repository.searchStaff('zzzzzz');
+
+      expect(result.valueOrNull, isEmpty);
+    });
+
+    test('returns Err for any other failure', () async {
+      when(() => remote.searchStaff(any())).thenThrow(_httpFailure(500));
+
+      final result = await repository.searchStaff('Ada');
+
+      expect(result.isErr, isTrue);
+    });
   });
 }

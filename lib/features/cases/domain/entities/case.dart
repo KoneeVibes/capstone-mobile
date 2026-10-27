@@ -22,6 +22,7 @@ class Case extends Equatable {
     this.inquiryPurpose = const [],
     this.assigneeId,
     this.assignee,
+    this.reports = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -58,10 +59,16 @@ class Case extends Equatable {
   /// unassigned, or when the lookup found nobody.
   final CaseAssignee? assignee;
 
+  /// The submitted report's files, as URLs. Empty until the assignee submits
+  /// one; replaced whole when they submit again.
+  final List<String> reports;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get isAssigned => assigneeId != null;
+
+  bool get hasReport => reports.isNotEmpty;
 
   /// `Due diligence, Physical inspection`, or empty when none were given.
   String get purposeLabel => inquiryPurpose
@@ -98,6 +105,7 @@ class Case extends Equatable {
     inquiryPurpose: inquiryPurpose,
     assigneeId: assigneeId,
     assignee: assignee,
+    reports: reports,
     createdAt: createdAt,
     updatedAt: updatedAt,
   );
@@ -113,6 +121,7 @@ class Case extends Equatable {
     status,
     assigneeId,
     assignee,
+    reports,
     createdAt,
     updatedAt,
   ];

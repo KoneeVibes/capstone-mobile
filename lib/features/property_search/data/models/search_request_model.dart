@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../../core/utils/media_picker.dart';
+import '../../../../core/network/api_multipart.dart';
 import '../../../../shared/extensions/string_extensions.dart';
 import '../../domain/entities/search_request.dart';
 
@@ -37,7 +37,7 @@ abstract final class SearchRequestModel {
       ('propertyTitleDocument', request.titleDocuments),
     ]) {
       for (final file in files) {
-        form.files.add(MapEntry(field, await _upload(file)));
+        form.files.add(MapEntry(field, await ApiMultipart.fileOf(file)));
       }
     }
     return form;
@@ -59,23 +59,6 @@ abstract final class SearchRequestModel {
   @visibleForTesting
   static String normalisePhone(String value) =>
       value.replaceAll(RegExp(r'[\s-]'), '');
-
-  /// The picker already checked the extension, so the content type follows
-  /// it rather than dio's guess from the path.
-  @visibleForTesting
-  static DioMediaType contentTypeOf(PickedMedia file) =>
-      switch (file.extension) {
-        'pdf' => DioMediaType('application', 'pdf'),
-        'png' => DioMediaType('image', 'png'),
-        _ => DioMediaType('image', 'jpeg'),
-      };
-
-  static Future<MultipartFile> _upload(PickedMedia file) =>
-      MultipartFile.fromFile(
-        file.path,
-        filename: file.fileName,
-        contentType: contentTypeOf(file),
-      );
 
   static String? _string(Object? value) =>
       value is String ? value.nullIfBlank : null;

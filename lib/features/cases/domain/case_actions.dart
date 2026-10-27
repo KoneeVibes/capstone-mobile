@@ -2,10 +2,9 @@ import '../../../core/session/staff_permissions.dart';
 import 'entities/case.dart';
 import 'entities/case_status.dart';
 
-/// Everything a staff member can do to a case from the Cases screens.
-///
-/// [accept], [suspend], [reviewReport] and [addReport] are mock until their
-/// endpoints land (ADR 0017); [assign] and [reassign] write for real.
+/// Everything a staff member can do to a case from the Cases screens and the
+/// home queue. All write for real except [requestInformation], which opens
+/// the mock chat (ADR 0019).
 enum CaseAction {
   /// Open the case conversation.
   requestInformation,
@@ -25,7 +24,9 @@ class CaseCardAction {
   final bool isEnabled;
 }
 
-/// Who is looking at a case, as far as the action rules care.
+/// Who is looking at a case, and what the Case Status Matrix lets them do to
+/// it (ADR 0019). The menu, the card button and the detail footer all ask
+/// these, so the rules live nowhere else.
 class CaseViewer {
   const CaseViewer({required this.permissions, required this.userId});
 
@@ -35,58 +36,69 @@ class CaseViewer {
   final String? userId;
 
   bool isAssigneeOf(Case value) => userId != null && value.assigneeId == userId;
+
+  /// Assign or reassign, whichever the case needs. Taking a suspended case
+  /// off its holder needs a super-admin.
+  bool canHandOver(Case value) =>
+      permissions.canAssignCases &&
+      value.status.canBeAssigned &&
+      (value.status != CaseStatus.suspended ||
+          permissions.canReassignSuspendedCases);
+
+  bool canAccept(Case value) =>
+      value.status == CaseStatus.assigned && isAssigneeOf(value);
+
+  bool canSuspend(Case value) =>
+      permissions.canSuspendCases && value.status.canBeSuspended;
+
+  bool canReviewReport(Case value) =>
+      permissions.canReviewReports && value.status == CaseStatus.underReview;
+
+  bool canRequestInformation(Case value) =>
+      value.status.opensConversation &&
+      (isAssigneeOf(value) || permissions.canRequestCaseInformation);
+
+  /// Only the assignee ever submits a report.
+  bool canAddReport(Case value) =>
+      isAssigneeOf(value) && value.status.takesReport;
 }
 
 /// The ⋮ menu on the staff case detail, in the order the design lists them.
-List<CaseAction> menuActionsFor(Case value, CaseViewer viewer) {
-  final canManage = viewer.permissions.canAssignCases;
-  final status = value.status;
-  final canAssign = canManage && status.canBeAssigned;
-
-  return [
-    CaseAction.requestInformation,
-    if (canAssign && value.isAssigned) CaseAction.reassign,
-    if (canAssign && !value.isAssigned) CaseAction.assign,
-    if (canManage && status == CaseStatus.underReview) CaseAction.reviewReport,
-    if (status == CaseStatus.assigned && viewer.isAssigneeOf(value))
-      CaseAction.accept,
-    if (canManage && status.canBeSuspended) CaseAction.suspend,
-  ];
-}
+/// Empty when the viewer can do nothing to this case.
+List<CaseAction> menuActionsFor(Case value, CaseViewer viewer) => [
+  if (viewer.canRequestInformation(value)) CaseAction.requestInformation,
+  if (viewer.canHandOver(value))
+    value.isAssigned ? CaseAction.reassign : CaseAction.assign,
+  if (viewer.canReviewReport(value)) CaseAction.reviewReport,
+  if (viewer.canAccept(value)) CaseAction.accept,
+  if (viewer.canSuspend(value)) CaseAction.suspend,
+];
 
 /// The one button on a staff case card, or null for none.
 ///
-/// Mirrors the queue's status-to-action map, filtered by what the viewer may
-/// do: a member without assign rights sees no assign button rather than a
-/// disabled one they could never use.
+/// The viewer's own next step wins over a manager's: an assignee who is also a
+/// manager sees Accept, not Reassign. A member sees no button they could not
+/// use. Suspend is never a card button.
 CaseCardAction? cardActionFor(Case value, CaseViewer viewer) {
-  final canManage = viewer.permissions.canAssignCases;
+  // Shown greyed out: the case is the manager's next job once paid.
+  if (value.status.isAwaitingPayment) {
+    return viewer.permissions.canAssignCases
+        ? const CaseCardAction(CaseAction.assign, isEnabled: false)
+        : null;
+  }
 
-  return switch (value.status) {
-    // Shown greyed out: the case is the manager's next job once paid.
-    CaseStatus.submitted when canManage => const CaseCardAction(
-      CaseAction.assign,
-      isEnabled: false,
-    ),
-    CaseStatus.paymentValidated when canManage => CaseCardAction(
+  final action = switch (value) {
+    _ when viewer.canAccept(value) => CaseAction.accept,
+    _ when viewer.canReviewReport(value) => CaseAction.reviewReport,
+    // Under review the report is already in; replacing it is a detail job.
+    _
+        when viewer.canAddReport(value) &&
+            value.status != CaseStatus.underReview =>
+      CaseAction.addReport,
+    _ when viewer.canHandOver(value) =>
       value.isAssigned ? CaseAction.reassign : CaseAction.assign,
-    ),
-    CaseStatus.assigned when viewer.isAssigneeOf(value) => const CaseCardAction(
-      CaseAction.accept,
-    ),
-    CaseStatus.assigned when canManage => const CaseCardAction(
-      CaseAction.reassign,
-    ),
-    CaseStatus.accepted => const CaseCardAction(CaseAction.addReport),
-    CaseStatus.underReview when canManage => const CaseCardAction(
-      CaseAction.reviewReport,
-    ),
-    CaseStatus.pendingInformation => const CaseCardAction(
-      CaseAction.requestInformation,
-    ),
-    CaseStatus.closed || CaseStatus.suspended when canManage => CaseCardAction(
-      value.isAssigned ? CaseAction.reassign : CaseAction.assign,
-    ),
+    _ when viewer.canRequestInformation(value) => CaseAction.requestInformation,
     _ => null,
   };
+  return action == null ? null : CaseCardAction(action);
 }

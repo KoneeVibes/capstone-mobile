@@ -4,6 +4,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/staff_draft.dart';
 import 'staff_list_provider.dart';
 import 'staff_providers.dart';
+import 'staff_search_provider.dart';
 
 /// Create, update and deactivate.
 ///
@@ -20,12 +21,11 @@ class StaffMutationNotifier extends AsyncNotifier<void> {
 
   /// Named `updateStaff` rather than `update`, which `AsyncNotifier` already
   /// defines for mutating its own state.
-  Future<bool> updateStaff({
-    required String id,
-    required StaffDraft draft,
-  }) => _run(
-    () => ref.read(staffRepositoryProvider).updateStaff(id: id, draft: draft),
-  );
+  Future<bool> updateStaff({required String id, required StaffDraft draft}) =>
+      _run(
+        () =>
+            ref.read(staffRepositoryProvider).updateStaff(id: id, draft: draft),
+      );
 
   /// Soft-deletes: the record comes back from the list as inactive.
   Future<bool> removeStaff(String id) =>
@@ -39,8 +39,10 @@ class StaffMutationNotifier extends AsyncNotifier<void> {
     return result.fold(
       onOk: (_) {
         state = const AsyncData<void>(null);
-        // Re-read the list so the new, edited or deactivated row is reflected.
+        // Re-read the list, and any search over it, so the new, edited or
+        // deactivated row is reflected.
         ref.invalidate(staffListProvider);
+        ref.invalidate(staffSearchProvider);
         return true;
       },
       onErr: (failure) {

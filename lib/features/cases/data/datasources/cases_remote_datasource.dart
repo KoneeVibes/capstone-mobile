@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_pagination.dart';
+import '../../../../core/utils/media_picker.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_assignee.dart';
 import '../../domain/entities/case_status.dart';
@@ -96,6 +98,27 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     return resolveAssignees ? _withAssigneeName(response.data) : response.data;
   }
 
+  /// One `GET /search` page of cases, the largest the API serves. Its
+  /// "No matching records found." 404 is an empty answer, as the list's is.
+  @override
+  Future<List<Case>> searchCases(String query) async {
+    final found = await _noneOn404(() async {
+      final response = await _client.get<List<Case>>(
+        ApiEndpoints.search,
+        queryParameters: {
+          'q': query,
+          'flag': 'case',
+          'perPage': AppConstants.searchResultLimit,
+        },
+        decoder: (data) => CaseModel.listFromJson(
+          data is Map<String, dynamic> ? data['cases'] : null,
+        ),
+      );
+      return response.data;
+    });
+    return resolveAssignees ? _withAssigneeNames(found) : found;
+  }
+
   /// The staff a case may be given to.
   ///
   /// Deactivated accounts are filtered out: staff delete is a soft delete, so
@@ -116,10 +139,10 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
     required String caseId,
     required String assigneeId,
   }) async {
-    // Read first, so the body can carry a status only for a payment-validated
-    // case. That hand-off is what assigning moves along; re-assigning anything
-    // further on is a change of hands, and sending a status there would knock
-    // the case backwards.
+    // Read first, so the body carries a status only where assigning moves the
+    // case on: a payment-validated case, or lifting a suspension. Re-assigning
+    // anything else is a change of hands, and sending a status there would
+    // knock the case backwards.
     final current = await _client.get<Case>(
       ApiEndpoints.caseById(caseId),
       decoder: CaseModel.fromData,
@@ -127,14 +150,55 @@ class CasesRemoteDataSourceImpl implements CasesDataSource {
 
     final response = await _client.patch<Case>(
       ApiEndpoints.caseById(caseId),
-      data: CaseModel.assignmentBody(
-        assigneeId: assigneeId,
-        currentStatus: current.data.status,
+      data: CaseModel.form(
+        CaseModel.assignmentBody(
+          assigneeId: assigneeId,
+          currentStatus: current.data.status,
+        ),
       ),
       decoder: CaseModel.fromData,
     );
 
     return _withAssigneeName(response.data);
+  }
+
+  @override
+  Future<Case> updateStatus({
+    required String caseId,
+    required CaseStatus status,
+  }) async {
+    final response = await _client.patch<Case>(
+      ApiEndpoints.caseById(caseId),
+      data: CaseModel.form(CaseModel.statusBody(status)),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
+  }
+
+  /// `DELETE /case/{id}` suspends the case, it does not remove it (backend
+  /// lead, 26 Oct 2026); the response is the suspended case.
+  @override
+  Future<Case> suspendCase({required String caseId}) async {
+    final response = await _client.delete<Case>(
+      ApiEndpoints.caseById(caseId),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
+  }
+
+  /// Submits, or replaces, the case's report; the case moves to
+  /// `under-review`.
+  @override
+  Future<Case> submitReport({
+    required String caseId,
+    required List<PickedMedia> files,
+  }) async {
+    final response = await _client.put<Case>(
+      ApiEndpoints.caseById(caseId),
+      data: await CaseModel.reportFormData(files),
+      decoder: CaseModel.fromData,
+    );
+    return resolveAssignees ? _withAssigneeName(response.data) : response.data;
   }
 
   /// Joins names onto a list of cases, in one staff request rather than one

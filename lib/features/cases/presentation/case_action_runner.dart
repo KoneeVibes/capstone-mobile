@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/navigation/app_session.dart';
 import '../../../core/session/staff_permissions.dart';
+import '../../../core/utils/error/async_value_x.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/app_confirm_dialog.dart';
 import '../domain/case_actions.dart';
 import '../domain/entities/case.dart';
 import 'providers/case_detail_provider.dart';
+import 'providers/case_update_provider.dart';
 import 'providers/cases_list_provider.dart';
 import 'widgets/case_assign_sheet.dart';
 import 'widgets/case_report_sheet.dart';
+import 'widgets/case_report_view.dart';
 
 /// The signed-in staff member, as the action rules see them.
 CaseViewer caseViewerOf(WidgetRef ref) {
@@ -44,11 +47,33 @@ String caseMenuLabel(CaseAction action) => switch (action) {
   CaseAction.addReport => 'Add report',
 };
 
-/// Carries out [action] on [value], from a list card or the detail screen.
-///
-/// Assigning writes for real; accept and suspend confirm, then only raise a
-/// snackbar; Add Report opens a sheet that keeps nothing yet, and Review
-/// report is not built (ADR 0017).
+/// A staff case card's button as (label, handler), from the action rules. No
+/// label means no button; no handler greys it out.
+(String?, VoidCallback?) staffCardButton({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Case value,
+  required CaseViewer viewer,
+  required String chatRouteName,
+}) {
+  final card = cardActionFor(value, viewer);
+  if (card == null) return (null, null);
+  return (
+    caseCardLabel(card.action),
+    card.isEnabled
+        ? () => runCaseAction(
+            context: context,
+            ref: ref,
+            value: value,
+            action: card.action,
+            chatRouteName: chatRouteName,
+          )
+        : null,
+  );
+}
+
+/// Carries out [action] on [value], from a list card, the home queue or the
+/// detail screen. Everything but the chat writes for real (ADR 0019).
 Future<void> runCaseAction({
   required BuildContext context,
   required WidgetRef ref,
@@ -56,6 +81,8 @@ Future<void> runCaseAction({
   required CaseAction action,
   required String chatRouteName,
 }) async {
+  final updates = ref.read(caseUpdateProvider.notifier);
+
   switch (action) {
     case CaseAction.requestInformation:
       await context.pushNamed(
@@ -65,49 +92,74 @@ Future<void> runCaseAction({
       );
     case CaseAction.assign || CaseAction.reassign:
       await _assign(context, ref, value);
-    // TODO(backend): accept through the real endpoint.
     case CaseAction.accept:
-      final confirmed = await _confirm(
+      await _confirmThenWrite(
         context,
+        ref,
         title: 'Accept Assignment',
         message: 'Are you sure you want to accept this case assignment?',
+        write: () => updates.accept(value.id),
+        done: 'Assignment accepted.',
       );
-      if (confirmed && context.mounted) {
-        context.showMessage('Assignment accepted.');
-      }
-    // TODO(backend): suspend through the real endpoint.
     case CaseAction.suspend:
-      final confirmed = await _confirm(
+      await _confirmThenWrite(
         context,
+        ref,
         title: 'Suspend Case',
         message: 'Are you sure you want to suspend this case?',
+        write: () => updates.suspend(value.id),
+        done: 'Case suspended.',
       );
-      if (confirmed && context.mounted) context.showMessage('Case suspended.');
     case CaseAction.reviewReport:
-      context.showMessage('Reviewing reports is coming soon.');
-    // TODO(backend): the sheet keeps nothing until the report endpoint exists.
+      final accepted = await showCaseReportView(
+        context: context,
+        caseId: value.id,
+      );
+      if (accepted == true && context.mounted) {
+        context.showMessage('Report accepted. The case is closed.');
+      }
     case CaseAction.addReport:
-      final uploaded = await showCaseReportSheet(context: context);
+      final uploaded = await showCaseReportSheet(
+        context: context,
+        caseId: value.id,
+      );
       if (uploaded == true && context.mounted) {
-        context.showMessage('Report submitted.');
+        context.showMessage('Report submitted for review.');
       }
   }
 }
 
-Future<bool> _confirm(
-  BuildContext context, {
+/// Confirm over Cancel, then [write]; says how it went in a snackbar.
+Future<void> _confirmThenWrite(
+  BuildContext context,
+  WidgetRef ref, {
   required String title,
   required String message,
-}) => showAppConfirmDialog(
-  context: context,
-  title: title,
-  message: message,
-  confirmLabel: 'Confirm',
-  cancelLabel: 'Cancel',
-  icon: null,
-  isDestructive: false,
-  stackActions: true,
-);
+  required Future<bool> Function() write,
+  required String done,
+}) async {
+  final confirmed = await showAppConfirmDialog(
+    context: context,
+    title: title,
+    message: message,
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    icon: null,
+    isDestructive: false,
+    stackActions: true,
+  );
+  if (!confirmed || !context.mounted) return;
+
+  final succeeded = await write();
+  if (!context.mounted) return;
+
+  if (succeeded) {
+    context.showMessage(done);
+    return;
+  }
+  final failure = ref.read(caseUpdateProvider).failure;
+  if (failure != null) context.showFailure(failure);
+}
 
 Future<void> _assign(BuildContext context, WidgetRef ref, Case value) async {
   // The sheet performs the write itself and reports its own failures inline,

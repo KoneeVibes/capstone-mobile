@@ -25,11 +25,20 @@ class CasesListState extends Equatable {
   /// two need different copy, so the screen distinguishes them.
   bool get isEmpty => items.isEmpty;
 
+  /// [found] as [list] now holds them, where it holds them at all.
+  ///
+  /// Search results are a snapshot; writes update the list. Drawing a result
+  /// from the list's copy means a case accepted from its result card shows as
+  /// accepted at once. A case the list does not hold keeps the search's copy.
+  static List<Case> latestOf(List<Case> found, CasesListState? list) {
+    final held = {
+      for (final value in list?.items ?? const <Case>[]) value.id: value,
+    };
+    return [for (final value in found) held[value.id] ?? value];
+  }
+
   CasesListState copyWith({List<Case>? items, CaseFilter? filter}) =>
-      CasesListState(
-        items: items ?? this.items,
-        filter: filter ?? this.filter,
-      );
+      CasesListState(items: items ?? this.items, filter: filter ?? this.filter);
 
   @override
   List<Object?> get props => [items, filter];

@@ -42,6 +42,9 @@ abstract final class ApiEndpoints {
   // Property search: the priced locations a case can be filed for.
   static const String locations = '/misc/location';
 
+  // Search across cases and users, narrowed with `flag` (`case`, `staff`).
+  static const String search = '/search';
+
   // Payment: the invoice a new case creates, and the Paystack transaction that
   // settles it.
 

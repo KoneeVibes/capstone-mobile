@@ -24,10 +24,12 @@ class CaseOverview extends Equatable {
       switch (status) {
         case TrackingStatus.closed:
           ready++;
+        // A disputed case is being worked again.
         case TrackingStatus.paymentValidated ||
             TrackingStatus.assigned ||
             TrackingStatus.accepted ||
-            TrackingStatus.underReview:
+            TrackingStatus.underReview ||
+            TrackingStatus.disputed:
           moving++;
         // Unpaid, or stalled on something from the applicant.
         case TrackingStatus.submitted || TrackingStatus.pendingInformation:

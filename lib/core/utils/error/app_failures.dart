@@ -62,6 +62,14 @@ abstract final class AppFailures {
     message: 'That file is too large. Choose one under 10 MB.',
   );
 
+  /// [fileTooLarge] for an upload with a tighter limit than the app's.
+  static AppFailure fileTooLargeFor(int maxBytes) => AppFailure(
+    type: FailureType.validation,
+    message:
+        'That file is too large. Choose one under '
+        '${maxBytes ~/ (1024 * 1024)} MB.',
+  );
+
   /// A document link could not be handed to the browser or a viewer.
   ///
   /// Covers a malformed URL and a device with nothing registered for it.

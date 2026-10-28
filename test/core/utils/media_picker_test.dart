@@ -238,6 +238,19 @@ void main() {
       expect(result.valueOrNull, PickedDocuments.none);
     });
 
+    test('a tighter size limit names its own size', () async {
+      const fiveMb = 5 * 1024 * 1024;
+      backend.files = [_file(path: '/tmp/a.pdf', name: 'a.pdf')];
+      expect((await picker.pickDocuments(maxBytes: fiveMb)).isOk, isTrue);
+
+      backend.files = [
+        _file(path: '/tmp/a.pdf', name: 'a.pdf', sizeBytes: fiveMb + 1),
+      ];
+      final result = await picker.pickDocuments(maxBytes: fiveMb);
+
+      expect(result.failureOrNull?.message, contains('under 5 MB'));
+    });
+
     test('converts a plugin throw into a safe failure', () async {
       backend.throws = Exception('boom');
 

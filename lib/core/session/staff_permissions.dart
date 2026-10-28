@@ -57,5 +57,10 @@ class StaffPermissions {
   /// every manager and the backend decides (ADR 0019).
   bool get canRequestCaseInformation => role == StaffRole.manager;
 
+  /// Declining a dispute on a case someone else holds. The matrix gives it to
+  /// the assignee's manager; as above, every manager (ADR 0025). Accepting
+  /// one is the assignee's alone.
+  bool get canRespondToDisputes => role == StaffRole.manager;
+
   bool _isAny(Set<StaffRole> roles) => roles.contains(role);
 }

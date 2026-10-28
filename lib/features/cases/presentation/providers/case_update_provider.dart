@@ -5,6 +5,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_status.dart';
 import 'case_detail_provider.dart';
+import 'case_disputes_provider.dart';
 import 'cases_list_provider.dart';
 import 'cases_providers.dart';
 
@@ -26,6 +27,15 @@ class CaseUpdateNotifier extends AsyncNotifier<void> {
 
   /// Accepting a report closes the case and releases the report to the client.
   Future<bool> close(String caseId) => _move(caseId, CaseStatus.closed);
+
+  /// Taking a client's dispute in: the case moves to `disputed` and its report
+  /// has to be submitted again. The disputes are re-read for the server's say
+  /// on the dispute itself (ADR 0025).
+  Future<bool> takeInDispute(String caseId) async {
+    final moved = await _move(caseId, CaseStatus.disputed);
+    if (moved) ref.invalidate(caseDisputesProvider(caseId));
+    return moved;
+  }
 
   Future<bool> submitReport(String caseId, List<PickedMedia> files) => _write(
     caseId,

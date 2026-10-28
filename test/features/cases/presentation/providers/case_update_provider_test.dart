@@ -90,6 +90,22 @@ void main() {
     }
   });
 
+  test('taking a dispute in moves the case to disputed', () async {
+    stubStatus(Ok(buildCase(id: 'case-101', status: CaseStatus.disputed)));
+
+    final takenIn = await makeContainer()
+        .read(caseUpdateProvider.notifier)
+        .takeInDispute('case-101');
+
+    expect(takenIn, isTrue);
+    verify(
+      () => repository.updateStatus(
+        caseId: 'case-101',
+        status: CaseStatus.disputed,
+      ),
+    ).called(1);
+  });
+
   test('suspend is its own write, not a status update', () async {
     stubSuspend(Ok(buildCase(id: 'case-101', status: CaseStatus.suspended)));
 

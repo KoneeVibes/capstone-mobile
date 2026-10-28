@@ -3,6 +3,7 @@ import 'package:propertyintelmobileapp/core/session/staff_permissions.dart';
 import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/case_actions.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case.dart';
+import 'package:propertyintelmobileapp/features/cases/domain/entities/case_dispute.dart';
 import 'package:propertyintelmobileapp/features/cases/domain/entities/case_status.dart';
 
 import '../case_fixtures.dart';
@@ -261,6 +262,47 @@ void main() {
         );
       }
       expect(_superAdmin.canAddReport(_held(CaseStatus.accepted)), isFalse);
+    });
+  });
+
+  group('answering a dispute', () {
+    CaseDispute dispute(DisputeStatus status) => CaseDispute(
+      id: 'dispute-1',
+      caseId: 'case-1',
+      title: 'Wrong plot',
+      description: 'The survey covers the next plot.',
+      status: status,
+    );
+
+    final closed = _held(CaseStatus.closed);
+    final open = dispute(DisputeStatus.open);
+
+    test('only the assignee accepts', () {
+      expect(_assignee.canAcceptDispute(closed, open), isTrue);
+      for (final viewer in [_superAdmin, _admin, _manager, _otherRegular]) {
+        expect(viewer.canAcceptDispute(closed, open), isFalse);
+      }
+    });
+
+    test('the assignee or any manager declines', () {
+      expect(_assignee.canDeclineDispute(closed, open), isTrue);
+      expect(_manager.canDeclineDispute(closed, open), isTrue);
+      for (final viewer in [_superAdmin, _admin, _otherRegular]) {
+        expect(viewer.canDeclineDispute(closed, open), isFalse);
+      }
+    });
+
+    test('only while the dispute is open', () {
+      for (final status in [DisputeStatus.accepted, DisputeStatus.rejected]) {
+        expect(_assignee.canAcceptDispute(closed, dispute(status)), isFalse);
+        expect(_assignee.canDeclineDispute(closed, dispute(status)), isFalse);
+      }
+    });
+
+    test('never once the case has moved on from closed', () {
+      final disputed = _held(CaseStatus.disputed);
+      expect(_assignee.canAcceptDispute(disputed, open), isFalse);
+      expect(_assignee.canDeclineDispute(disputed, open), isFalse);
     });
   });
 }

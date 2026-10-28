@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,19 +6,28 @@ import '../../../../core/navigation/app_session.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/media_picker.dart';
+import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_confirm_dialog.dart';
+import '../../../../shared/widgets/app_shimmer.dart';
 import '../../../../shared/widgets/app_state_view.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../domain/entities/case.dart';
 import '../../domain/entities/case_dispute.dart';
+import '../../domain/entities/case_status.dart';
+import '../case_action_runner.dart';
 import '../providers/case_detail_provider.dart';
 import '../providers/case_disputes_provider.dart';
+import '../providers/case_update_provider.dart';
+import '../providers/dispute_update_provider.dart';
+import '../widgets/case_document_tile.dart';
 
 /// One dispute as a timeline: what the client raised, then how staff answered.
-/// Staff answer an open one here — take it in, or decline it with a note.
+/// The assignee or a manager answers an open one here: take it in, or decline
+/// it with a note (ADR 0025).
 class DisputeDetailScreen extends ConsumerWidget {
   const DisputeDetailScreen({
     required this.caseId,
@@ -38,56 +45,95 @@ class DisputeDetailScreen extends ConsumerWidget {
       child: const _DeclineNoteForm(),
     );
     if (note == null || !context.mounted) return;
-    ref.read(caseDisputesProvider(caseId).notifier).decline(disputeId, note);
-    context.showMessage('Dispute cancelled.');
+
+    final declined = await ref
+        .read(disputeUpdateProvider.notifier)
+        .decline(caseId: caseId, disputeId: disputeId, note: note);
+    if (!context.mounted) return;
+    if (declined) {
+      context.showMessage('Dispute cancelled.');
+    } else if (ref.read(disputeUpdateProvider).failure case final failure?) {
+      context.showFailure(failure);
+    }
   }
 
-  void _takeIn(BuildContext context, WidgetRef ref) {
-    ref.read(caseDisputesProvider(caseId).notifier).takeIn(disputeId);
-    context.showMessage('Dispute taken in.');
+  Future<void> _takeIn(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: 'Accept Dispute',
+      message:
+          'The case moves to disputed and its report has to be submitted '
+          'again. Accept this dispute?',
+      confirmLabel: 'Confirm',
+      cancelLabel: 'Cancel',
+      icon: null,
+      isDestructive: false,
+      stackActions: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    final takenIn = await ref
+        .read(caseUpdateProvider.notifier)
+        .takeInDispute(caseId);
+    if (!context.mounted) return;
+    if (takenIn) {
+      context.showMessage('Dispute taken in.');
+    } else if (ref.read(caseUpdateProvider).failure case final failure?) {
+      context.showFailure(failure);
+    }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isStaff = ref.watch(sessionProvider)?.isStaff ?? false;
     final value = ref.watch(caseDetailProvider(caseId)).value;
-    final dispute = ref
-        .watch(caseDisputesProvider(caseId))
-        .where((d) => d.id == disputeId)
-        .firstOrNull;
+    final disputes = ref.watch(caseDisputesProvider(caseId));
 
     return Scaffold(
       appBar: AppBar(titleSpacing: 0, title: const Text('Dispute detail')),
       body: SafeArea(
-        child: dispute == null
-            ? const AppStateView.empty(
+        child: disputes.when2(
+          loading: () => const _DisputeSkeleton(),
+          error: (failure) => AppStateView.failure(
+            failure: failure,
+            onRetry: failure.isRetryable
+                ? () => ref.invalidate(caseDisputesProvider(caseId))
+                : null,
+          ),
+          data: (loaded) {
+            final dispute = loaded.where((d) => d.id == disputeId).firstOrNull;
+            if (dispute == null) {
+              return const AppStateView.empty(
                 icon: Icons.search_off,
                 title: 'Dispute not found',
-                message: 'It may have been raised in an earlier session.',
-              )
-            : ListView(
-                padding: const EdgeInsets.all(AppSizing.screenPadding),
-                children: [
-                  if (value != null) ...[
-                    Text(value.headline, style: AppTextStyles.titleSmall),
-                    if (value.trackingId case final reference?)
-                      Text(reference, style: AppTextStyles.bodyMedium),
-                    const SizedBox(height: AppSizing.space24),
-                  ],
-                  _TimelineEntry(
-                    icon: Icons.schedule,
-                    color: AppColors.textTertiary,
-                    isLast: false,
-                    child: _EventCard(
-                      at: dispute.raisedAt,
-                      title: dispute.title,
-                      body: dispute.description,
-                      evidence: dispute.evidence,
-                    ),
-                  ),
-                  _response(context, ref, dispute, isStaff: isStaff),
+                message: 'It is no longer on this case.',
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.all(AppSizing.screenPadding),
+              children: [
+                if (value != null) ...[
+                  Text(value.headline, style: AppTextStyles.titleSmall),
+                  if (value.trackingId case final reference?)
+                    Text(reference, style: AppTextStyles.bodyMedium),
+                  const SizedBox(height: AppSizing.space24),
                 ],
-              ),
+                _TimelineEntry(
+                  icon: Icons.schedule,
+                  color: AppColors.textTertiary,
+                  isLast: false,
+                  child: _EventCard(
+                    at: dispute.createdAt,
+                    title: dispute.title,
+                    body: dispute.description,
+                    attachments: dispute.attachments,
+                  ),
+                ),
+                _response(context, ref, dispute, value, isStaff: isStaff),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -95,27 +141,49 @@ class DisputeDetailScreen extends ConsumerWidget {
   Widget _response(
     BuildContext context,
     WidgetRef ref,
-    CaseDispute dispute, {
+    CaseDispute dispute,
+    Case? value, {
     required bool isStaff,
   }) {
+    final viewer = caseViewerOf(ref);
+    final canAccept =
+        isStaff && value != null && viewer.canAcceptDispute(value, dispute);
+    final canDecline =
+        isStaff && value != null && viewer.canDeclineDispute(value, dispute);
+    // Once the case says disputed it has been taken in, even if the dispute
+    // record has not caught up.
+    final caseTookItIn = value?.status == CaseStatus.disputed;
+
     return switch (dispute.status) {
-      DisputeStatus.takenIn => _TimelineEntry(
+      DisputeStatus.accepted => _TimelineEntry(
         icon: Icons.check_circle,
         color: AppColors.success,
         isLast: true,
         child: _EventCard(at: dispute.respondedAt, title: 'Dispute taken in'),
       ),
-      DisputeStatus.declined => _TimelineEntry(
+      DisputeStatus.rejected => _TimelineEntry(
         icon: Icons.warning_amber_rounded,
         color: AppColors.warning,
         isLast: true,
         child: _EventCard(
           at: dispute.respondedAt,
           title: 'Dispute cancelled',
-          body: dispute.declineNote,
+          body: dispute.rejectionNote,
         ),
       ),
-      DisputeStatus.open when isStaff => _TimelineEntry(
+      DisputeStatus.unknown => _TimelineEntry(
+        icon: Icons.info_outline,
+        color: AppColors.textTertiary,
+        isLast: true,
+        child: _EventCard(at: dispute.respondedAt, title: 'Dispute answered'),
+      ),
+      DisputeStatus.open when caseTookItIn => const _TimelineEntry(
+        icon: Icons.check_circle,
+        color: AppColors.success,
+        isLast: true,
+        child: _EventCard(at: null, title: 'Dispute taken in'),
+      ),
+      DisputeStatus.open when canAccept || canDecline => _TimelineEntry(
         icon: Icons.warning_amber_rounded,
         color: AppColors.warning,
         isLast: true,
@@ -126,16 +194,20 @@ class DisputeDetailScreen extends ConsumerWidget {
             const SizedBox(height: AppSizing.space12),
             Row(
               children: [
-                AppButton(
-                  label: 'Accept',
-                  expanded: false,
-                  onPressed: () => _takeIn(context, ref),
-                ),
-                const SizedBox(width: AppSizing.space8),
+                if (canAccept) ...[
+                  AppButton(
+                    label: 'Accept',
+                    expanded: false,
+                    isLoading: ref.watch(caseUpdateProvider).isLoading,
+                    onPressed: () => _takeIn(context, ref),
+                  ),
+                  const SizedBox(width: AppSizing.space8),
+                ],
                 AppButton(
                   label: 'Decline with Note',
                   variant: AppButtonVariant.destructiveOutlined,
                   expanded: false,
+                  isLoading: ref.watch(disputeUpdateProvider).isLoading,
                   onPressed: () => _decline(context, ref),
                 ),
               ],
@@ -156,6 +228,31 @@ class DisputeDetailScreen extends ConsumerWidget {
         ),
       ),
     };
+  }
+}
+
+/// Placeholder while the case's disputes load: the heading and the raised
+/// card.
+class _DisputeSkeleton extends StatelessWidget {
+  const _DisputeSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(AppSizing.screenPadding),
+      child: AppShimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppShimmerBox(width: 180, height: AppSizing.space16),
+            SizedBox(height: AppSizing.space6),
+            AppShimmerBox(width: 120),
+            SizedBox(height: AppSizing.space24),
+            AppShimmerBox(height: 120, radius: AppSizing.radiusMd),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -213,17 +310,20 @@ class _EventCard extends StatelessWidget {
     required this.at,
     required this.title,
     this.body,
-    this.evidence = const [],
+    this.attachments = const [],
   });
 
   final DateTime? at;
   final String title;
   final String? body;
-  final List<PickedMedia> evidence;
+
+  /// File URLs, opened in the app like a case's documents (ADR 0022).
+  final List<String> attachments;
 
   @override
   Widget build(BuildContext context) {
     final body = this.body;
+    final at = this.at;
 
     return Container(
       padding: const EdgeInsets.all(AppSizing.space12),
@@ -238,70 +338,23 @@ class _EventCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppFormatters.dateTime(at), style: AppTextStyles.bodySmall),
-          const SizedBox(height: AppSizing.space4),
+          if (at != null) ...[
+            Text(AppFormatters.dateTime(at), style: AppTextStyles.bodySmall),
+            const SizedBox(height: AppSizing.space4),
+          ],
           Text(title, style: AppTextStyles.titleSmall),
           if (body != null && body.isNotEmpty) ...[
             const SizedBox(height: AppSizing.space8),
             Text(body, style: AppTextStyles.bodyMedium),
           ],
-          if (evidence.isNotEmpty) ...[
+          if (attachments.isNotEmpty) ...[
             const SizedBox(height: AppSizing.space12),
-            Wrap(
-              spacing: AppSizing.space8,
-              runSpacing: AppSizing.space8,
-              children: [
-                for (final file in evidence) _EvidenceThumb(file: file),
-              ],
+            CaseDocumentGrid(
+              documents: CaseDocumentGrid.numbered('Evidence', attachments),
             ),
           ],
         ],
       ),
-    );
-  }
-}
-
-/// A picked file: the image itself, or a document icon with its name.
-class _EvidenceThumb extends StatelessWidget {
-  const _EvidenceThumb({required this.file});
-
-  final PickedMedia file;
-
-  @override
-  Widget build(BuildContext context) {
-    const side = AppSizing.avatarLg;
-    final radius = BorderRadius.circular(AppSizing.radiusSm);
-
-    return Tooltip(
-      message: file.fileName,
-      child: ClipRRect(
-        borderRadius: radius,
-        child: Container(
-          width: side,
-          height: side,
-          color: AppColors.surfaceMuted,
-          child: file.isImage
-              ? Image.file(
-                  File(file.path),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const _DocumentIcon(),
-                )
-              : const _DocumentIcon(),
-        ),
-      ),
-    );
-  }
-}
-
-class _DocumentIcon extends StatelessWidget {
-  const _DocumentIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Icon(
-      Icons.picture_as_pdf_outlined,
-      size: AppSizing.iconLg,
-      color: AppColors.destructiveIcon,
     );
   }
 }

@@ -118,10 +118,12 @@ class MediaPicker {
   ///
   /// Returns empty [PickedDocuments] when the user backs out. The first invalid
   /// file fails the whole batch; files past [limit] are left out and counted in
-  /// [PickedDocuments.dropped], so the caller can say so.
+  /// [PickedDocuments.dropped], so the caller can say so. [maxBytes] tightens
+  /// the app-wide size limit for an endpoint that takes less.
   Future<Result<PickedDocuments>> pickDocuments({
     Set<String>? allowedExtensions,
     int? limit,
+    int maxBytes = AppConstants.maxUploadBytes,
   }) async {
     final allowed = allowedExtensions ?? AppConstants.allowedDocumentExtensions;
 
@@ -147,6 +149,7 @@ class MediaPicker {
         file,
         allowed: allowed,
         onUnsupported: AppFailures.unsupportedDocumentType,
+        maxBytes: maxBytes,
       );
       if (validated.isErr) return Err(validated.failureOrNull!);
       picked.add(validated.valueOrNull!);
@@ -189,14 +192,19 @@ class MediaPicker {
     RawPickedFile raw, {
     required Set<String> allowed,
     required AppFailure onUnsupported,
+    int maxBytes = AppConstants.maxUploadBytes,
   }) {
     final path = raw.path;
     if (path == null || path.isEmpty) {
       return const Err(AppFailures.fileUnreadable);
     }
 
-    if (raw.sizeBytes > AppConstants.maxUploadBytes) {
-      return const Err(AppFailures.fileTooLarge);
+    if (raw.sizeBytes > maxBytes) {
+      return Err(
+        maxBytes == AppConstants.maxUploadBytes
+            ? AppFailures.fileTooLarge
+            : AppFailures.fileTooLargeFor(maxBytes),
+      );
     }
 
     final extension = _extensionOf(raw.name.isNotEmpty ? raw.name : path);

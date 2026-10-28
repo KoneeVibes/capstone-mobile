@@ -1,6 +1,6 @@
 # 0017 — Case actions menu, the client case view, and disputes (mock)
 
-- **Status:** Accepted; the action rules, accept, suspend and review superseded by [0019](0019-case-status-actions-and-reports.md) (disputes stay mock)
+- **Status:** Accepted; the action rules, accept, suspend and review superseded by [0019](0019-case-status-actions-and-reports.md), disputes by [0025](0025-disputes-write-for-real.md)
 - **Recorded:** 2026-10-20
 
 ## Context

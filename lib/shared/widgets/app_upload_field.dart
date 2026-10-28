@@ -20,7 +20,11 @@ class AppUploadField extends StatelessWidget {
     this.errorText,
     this.clearAllLabel,
     this.onClearAll,
+    this.formats = 'PDF, JPG, JPEG or PNG, less than 10MB',
   });
+
+  /// The types and size the box accepts, under "Tap to upload".
+  final String formats;
 
   /// The heading above the box.
   final String label;
@@ -75,18 +79,18 @@ class AppUploadField extends StatelessWidget {
                   width: AppSizing.borderWidth,
                 ),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.upload_file_outlined,
                     size: AppSizing.iconLg,
                     color: AppColors.primary,
                   ),
-                  SizedBox(height: AppSizing.space8),
-                  Text('Tap to upload', style: AppTextStyles.titleSmall),
-                  SizedBox(height: AppSizing.space2),
+                  const SizedBox(height: AppSizing.space8),
+                  const Text('Tap to upload', style: AppTextStyles.titleSmall),
+                  const SizedBox(height: AppSizing.space2),
                   Text(
-                    'PDF, JPG, JPEG or PNG, less than 10MB',
+                    formats,
                     style: AppTextStyles.bodySmall,
                     textAlign: TextAlign.center,
                   ),

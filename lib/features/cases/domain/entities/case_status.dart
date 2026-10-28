@@ -88,8 +88,9 @@ enum CaseStatus {
   /// Whether the client may see the report: only once it has been accepted.
   bool get releasesReport => this == closed;
 
-  /// A client may raise a dispute on anything they have paid for.
-  bool get canBeDisputed => this != submitted;
+  /// A client disputes a finished case's outcome: `POST /dispute` takes a
+  /// closed case only (ADR 0025).
+  bool get canBeDisputed => this == closed;
 
   /// Whether assigning also moves the case along its lifecycle.
   ///

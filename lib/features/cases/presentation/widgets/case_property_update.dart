@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_shimmer.dart';
 import '../../domain/entities/case_dispute.dart';
+import '../providers/case_disputes_provider.dart';
 import 'case_document_tile.dart';
 
 /// "Property Update": the case's report and the disputes raised on it.
@@ -15,25 +19,36 @@ class CasePropertyUpdate extends StatelessWidget {
   const CasePropertyUpdate({
     required this.disputes,
     required this.onView,
+    required this.onRetryDisputes,
     super.key,
     this.reports = const [],
+    this.showRaise = false,
     this.onRaise,
   });
 
   /// The report's file URLs; the Report part is left out when empty.
   final List<String> reports;
 
-  final List<CaseDispute> disputes;
+  final AsyncValue<List<CaseDispute>> disputes;
   final ValueChanged<CaseDispute> onView;
+  final VoidCallback onRetryDisputes;
 
-  /// Set for a client who may raise a dispute; staff only answer them.
+  /// Set for a client: offers Raise dispute while no dispute is open. Staff
+  /// only answer them.
+  final bool showRaise;
+
+  /// Null greys Raise dispute out: the case is not closed (ADR 0025).
   final VoidCallback? onRaise;
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(AppSizing.radiusLg);
-    final onRaise = this.onRaise;
-    final showDisputes = disputes.isNotEmpty || onRaise != null;
+    final list = disputes.value ?? const <CaseDispute>[];
+    final failure = disputes.failure;
+    final isLoading = disputes.isLoading && !disputes.hasValue;
+    final offerRaise =
+        showRaise && !isLoading && failure == null && !hasOpenDispute(list);
+    final showDisputes = list.isNotEmpty || showRaise || failure != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -79,14 +94,34 @@ class CasePropertyUpdate extends StatelessWidget {
                 ],
                 if (showDisputes)
                   const Text('Dispute', style: AppTextStyles.label),
-                if (onRaise != null) ...[
+                if (offerRaise) ...[
                   const SizedBox(height: AppSizing.space2),
-                  const Text(
-                    'Add a dispute if you have a concern with the search.',
+                  Text(
+                    onRaise != null
+                        ? 'Add a dispute if you have a concern with the search.'
+                        : 'You can raise a dispute once the search is closed.',
                     style: AppTextStyles.bodySmall,
                   ),
                 ],
-                for (final dispute in disputes) ...[
+                if (showRaise && isLoading) ...[
+                  const SizedBox(height: AppSizing.space12),
+                  const AppShimmer(
+                    child: AppShimmerBox(height: AppSizing.buttonHeight),
+                  ),
+                ],
+                if (failure != null) ...[
+                  const SizedBox(height: AppSizing.space8),
+                  Text(failure.message, style: AppTextStyles.bodySmall),
+                  if (failure.isRetryable)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: onRetryDisputes,
+                        child: const Text('Try again'),
+                      ),
+                    ),
+                ],
+                for (final dispute in list) ...[
                   const SizedBox(height: AppSizing.space12),
                   _DisputeSummary(dispute: dispute),
                   const SizedBox(height: AppSizing.space12),
@@ -96,7 +131,7 @@ class CasePropertyUpdate extends StatelessWidget {
                     onPressed: () => onView(dispute),
                   ),
                 ],
-                if (onRaise != null && disputes.isEmpty) ...[
+                if (offerRaise) ...[
                   const SizedBox(height: AppSizing.space12),
                   AppButton(
                     label: 'Raise dispute',
@@ -124,11 +159,12 @@ class _DisputeSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color) = switch (dispute.status) {
       DisputeStatus.open => (Icons.error_outline, AppColors.destructiveIcon),
-      DisputeStatus.takenIn => (Icons.check_circle_outline, AppColors.success),
-      DisputeStatus.declined => (
+      DisputeStatus.accepted => (Icons.check_circle_outline, AppColors.success),
+      DisputeStatus.rejected => (
         Icons.warning_amber_outlined,
         AppColors.warning,
       ),
+      DisputeStatus.unknown => (Icons.info_outline, AppColors.textTertiary),
     };
 
     return Row(

@@ -39,6 +39,13 @@ abstract final class ApiEndpoints {
   static String trackCase(String trackingId) =>
       '$cases/track/${Uri.encodeComponent(trackingId)}';
 
+  // Disputes: raised by a client on a closed case, declined here by staff.
+  static const String disputes = '/dispute';
+
+  static String disputeById(String disputeId) => '$disputes/$disputeId';
+
+  static String caseDisputes(String caseId) => '$disputes/case/$caseId';
+
   // Property search: the priced locations a case can be filed for.
   static const String locations = '/misc/location';
 

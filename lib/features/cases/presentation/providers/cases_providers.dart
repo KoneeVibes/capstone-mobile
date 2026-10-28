@@ -4,9 +4,12 @@ import '../../../../core/navigation/app_session.dart';
 import '../../../../core/network/api_provider.dart';
 import '../../data/datasources/cases_datasource.dart';
 import '../../data/datasources/cases_remote_datasource.dart';
+import '../../data/datasources/disputes_remote_datasource.dart';
 import '../../data/repositories/cases_repository_impl.dart';
+import '../../data/repositories/disputes_repository_impl.dart';
 import '../../domain/entities/case_assignee.dart';
 import '../../domain/repositories/cases_repository.dart';
+import '../../domain/repositories/disputes_repository.dart';
 
 /// Wiring for the cases feature.
 ///
@@ -24,6 +27,12 @@ final casesDataSourceProvider = Provider<CasesDataSource>(
 
 final casesRepositoryProvider = Provider<CasesRepository>(
   (ref) => CasesRepositoryImpl(ref.watch(casesDataSourceProvider)),
+);
+
+final disputesRepositoryProvider = Provider<DisputesRepository>(
+  (ref) => DisputesRepositoryImpl(
+    DisputesRemoteDataSourceImpl(ref.watch(apiClientProvider)),
+  ),
 );
 
 /// The team members a case may be given to. Active staff only.

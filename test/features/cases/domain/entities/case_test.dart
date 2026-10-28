@@ -85,6 +85,10 @@ void main() {
       expect(where((s) => s.releasesReport), {CaseStatus.closed});
     });
 
+    test('only a closed case can be disputed (ADR 0025)', () {
+      expect(where((s) => s.canBeDisputed), {CaseStatus.closed});
+    });
+
     test('an unknown status allows nothing', () {
       const unknown = CaseStatus.unknown;
       expect(unknown.canBeAssigned, isFalse);

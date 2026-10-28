@@ -1,55 +1,44 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/utils/media_picker.dart';
+import '../../../../core/navigation/app_session.dart';
 import '../../domain/entities/case_dispute.dart';
+import 'cases_providers.dart';
 
-/// The disputes raised on one case, newest last, keyed by case id.
-///
-/// Mock and in memory. Deliberately does not watch the session, so a dispute
-/// raised as a client can be answered as staff on the same device.
-///
-/// TODO(backend): load, raise (with evidence upload) and respond through the
-/// dispute endpoints once they exist.
-class CaseDisputesNotifier extends Notifier<List<CaseDispute>> {
+/// The disputes raised on one case, oldest first, keyed by case id
+/// (`GET /dispute/case/{id}`).
+class CaseDisputesNotifier extends AsyncNotifier<List<CaseDispute>> {
   CaseDisputesNotifier(this.caseId);
 
   final String caseId;
 
   @override
-  List<CaseDispute> build() => const [];
-
-  CaseDispute raise({
-    required String title,
-    required String description,
-    List<PickedMedia> evidence = const [],
-  }) {
-    // Disputes are only ever appended, so the count is a unique id.
-    final dispute = CaseDispute(
-      id: '$caseId-${state.length + 1}',
-      title: title.trim(),
-      description: description.trim(),
-      evidence: evidence,
-      raisedAt: DateTime.now(),
-    );
-    state = [...state, dispute];
-    return dispute;
+  Future<List<CaseDispute>> build() async {
+    ref.watch(sessionProvider);
+    final result = await ref
+        .read(disputesRepositoryProvider)
+        .fetchDisputes(caseId);
+    return result.unwrapOrThrow();
   }
 
-  void takeIn(String id) => _update(id, (d) => d.takeIn(DateTime.now()));
-
-  void decline(String id, String note) =>
-      _update(id, (d) => d.decline(DateTime.now(), note.trim()));
-
-  /// Only an open dispute can be answered; anything else is left alone.
-  void _update(String id, CaseDispute Function(CaseDispute) change) {
-    state = [
-      for (final dispute in state)
-        dispute.id == id && dispute.isOpen ? change(dispute) : dispute,
-    ];
+  /// Swaps in a dispute a write has just returned.
+  void replaceDispute(CaseDispute updated) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData([
+      for (final dispute in current)
+        dispute.id == updated.id ? updated : dispute,
+    ]);
   }
 }
 
 final caseDisputesProvider =
-    NotifierProvider.family<CaseDisputesNotifier, List<CaseDispute>, String>(
-      CaseDisputesNotifier.new,
-    );
+    AsyncNotifierProvider.family<
+      CaseDisputesNotifier,
+      List<CaseDispute>,
+      String
+    >(CaseDisputesNotifier.new);
+
+/// Whether any dispute on the list is still waiting for an answer. The API
+/// allows one open dispute per case.
+bool hasOpenDispute(List<CaseDispute> disputes) =>
+    disputes.any((dispute) => dispute.isOpen);

@@ -1,5 +1,6 @@
 import '../../../core/session/staff_permissions.dart';
 import 'entities/case.dart';
+import 'entities/case_dispute.dart';
 import 'entities/case_status.dart';
 
 /// Everything a staff member can do to a case from the Cases screens and the
@@ -61,6 +62,21 @@ class CaseViewer {
   /// Only the assignee ever submits a report.
   bool canAddReport(Case value) =>
       isAssigneeOf(value) && value.status.takesReport;
+
+  /// Take [dispute] in: the assignee only ("Only the assigned staff member
+  /// may accept the dispute", checked live 28 Oct 2026; ADR 0025).
+  bool canAcceptDispute(Case value, CaseDispute dispute) =>
+      _isAnswerable(value, dispute) && isAssigneeOf(value);
+
+  /// Decline [dispute] with a note: the assignee or a manager.
+  bool canDeclineDispute(Case value, CaseDispute dispute) =>
+      _isAnswerable(value, dispute) &&
+      (isAssigneeOf(value) || permissions.canRespondToDisputes);
+
+  /// Open, on a case still closed. Once taken in the case is `disputed`, so a
+  /// dispute the server left open cannot be answered twice.
+  bool _isAnswerable(Case value, CaseDispute dispute) =>
+      dispute.isOpen && value.status.canBeDisputed;
 }
 
 /// The ⋮ menu on the staff case detail, in the order the design lists them.

@@ -150,6 +150,7 @@ class _StaffBody extends ConsumerWidget {
     // Only the assignee ever submits a report, so nobody else sees the button.
     final isAssignee = viewer.isAssigneeOf(value);
     final disputes = ref.watch(caseDisputesProvider(value.id));
+    final hasDisputes = disputes.value?.isNotEmpty ?? false;
     final menu = menuActionsFor(value, viewer);
 
     // Buttons grey out rather than vanishing; these say why.
@@ -189,12 +190,14 @@ class _StaffBody extends ConsumerWidget {
                   ],
                 ),
         ),
-        if (value.hasReport || disputes.isNotEmpty) ...[
+        if (value.hasReport || hasDisputes || disputes.hasError) ...[
           const SizedBox(height: AppSizing.space16),
           CasePropertyUpdate(
             reports: value.reports,
             disputes: disputes,
             onView: (dispute) => screen._openDispute(context, dispute),
+            onRetryDisputes: () =>
+                ref.invalidate(caseDisputesProvider(value.id)),
           ),
         ],
       ],
@@ -260,7 +263,15 @@ class _ClientBody extends ConsumerWidget {
     final trackRoute = screen.trackRouteName;
     final trackingId = value.trackingId;
     final raiseRoute = screen.raiseDisputeRouteName;
-    final canDispute = raiseRoute != null && value.status.canBeDisputed;
+    final hasDisputes = disputes.value?.isNotEmpty ?? false;
+    // Shown, greyed out, on any paid case; live only on a closed one with no
+    // dispute waiting for an answer (ADR 0025).
+    final showRaise = raiseRoute != null && !value.status.isAwaitingPayment;
+    final canDispute =
+        showRaise &&
+        value.status.canBeDisputed &&
+        disputes.hasValue &&
+        !hasOpenDispute(disputes.requireValue);
 
     void raise() =>
         context.pushNamed(raiseRoute!, pathParameters: {'caseId': value.id});
@@ -277,12 +288,15 @@ class _ClientBody extends ConsumerWidget {
         _PropertyHeader(value: value),
         const SizedBox(height: AppSizing.space16),
         CaseRequestCard(value: value, showAssignment: false),
-        if (reports.isNotEmpty || canDispute || disputes.isNotEmpty) ...[
+        if (reports.isNotEmpty || showRaise || hasDisputes) ...[
           const SizedBox(height: AppSizing.space16),
           CasePropertyUpdate(
             reports: reports,
             disputes: disputes,
             onView: (dispute) => screen._openDispute(context, dispute),
+            onRetryDisputes: () =>
+                ref.invalidate(caseDisputesProvider(value.id)),
+            showRaise: showRaise,
             onRaise: canDispute ? raise : null,
           ),
         ],

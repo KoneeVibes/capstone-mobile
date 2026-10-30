@@ -72,25 +72,27 @@ void main() {
       ).called(1);
     });
 
-    test('patches the list row from the returned case, without re-reading',
-        () async {
-      stubAssign(Ok(_assigned));
-      when(repository.fetchCases).thenAnswer((_) async => Ok([_unassigned]));
+    test(
+      'patches the list row from the returned case, without re-reading',
+      () async {
+        stubAssign(Ok(_assigned));
+        when(repository.fetchCases).thenAnswer((_) async => Ok([_unassigned]));
 
-      final container = makeContainer();
-      await container.read(casesListProvider.future);
+        final container = makeContainer();
+        await container.read(casesListProvider.future);
 
-      await container
-          .read(caseAssignmentProvider.notifier)
-          .assign(caseId: 'case-101', assigneeId: 'stf-1');
+        await container
+            .read(caseAssignmentProvider.notifier)
+            .assign(caseId: 'case-101', assigneeId: 'stf-1');
 
-      final items = container.read(casesListProvider).value!.items;
-      expect(items.single.assignee, _ada);
-      expect(items.single.status, CaseStatus.assigned);
-      // Only the initial build read the list: the row was corrected from the
-      // write's own response.
-      verify(repository.fetchCases).called(1);
-    });
+        final items = container.read(casesListProvider).value!.items;
+        expect(items.single.assignee, _ada);
+        expect(items.single.status, CaseStatus.assigned);
+        // Only the initial build read the list: the row was corrected from the
+        // write's own response.
+        verify(repository.fetchCases).called(1);
+      },
+    );
 
     test('leaves the other rows alone', () async {
       final other = buildCase(
@@ -122,6 +124,8 @@ void main() {
       ).thenAnswer((_) async => Ok(_unassigned));
 
       final container = makeContainer();
+      // Held open, as the detail screen holds it.
+      container.listen(caseDetailProvider('case-101'), (_, _) {});
       await container.read(caseDetailProvider('case-101').future);
 
       await container
@@ -133,17 +137,36 @@ void main() {
       verify(() => repository.fetchCase('case-101')).called(1);
     });
 
-    test('reports failure and holds an AppFailure, never a raw error', () async {
-      stubAssign(const Err(_conflictFailure));
+    test('assigning from a card starts no detail read', () async {
+      stubAssign(Ok(_assigned));
+      when(repository.fetchCases).thenAnswer((_) async => Ok([_unassigned]));
 
       final container = makeContainer();
-      final assigned = await container
+      await container.read(casesListProvider.future);
+      await container
           .read(caseAssignmentProvider.notifier)
           .assign(caseId: 'case-101', assigneeId: 'stf-1');
 
-      expect(assigned, isFalse);
-      expect(container.read(caseAssignmentProvider).failure, _conflictFailure);
+      verifyNever(() => repository.fetchCase(any()));
     });
+
+    test(
+      'reports failure and holds an AppFailure, never a raw error',
+      () async {
+        stubAssign(const Err(_conflictFailure));
+
+        final container = makeContainer();
+        final assigned = await container
+            .read(caseAssignmentProvider.notifier)
+            .assign(caseId: 'case-101', assigneeId: 'stf-1');
+
+        expect(assigned, isFalse);
+        expect(
+          container.read(caseAssignmentProvider).failure,
+          _conflictFailure,
+        );
+      },
+    );
 
     test('leaves the list alone when the write failed', () async {
       when(repository.fetchCases).thenAnswer((_) async => Ok([_unassigned]));
@@ -175,10 +198,9 @@ void main() {
       // The patch is skipped rather than throwing; the list loads correctly
       // when the user reaches it.
       expect(assigned, isTrue);
-      expect(
-        (await container.read(casesListProvider.future)).items,
-        [_unassigned],
-      );
+      expect((await container.read(casesListProvider.future)).items, [
+        _unassigned,
+      ]);
     });
 
     test('clears an earlier failure on a later success', () async {

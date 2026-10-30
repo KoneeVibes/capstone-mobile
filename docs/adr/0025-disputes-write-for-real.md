@@ -1,6 +1,6 @@
 # 0025 — Disputes write for real, on a closed case
 
-- **Status:** Accepted
+- **Status:** Accepted; the greyed-out Raise dispute superseded by [0026](0026-dispute-section-on-a-closed-case.md)
 - **Recorded:** 2026-10-28
 - **Supersedes:** the disputes half of [0017](0017-case-actions-and-disputes.md)
 
@@ -60,6 +60,6 @@ No endpoint accepts a dispute. The 24 Oct call had a client dispute an
 - On 28 Oct 2026, raising a second dispute on a case after a decline failed
   with a server 500. The app shows the server's message and keeps the form
   filled in. Raise stays offered there, because the API intends to allow a
-  new dispute once none is open.
+  new dispute once none is open. The backend fixed this on 30 Oct 2026 (0026).
 - Accepting was verified end to end by the assignee on a new case
   (28 Oct 2026). The server refuses every other role with 403.

@@ -20,6 +20,7 @@ import '../providers/cases_list_provider.dart';
 import '../widgets/case_filter_bar.dart';
 import '../widgets/case_list_skeleton.dart';
 import '../widgets/case_list_tile.dart';
+import '../widgets/revisit_cases_list.dart';
 
 /// Every case, filtered by the tab bar, opening onto the detail screen.
 ///
@@ -52,7 +53,8 @@ class CasesListScreen extends ConsumerStatefulWidget {
   ConsumerState<CasesListScreen> createState() => _CasesListScreenState();
 }
 
-class _CasesListScreenState extends ConsumerState<CasesListScreen> {
+class _CasesListScreenState extends ConsumerState<CasesListScreen>
+    with RevisitCasesList {
   // Seeded from the provider, so the bar survives a rebuild of the tab.
   late final _search = TextEditingController(
     text: ref.read(caseSearchQueryProvider),
@@ -298,10 +300,16 @@ class _CasesList extends ConsumerWidget {
               : _clientAction(context, value, canPay: canPay);
           return CaseListTile(
             value: value,
-            onTap: () => context.pushNamed(
-              detailRouteName,
-              pathParameters: {'caseId': value.id},
-            ),
+            onTap: () async {
+              await context.pushNamed(
+                detailRouteName,
+                pathParameters: {'caseId': value.id},
+              );
+              // Back from the case: pick up what changed meanwhile.
+              if (context.mounted) {
+                unawaited(ref.read(casesListProvider.notifier).revisit());
+              }
+            },
             actionLabel: label,
             onAction: onAction,
           );

@@ -32,7 +32,10 @@ class CaseAssignmentNotifier extends AsyncNotifier<void> {
         // "Not assigned yet" underneath its own "assigned" confirmation until
         // the round trip finished — seconds on this host, and long enough to
         // read as a silent failure.
-        ref.read(caseDetailProvider(caseId).notifier).replaceWith(updated);
+        // A card assign has no detail open; reading one would start a fetch.
+        if (ref.exists(caseDetailProvider(caseId))) {
+          ref.read(caseDetailProvider(caseId).notifier).replaceWith(updated);
+        }
         ref.read(casesListProvider.notifier).replaceCase(updated);
         return true;
       },

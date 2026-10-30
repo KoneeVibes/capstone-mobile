@@ -95,9 +95,20 @@ class CasesListNotifier extends AsyncNotifier<CasesListState> {
     state = AsyncData(current.copyWith(items: items));
   }
 
-  /// Reloads. Backs pull-to-refresh and the error-state retry.
-  Future<void> refresh() async {
-    state = await AsyncValue.guard(_load);
+  Future<void>? _reloading;
+
+  /// Reloads. Backs pull-to-refresh, the error-state retry and [revisit]; a
+  /// reload already under way is joined, not repeated.
+  Future<void> refresh() => _reloading ??= AsyncValue.guard(
+    _load,
+  ).then((value) => state = value).whenComplete(() => _reloading = null);
+
+  /// Re-reads on coming back to the list, so the other role's changes show.
+  /// The rows stay on screen meanwhile. Skipped until a first load has landed:
+  /// the screen is already showing its skeleton or its retry.
+  Future<void> revisit() async {
+    if (!state.hasValue) return;
+    await refresh();
   }
 }
 

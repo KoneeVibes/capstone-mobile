@@ -117,6 +117,8 @@ void main() {
       ),
     ).thenAnswer((_) async => const Ok(_rejected));
     final container = makeContainer();
+    // Held open, as the case screen holds it.
+    container.listen(caseDisputesProvider('case-1'), (_, _) {});
     await container.read(caseDisputesProvider('case-1').future);
 
     final declined = await container
@@ -131,6 +133,21 @@ void main() {
     expect(container.read(caseDisputesProvider('case-1')).value, [_rejected]);
     // Pushed in, not re-read.
     verify(() => repository.fetchDisputes('case-1')).called(1);
+  });
+
+  test('closing the case drops its disputes; the next open re-reads', () async {
+    stubList([_open]);
+    final container = makeContainer();
+    final screen = container.listen(caseDisputesProvider('case-1'), (_, _) {});
+    await container.read(caseDisputesProvider('case-1').future);
+
+    screen.close();
+    await container.pump();
+    stubList([_rejected]);
+
+    expect(await container.read(caseDisputesProvider('case-1').future), [
+      _rejected,
+    ]);
   });
 
   test('hasOpenDispute', () {

@@ -264,12 +264,10 @@ class _ClientBody extends ConsumerWidget {
     final trackingId = value.trackingId;
     final raiseRoute = screen.raiseDisputeRouteName;
     final hasDisputes = disputes.value?.isNotEmpty ?? false;
-    // Shown, greyed out, on any paid case; live only on a closed one with no
-    // dispute waiting for an answer (ADR 0025).
-    final showRaise = raiseRoute != null && !value.status.isAwaitingPayment;
+    // Only a closed case offers a dispute; past ones stay listed (ADR 0026).
+    final showRaise = raiseRoute != null && value.status.canBeDisputed;
     final canDispute =
         showRaise &&
-        value.status.canBeDisputed &&
         disputes.hasValue &&
         !hasOpenDispute(disputes.requireValue);
 
@@ -296,8 +294,7 @@ class _ClientBody extends ConsumerWidget {
             onView: (dispute) => screen._openDispute(context, dispute),
             onRetryDisputes: () =>
                 ref.invalidate(caseDisputesProvider(value.id)),
-            showRaise: showRaise,
-            onRaise: canDispute ? raise : null,
+            onRaise: showRaise ? raise : null,
           ),
         ],
       ],

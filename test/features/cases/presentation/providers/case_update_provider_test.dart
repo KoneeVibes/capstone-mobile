@@ -158,6 +158,8 @@ void main() {
     ).thenAnswer((_) async => Ok(_accepted));
 
     final container = makeContainer();
+    // Held open, as the detail screen holds it.
+    container.listen(caseDetailProvider('case-101'), (_, _) {});
     await container.read(caseDetailProvider('case-101').future);
 
     await container.read(caseUpdateProvider.notifier).submitReport(

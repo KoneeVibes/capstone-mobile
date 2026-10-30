@@ -266,10 +266,9 @@ class _ClientBody extends ConsumerWidget {
     final hasDisputes = disputes.value?.isNotEmpty ?? false;
     // Only a closed case offers a dispute; past ones stay listed (ADR 0026).
     final showRaise = raiseRoute != null && value.status.canBeDisputed;
+    // The section offers the first dispute; the footer offers any after it.
     final canDispute =
-        showRaise &&
-        disputes.hasValue &&
-        !hasOpenDispute(disputes.requireValue);
+        showRaise && hasDisputes && !hasOpenDispute(disputes.requireValue);
 
     void raise() =>
         context.pushNamed(raiseRoute!, pathParameters: {'caseId': value.id});

@@ -8,7 +8,6 @@ import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_shimmer.dart';
 import '../../domain/entities/case_dispute.dart';
-import '../providers/case_disputes_provider.dart';
 import 'case_document_tile.dart';
 
 /// "Property Update": the case's report and the disputes raised on it.
@@ -32,8 +31,8 @@ class CasePropertyUpdate extends StatelessWidget {
   final ValueChanged<CaseDispute> onView;
   final VoidCallback onRetryDisputes;
 
-  /// Set for a client on a closed case: offers Raise dispute while no dispute
-  /// is open (ADR 0026). Staff only answer them.
+  /// Set for a client on a closed case: offers Raise dispute until the first
+  /// one is raised, after which the detail footer offers it (ADR 0026).
   final VoidCallback? onRaise;
 
   @override
@@ -44,7 +43,7 @@ class CasePropertyUpdate extends StatelessWidget {
     final isLoading = disputes.isLoading && !disputes.hasValue;
     final canRaise = onRaise != null;
     final offerRaise =
-        canRaise && !isLoading && failure == null && !hasOpenDispute(list);
+        canRaise && !isLoading && failure == null && list.isEmpty;
     final showDisputes = list.isNotEmpty || canRaise || failure != null;
 
     return Container(

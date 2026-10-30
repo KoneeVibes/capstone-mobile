@@ -15,6 +15,8 @@ import 'package:propertyintelmobileapp/features/staff/presentation/providers/sta
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_mutation_provider.dart';
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_providers.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
+
 class MockStaffRepository extends Mock implements StaffRepository {}
 
 const _draft = StaffDraft(
@@ -49,7 +51,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [staffRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        staffRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;
@@ -90,10 +95,12 @@ void main() {
     });
 
     test('invalidates the list so the new record shows up', () async {
-      when(() => repository.fetchStaff(
-            page: any(named: 'page'),
-            perPage: any(named: 'perPage'),
-          )).thenAnswer((_) async => const Ok(StaffPage.empty()));
+      when(
+        () => repository.fetchStaff(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+        ),
+      ).thenAnswer((_) async => const Ok(StaffPage.empty()));
       when(
         () => repository.createStaff(any()),
       ).thenAnswer((_) async => const Ok<void>(null));
@@ -104,17 +111,21 @@ void main() {
       await container.read(staffMutationProvider.notifier).createStaff(_draft);
       await container.read(staffListProvider.future);
 
-      verify(() => repository.fetchStaff(
-            page: any(named: 'page'),
-            perPage: any(named: 'perPage'),
-          )).called(2);
+      verify(
+        () => repository.fetchStaff(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+        ),
+      ).called(2);
     });
 
     test('does not invalidate the list when the call failed', () async {
-      when(() => repository.fetchStaff(
-            page: any(named: 'page'),
-            perPage: any(named: 'perPage'),
-          )).thenAnswer((_) async => const Ok(StaffPage.empty()));
+      when(
+        () => repository.fetchStaff(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+        ),
+      ).thenAnswer((_) async => const Ok(StaffPage.empty()));
       when(
         () => repository.createStaff(any()),
       ).thenAnswer((_) async => const Err(_conflict));
@@ -125,17 +136,22 @@ void main() {
       await container.read(staffMutationProvider.notifier).createStaff(_draft);
       await container.read(staffListProvider.future);
 
-      verify(() => repository.fetchStaff(
-            page: any(named: 'page'),
-            perPage: any(named: 'perPage'),
-          )).called(1);
+      verify(
+        () => repository.fetchStaff(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+        ),
+      ).called(1);
     });
   });
 
   group('updateStaff', () {
     test('returns true on success', () async {
       when(
-        () => repository.updateStaff(id: 'staff-1', draft: any(named: 'draft')),
+        () => repository.updateStaff(
+          id: 'staff-1',
+          draft: any(named: 'draft'),
+        ),
       ).thenAnswer((_) async => const Ok(_staff));
 
       final container = makeContainer();
@@ -153,7 +169,10 @@ void main() {
         statusCode: 404,
       );
       when(
-        () => repository.updateStaff(id: 'gone', draft: any(named: 'draft')),
+        () => repository.updateStaff(
+          id: 'gone',
+          draft: any(named: 'draft'),
+        ),
       ).thenAnswer((_) async => const Err(notFound));
 
       final container = makeContainer();

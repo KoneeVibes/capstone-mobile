@@ -12,6 +12,8 @@ import 'package:propertyintelmobileapp/features/cases/presentation/providers/cas
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/cases_providers.dart';
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/dispute_update_provider.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
+
 class MockDisputesRepository extends Mock implements DisputesRepository {}
 
 const _open = CaseDispute(
@@ -46,7 +48,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [disputesRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        disputesRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;

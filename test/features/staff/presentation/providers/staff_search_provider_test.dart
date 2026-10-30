@@ -14,6 +14,8 @@ import 'package:propertyintelmobileapp/features/staff/presentation/providers/sta
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_providers.dart';
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_search_provider.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
+
 class MockStaffRepository extends Mock implements StaffRepository {}
 
 const _ada = Staff(
@@ -42,7 +44,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [staffRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        staffRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;

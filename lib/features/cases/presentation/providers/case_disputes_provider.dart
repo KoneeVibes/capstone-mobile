@@ -13,7 +13,7 @@ class CaseDisputesNotifier extends AsyncNotifier<List<CaseDispute>> {
 
   @override
   Future<List<CaseDispute>> build() async {
-    ref.watch(sessionProvider);
+    if (ref.watch(sessionProvider) == null) return untilSignedIn();
     final result = await ref
         .read(disputesRepositoryProvider)
         .fetchDisputes(caseId);

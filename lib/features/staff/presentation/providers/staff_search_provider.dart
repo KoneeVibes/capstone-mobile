@@ -30,7 +30,7 @@ final staffSearchQueryProvider =
 final staffSearchProvider = FutureProvider.autoDispose<List<Staff>?>((
   ref,
 ) async {
-  ref.watch(sessionProvider);
+  if (ref.watch(sessionProvider) == null) return untilSignedIn();
   final query = searchQueryFrom(ref.watch(staffSearchQueryProvider));
   if (query == null) return null;
 

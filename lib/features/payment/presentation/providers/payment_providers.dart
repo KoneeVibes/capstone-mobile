@@ -27,7 +27,7 @@ final invoiceProvider = FutureProvider.autoDispose.family<Invoice, String>((
   ref,
   lookupId,
 ) async {
-  ref.watch(sessionProvider);
+  if (ref.watch(sessionProvider) == null) return untilSignedIn();
   final result = await ref
       .watch(paymentRepositoryProvider)
       .fetchInvoice(lookupId);

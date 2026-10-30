@@ -14,6 +14,8 @@ import 'package:propertyintelmobileapp/features/staff/domain/repositories/staff_
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_list_provider.dart';
 import 'package:propertyintelmobileapp/features/staff/presentation/providers/staff_providers.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
+
 class MockStaffRepository extends Mock implements StaffRepository {}
 
 Staff _staff(String id) => Staff(
@@ -25,16 +27,19 @@ Staff _staff(String id) => Staff(
   status: StaffStatus.active,
 );
 
-StaffPage _page(List<String> ids, {required int page, required int totalPages}) =>
-    StaffPage(
-      items: ids.map(_staff).toList(),
-      meta: PageMeta(
-        page: page,
-        perPage: 20,
-        total: totalPages * 20,
-        totalPages: totalPages,
-      ),
-    );
+StaffPage _page(
+  List<String> ids, {
+  required int page,
+  required int totalPages,
+}) => StaffPage(
+  items: ids.map(_staff).toList(),
+  meta: PageMeta(
+    page: page,
+    perPage: 20,
+    total: totalPages * 20,
+    totalPages: totalPages,
+  ),
+);
 
 const _serverFailure = AppFailure(
   type: FailureType.server,
@@ -49,7 +54,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [staffRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        staffRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;
@@ -57,7 +65,10 @@ void main() {
 
   void stubPage(int page, Result<StaffPage> result) {
     when(
-      () => repository.fetchStaff(page: page, perPage: any(named: 'perPage')),
+      () => repository.fetchStaff(
+        page: page,
+        perPage: any(named: 'perPage'),
+      ),
     ).thenAnswer((_) async => result);
   }
 

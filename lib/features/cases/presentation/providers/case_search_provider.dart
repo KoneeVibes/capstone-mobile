@@ -29,7 +29,7 @@ final caseSearchQueryProvider =
 /// Never retried: a failed search is the user's to repeat, from the retry on
 /// the error state.
 final caseSearchProvider = FutureProvider.autoDispose<List<Case>?>((ref) async {
-  ref.watch(sessionProvider);
+  if (ref.watch(sessionProvider) == null) return untilSignedIn();
   ref.watch(casesChangedProvider);
   final query = searchQueryFrom(ref.watch(caseSearchQueryProvider));
   if (query == null) return null;

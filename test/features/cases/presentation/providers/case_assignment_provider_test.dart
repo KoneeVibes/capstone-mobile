@@ -13,6 +13,7 @@ import 'package:propertyintelmobileapp/features/cases/presentation/providers/cas
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/cases_list_provider.dart';
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/cases_providers.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
 import '../../case_fixtures.dart';
 
 class MockCasesRepository extends Mock implements CasesRepository {}
@@ -40,7 +41,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [casesRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        casesRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;

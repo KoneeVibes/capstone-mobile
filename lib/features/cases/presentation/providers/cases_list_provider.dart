@@ -55,7 +55,7 @@ class CasesListNotifier extends AsyncNotifier<CasesListState> {
   @override
   Future<CasesListState> build() {
     // One user's cases: the next user to sign in starts from nothing.
-    ref.watch(sessionProvider);
+    if (ref.watch(sessionProvider) == null) return untilSignedIn();
     // A case filed from the search flow appears without a pull to refresh.
     ref.watch(casesChangedProvider);
     return _load();

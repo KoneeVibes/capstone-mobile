@@ -21,7 +21,7 @@ class CaseDetailNotifier extends AsyncNotifier<Case> {
 
   @override
   Future<Case> build() async {
-    ref.watch(sessionProvider);
+    if (ref.watch(sessionProvider) == null) return untilSignedIn();
     // Re-read when a case changes elsewhere — notably after its invoice is
     // paid from the detail screen, so the status and the Pay button update.
     ref.watch(casesChangedProvider);

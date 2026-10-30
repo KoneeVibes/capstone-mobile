@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,6 +63,12 @@ class SessionUser extends Equatable {
 /// Providers that hold one user's data watch this, so the next user to sign
 /// in starts from nothing.
 final sessionProvider = Provider<SessionUser?>((ref) => null);
+
+/// What a provider of one user's data returns while nobody is signed in.
+///
+/// Sign-out rebuilds those providers while their screen is still up; this
+/// future never completes, so they wait rather than fetch with no token.
+Future<T> untilSignedIn<T>() => Completer<T>().future;
 
 /// Whether onboarding has been seen on this install.
 final hasSeenOnboardingProvider = Provider<bool>((ref) => false);

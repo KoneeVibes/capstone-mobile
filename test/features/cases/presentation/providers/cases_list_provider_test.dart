@@ -13,6 +13,7 @@ import 'package:propertyintelmobileapp/features/cases/domain/repositories/cases_
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/cases_list_provider.dart';
 import 'package:propertyintelmobileapp/features/cases/presentation/providers/cases_providers.dart';
 
+import '../../../../core/navigation/session_fixtures.dart';
 import '../../case_fixtures.dart';
 
 class MockCasesRepository extends Mock implements CasesRepository {}
@@ -47,7 +48,10 @@ void main() {
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [casesRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        casesRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;
@@ -274,6 +278,26 @@ void main() {
 
       verify(repository.fetchCases).called(2);
     });
+
+    test('signing out sends no request', () async {
+      stubCases(Ok(_allCases));
+      final container = ProviderContainer(
+        overrides: [
+          casesRepositoryProvider.overrideWithValue(repository),
+          sessionProvider.overrideWith((ref) => ref.watch(_signedIn)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final sub = container.listen(casesListProvider, (_, _) {});
+      addTearDown(sub.close);
+
+      await container.read(casesListProvider.future);
+      container.read(_signedIn.notifier).signOut();
+      await pumpEventQueue();
+
+      verify(repository.fetchCases).called(1);
+      expect(container.read(casesListProvider).isLoading, isTrue);
+    });
   });
 
   group('CasesListState.latestOf', () {
@@ -304,6 +328,8 @@ class _SignedIn extends Notifier<SessionUser?> {
       const SessionUser(id: 'client-a', role: AppRole.client);
 
   void become(String id) => state = SessionUser(id: id, role: AppRole.client);
+
+  void signOut() => state = null;
 }
 
 final _signedIn = NotifierProvider<_SignedIn, SessionUser?>(_SignedIn.new);

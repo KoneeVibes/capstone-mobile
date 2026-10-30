@@ -55,7 +55,7 @@ class StaffListState extends Equatable {
 class StaffListNotifier extends AsyncNotifier<StaffListState> {
   @override
   Future<StaffListState> build() {
-    ref.watch(sessionProvider);
+    if (ref.watch(sessionProvider) == null) return untilSignedIn();
     return _loadFirstPage();
   }
 

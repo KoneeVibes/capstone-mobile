@@ -23,7 +23,9 @@ the swagger shows no new fields:
 
 - **Raise dispute shows on a closed case only.** On any other status the
   client sees no Dispute part and no greyed-out button. It still hides while a
-  dispute waits for an answer.
+  dispute waits for an answer. It is offered in one place at a time: the
+  Dispute section's "+ Raise dispute" until the first dispute is raised, then
+  the footer's "Not satisfied with the outcome? Raise dispute" (user, 30 Oct).
 - **Disputes already raised stay listed** after the case moves on (`disputed`,
   then `under-review`), so the client can see theirs was taken in.
 - **Decline stays offered to the assignee and to managers.** No record names the
@@ -40,4 +42,7 @@ the swagger shows no new fields:
 - The Decline rule depends on a manager seeing only their own team's cases.
   If the backend widens that view, the app would offer Decline to managers
   the server refuses, and it would need the assignee's manager on the record.
-- Re-raising after a decline has not yet been checked live against the fix.
+- Re-raising after a decline was checked live on 30 Oct 2026 and works. The
+  same run found a manager's decline refused (401, "Only the assigned staff
+  member may reject the dispute"). That is raised with the backend, and this
+  Decline rule stands until it answers.

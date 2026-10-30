@@ -15,13 +15,15 @@ import '../providers/cases_list_provider.dart';
 import 'case_error_banner.dart';
 import 'case_list_skeleton.dart';
 import 'case_list_tile.dart';
+import 'revisit_cases_list.dart';
 
 /// The staff home's "My queue": the most recently changed cases, as the same
 /// cards and buttons the Cases tab draws (ADR 0019).
 ///
 /// Lives in the cases feature so the action rules stay in one place; the
-/// router hands it to the home screen. Reads the Cases tab's own list, so it
-/// costs no request of its own and a write on either screen shows on both.
+/// router hands it to the home screen. Reads the Cases tab's own list, so a
+/// write on either screen shows on both; it re-reads that list when the home
+/// tab comes back into view.
 class CaseQueueSection extends ConsumerStatefulWidget {
   const CaseQueueSection({
     required this.detailRouteName,
@@ -45,7 +47,8 @@ class CaseQueueSection extends ConsumerStatefulWidget {
   ConsumerState<CaseQueueSection> createState() => _CaseQueueSectionState();
 }
 
-class _CaseQueueSectionState extends ConsumerState<CaseQueueSection> {
+class _CaseQueueSectionState extends ConsumerState<CaseQueueSection>
+    with RevisitCasesList {
   CaseQueueFilter _filter = CaseQueueFilter.all;
 
   static String _label(CaseQueueFilter filter) => switch (filter) {

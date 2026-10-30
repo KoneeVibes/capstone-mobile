@@ -31,12 +31,12 @@ class CaseDisputesNotifier extends AsyncNotifier<List<CaseDispute>> {
   }
 }
 
-final caseDisputesProvider =
-    AsyncNotifierProvider.family<
-      CaseDisputesNotifier,
-      List<CaseDispute>,
-      String
-    >(CaseDisputesNotifier.new);
+/// Dropped with the case screens, so the other role's answer shows on the
+/// next open.
+final caseDisputesProvider = AsyncNotifierProvider.autoDispose
+    .family<CaseDisputesNotifier, List<CaseDispute>, String>(
+      CaseDisputesNotifier.new,
+    );
 
 /// Whether any dispute on the list is still waiting for an answer. The API
 /// allows one open dispute per case.

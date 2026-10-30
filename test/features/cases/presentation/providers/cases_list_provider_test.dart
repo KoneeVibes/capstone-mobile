@@ -217,6 +217,42 @@ void main() {
 
       expect(container.read(casesListProvider).failure, _serverFailure);
     });
+
+    test('joins a reload already under way', () async {
+      stubCases(Ok(_allCases));
+
+      final container = makeContainer();
+      await container.read(casesListProvider.future);
+      final notifier = container.read(casesListProvider.notifier);
+      await Future.wait([notifier.refresh(), notifier.refresh()]);
+
+      verify(repository.fetchCases).called(2);
+    });
+  });
+
+  group('revisit', () {
+    test('re-reads, keeping the rows while it does', () async {
+      stubCases(Ok(_allCases));
+
+      final container = makeContainer();
+      await container.read(casesListProvider.future);
+      final pending = container.read(casesListProvider.notifier).revisit();
+
+      expect(container.read(casesListProvider).value!.items, hasLength(6));
+      await pending;
+      verify(repository.fetchCases).called(2);
+    });
+
+    test('waits for a first load rather than racing it', () async {
+      stubCases(Ok(_allCases));
+
+      final container = makeContainer();
+      final first = container.read(casesListProvider.future);
+      await container.read(casesListProvider.notifier).revisit();
+      await first;
+
+      verify(repository.fetchCases).called(1);
+    });
   });
 
   group('across sign-ins', () {

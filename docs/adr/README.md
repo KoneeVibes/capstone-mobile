@@ -29,7 +29,9 @@ They are kept so the reason survives the people who were in the room.
 | [0022](0022-case-files-open-in-the-app.md) | Every case file opens in the app | Accepted |
 | [0023](0023-default-case-list-includes-closed.md) | The default case list includes closed cases | Accepted |
 | [0024](0024-who-may-edit-which-staff.md) | Who may edit which staff | Accepted |
-| [0025](0025-disputes-write-for-real.md) | Disputes write for real, on a closed case | Accepted |
+| [0025](0025-disputes-write-for-real.md) | Disputes write for real, on a closed case | Accepted; greyed-out Raise superseded by 0026 |
+| [0026](0026-dispute-section-on-a-closed-case.md) | The dispute section appears on a closed case only | Accepted |
+| [0027](0027-case-data-re-read-on-every-visit.md) | Case data is re-read on every visit | Accepted |
 
 ## Writing one
 

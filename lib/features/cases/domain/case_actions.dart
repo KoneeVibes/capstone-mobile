@@ -68,7 +68,8 @@ class CaseViewer {
   bool canAcceptDispute(Case value, CaseDispute dispute) =>
       _isAnswerable(value, dispute) && isAssigneeOf(value);
 
-  /// Decline [dispute] with a note: the assignee or a manager.
+  /// Decline [dispute] with a note: the assignee or their manager. A manager
+  /// only sees their own team's cases, so any manager here is theirs (0026).
   bool canDeclineDispute(Case value, CaseDispute dispute) =>
       _isAnswerable(value, dispute) &&
       (isAssigneeOf(value) || permissions.canRespondToDisputes);

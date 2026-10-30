@@ -41,7 +41,6 @@ class CaseDetailNotifier extends AsyncNotifier<Case> {
   void replaceWith(Case value) => state = AsyncData(value);
 }
 
-final caseDetailProvider =
-    AsyncNotifierProvider.family<CaseDetailNotifier, Case, String>(
-      CaseDetailNotifier.new,
-    );
+/// Dropped when no screen shows the case, so every open reads it fresh.
+final caseDetailProvider = AsyncNotifierProvider.autoDispose
+    .family<CaseDetailNotifier, Case, String>(CaseDetailNotifier.new);

@@ -22,7 +22,6 @@ class CasePropertyUpdate extends StatelessWidget {
     required this.onRetryDisputes,
     super.key,
     this.reports = const [],
-    this.showRaise = false,
     this.onRaise,
   });
 
@@ -33,11 +32,8 @@ class CasePropertyUpdate extends StatelessWidget {
   final ValueChanged<CaseDispute> onView;
   final VoidCallback onRetryDisputes;
 
-  /// Set for a client: offers Raise dispute while no dispute is open. Staff
-  /// only answer them.
-  final bool showRaise;
-
-  /// Null greys Raise dispute out: the case is not closed (ADR 0025).
+  /// Set for a client on a closed case: offers Raise dispute while no dispute
+  /// is open (ADR 0026). Staff only answer them.
   final VoidCallback? onRaise;
 
   @override
@@ -46,9 +42,10 @@ class CasePropertyUpdate extends StatelessWidget {
     final list = disputes.value ?? const <CaseDispute>[];
     final failure = disputes.failure;
     final isLoading = disputes.isLoading && !disputes.hasValue;
+    final canRaise = onRaise != null;
     final offerRaise =
-        showRaise && !isLoading && failure == null && !hasOpenDispute(list);
-    final showDisputes = list.isNotEmpty || showRaise || failure != null;
+        canRaise && !isLoading && failure == null && !hasOpenDispute(list);
+    final showDisputes = list.isNotEmpty || canRaise || failure != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -96,14 +93,12 @@ class CasePropertyUpdate extends StatelessWidget {
                   const Text('Dispute', style: AppTextStyles.label),
                 if (offerRaise) ...[
                   const SizedBox(height: AppSizing.space2),
-                  Text(
-                    onRaise != null
-                        ? 'Add a dispute if you have a concern with the search.'
-                        : 'You can raise a dispute once the search is closed.',
+                  const Text(
+                    'Add a dispute if you have a concern with the search.',
                     style: AppTextStyles.bodySmall,
                   ),
                 ],
-                if (showRaise && isLoading) ...[
+                if (canRaise && isLoading) ...[
                   const SizedBox(height: AppSizing.space12),
                   const AppShimmer(
                     child: AppShimmerBox(height: AppSizing.buttonHeight),

@@ -57,3 +57,6 @@ returns 403 for `regular` staff.
 - Everything new is covered by unit tests (the action map, the filter grouping,
   the chat state machine). The backlog tracks the endpoints each mock stands in
   for.
+- The filter grouping (All / New / Assigned / Closed, with disputed under
+  Assigned) and the generic property icon on queue cards were confirmed by
+  the software's owners on 30 Oct 2026. They are no longer a design guess.

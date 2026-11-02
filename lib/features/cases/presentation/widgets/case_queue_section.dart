@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/app_chip.dart';
+import '../../../../shared/widgets/on_tab_return.dart';
 import '../../domain/case_actions.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_queue_filter.dart';
@@ -48,7 +49,7 @@ class CaseQueueSection extends ConsumerStatefulWidget {
 }
 
 class _CaseQueueSectionState extends ConsumerState<CaseQueueSection>
-    with RevisitCasesList {
+    with OnTabReturn, RevisitCasesList {
   CaseQueueFilter _filter = CaseQueueFilter.all;
 
   static String _label(CaseQueueFilter filter) => switch (filter) {

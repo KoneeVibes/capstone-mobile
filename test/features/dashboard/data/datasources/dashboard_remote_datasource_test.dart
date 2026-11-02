@@ -5,9 +5,9 @@ import 'package:propertyintelmobileapp/core/network/api_client.dart';
 import 'package:propertyintelmobileapp/core/network/api_response.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/models/case_address_model.dart';
-import 'package:propertyintelmobileapp/features/dashboard/data/models/case_status_row_model.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/models/staff_name_model.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/case_overview.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/queue_overview.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracked_case.dart';
 
 import '../../dashboard_fixtures.dart';
@@ -163,69 +163,67 @@ void main() {
     expect(() => source.trackCase('PI-8K4M2QAA'), throwsA(isA<DioException>()));
   });
 
-  group('fetchOverview', () {
-    /// A null [rows] answers 404, as the live list does for a client with none.
-    void stubRows([List<Object?>? rows]) {
+  group('metrics', () {
+    void stubMetrics<T>(Map<String, dynamic> data) {
       when(
-        () => client.get<List<CaseStatusRowModel>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          decoder: any(named: 'decoder'),
-        ),
+        () => client.get<T>(any(), decoder: any(named: 'decoder')),
       ).thenAnswer((invocation) async {
-        if (rows == null) throw _httpFailure(404);
         final decoder =
-            invocation.namedArguments[#decoder]
-                as List<CaseStatusRowModel> Function(Object?);
-        return _page(decoder(rows));
+            invocation.namedArguments[#decoder] as T Function(Object?);
+        return ApiResponse<T>(
+          status: 'success',
+          message: 'System metrics retrieved successfully.',
+          data: decoder(data),
+        );
       });
     }
 
-    test('counts each status into its card, closed included', () async {
-      stubRows([
-        {'id': 'a', 'status': 'submitted'},
-        {'id': 'b', 'status': 'pending-information'},
-        {'id': 'c', 'status': 'assigned'},
-        {'id': 'd', 'status': 'under-review'},
-        {'id': 'e', 'status': 'suspended'},
-        {'id': 'f', 'status': 'closed'},
-      ]);
+    test('reads the client counts from /dashboard/metrics', () async {
+      stubMetrics<CaseOverview>({
+        'totalSearches': 7,
+        'reportsReady': 6,
+        'inProgress': 1,
+        'needsYourInput': 0,
+      });
 
       expect(
-        await source.fetchOverview(),
+        await source.fetchClientOverview(),
         const CaseOverview(
-          total: 6,
-          reportsReady: 1,
-          inProgress: 2,
-          needsInput: 2,
-        ),
-      );
-    });
-
-    test('reads a 404 as a client with no cases yet', () async {
-      stubRows();
-
-      expect(
-        await source.fetchOverview(),
-        const CaseOverview(
-          total: 0,
-          reportsReady: 0,
-          inProgress: 0,
+          total: 7,
+          reportsReady: 6,
+          inProgress: 1,
           needsInput: 0,
         ),
       );
-    });
-
-    test('lets any other failure propagate', () async {
-      when(
-        () => client.get<List<CaseStatusRowModel>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
+      verify(
+        () => client.get<CaseOverview>(
+          '/dashboard/metrics',
           decoder: any(named: 'decoder'),
         ),
+      ).called(1);
+    });
+
+    test('reads the staff counts from /dashboard/metrics', () async {
+      stubMetrics<QueueOverview>({'queue': 3, 'recent': 8});
+
+      expect(
+        await source.fetchStaffOverview(),
+        const QueueOverview(inQueue: 3, assignedThisWeek: 8),
+      );
+      verify(
+        () => client.get<QueueOverview>(
+          '/dashboard/metrics',
+          decoder: any(named: 'decoder'),
+        ),
+      ).called(1);
+    });
+
+    test('lets a failure propagate', () async {
+      when(
+        () => client.get<QueueOverview>(any(), decoder: any(named: 'decoder')),
       ).thenThrow(_httpFailure(500));
 
-      expect(source.fetchOverview, throwsA(isA<DioException>()));
+      expect(source.fetchStaffOverview, throwsA(isA<DioException>()));
     });
   });
 }

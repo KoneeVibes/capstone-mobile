@@ -49,6 +49,9 @@ abstract final class ApiEndpoints {
   // Property search: the priced locations a case can be filed for.
   static const String locations = '/misc/location';
 
+  // The signed-in user's home counts; the shape depends on the role.
+  static const String dashboardMetrics = '/dashboard/metrics';
+
   // Search across cases and users, narrowed with `flag` (`case`, `staff`).
   static const String search = '/search';
 

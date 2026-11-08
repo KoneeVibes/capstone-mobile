@@ -10,6 +10,8 @@ import 'dashboard_providers.dart';
 final caseOverviewProvider = FutureProvider<CaseOverview>((ref) async {
   if (ref.watch(sessionProvider) == null) return untilSignedIn();
   ref.watch(casesChangedProvider);
-  final result = await ref.read(dashboardRepositoryProvider).fetchOverview();
+  final result = await ref
+      .read(dashboardRepositoryProvider)
+      .fetchClientOverview();
   return result.unwrapOrThrow();
 });

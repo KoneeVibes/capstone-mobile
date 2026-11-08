@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/error/async_value_x.dart';
+import '../../../../shared/widgets/on_tab_return.dart';
+import '../../domain/entities/queue_overview.dart';
 import '../providers/queue_overview_provider.dart';
 import '../widgets/overview_card.dart';
+import '../widgets/overview_failure.dart';
 import '../widgets/staff_greeting_banner.dart';
 import '../widgets/tracking_banner.dart';
 
@@ -31,61 +35,110 @@ class StaffHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSizing.screenPadding),
-          children: [
-            const StaffGreetingBanner(),
-            const SizedBox(height: AppSizing.space24),
-            const Text('Overview', style: AppTextStyles.titleMedium),
-            const SizedBox(height: AppSizing.space12),
-            const _Overview(),
-            const SizedBox(height: AppSizing.space24),
-            // The tracking lookup / property search, as a card between the
-            // overview and the queue.
-            TrackingBanner(
-              showIllustration: false,
-              onTap: () => context.pushNamed(trackingLookupRouteName),
-            ),
-            const SizedBox(height: AppSizing.space24),
-            queue,
-          ],
+        child: RefreshIndicator(
+          onRefresh: () => ref.refresh(queueOverviewProvider.future),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSizing.screenPadding),
+            children: [
+              const StaffGreetingBanner(),
+              const SizedBox(height: AppSizing.space24),
+              const Text('Overview', style: AppTextStyles.titleMedium),
+              const SizedBox(height: AppSizing.space12),
+              const _Overview(),
+              const SizedBox(height: AppSizing.space24),
+              // The tracking lookup / property search, as a card between the
+              // overview and the queue.
+              TrackingBanner(
+                showIllustration: false,
+                onTap: () => context.pushNamed(trackingLookupRouteName),
+              ),
+              const SizedBox(height: AppSizing.space24),
+              queue,
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// The two headline counts, side by side.
-class _Overview extends ConsumerWidget {
+/// The two headline counts, re-read whenever the Dashboard tab comes back
+/// into view.
+class _Overview extends ConsumerStatefulWidget {
   const _Overview();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final overview = ref.watch(queueOverviewProvider);
+  ConsumerState<_Overview> createState() => _OverviewState();
+}
 
+class _OverviewState extends ConsumerState<_Overview> with OnTabReturn {
+  @override
+  void onTabReturn() => ref.invalidate(queueOverviewProvider);
+
+  @override
+  Widget build(BuildContext context) {
+    final overview = ref.watch(queueOverviewProvider);
+    final value = overview.value;
+
+    if (value != null) return _OverviewRow(value: value);
+    final failure = overview.failure;
+    if (failure != null && !overview.isLoading) {
+      return OverviewFailure(
+        title: "Couldn't load your cases.",
+        failure: failure,
+        onRetry: () => ref.invalidate(queueOverviewProvider),
+      );
+    }
+    return const _Row(
+      first: OverviewCardSkeleton(),
+      second: OverviewCardSkeleton(),
+    );
+  }
+}
+
+class _OverviewRow extends StatelessWidget {
+  const _OverviewRow({required this.value});
+
+  final QueueOverview value;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Row(
+      first: OverviewCard(
+        icon: Icons.inbox_outlined,
+        tint: AppColors.primaryBright,
+        tintSoft: AppColors.primarySoft,
+        count: value.inQueue,
+        label: 'searches in your queue',
+      ),
+      second: OverviewCard(
+        icon: Icons.task_alt,
+        tint: AppColors.success,
+        tintSoft: AppColors.successSoft,
+        count: value.assignedThisWeek,
+        label: 'assigned this week',
+      ),
+    );
+  }
+}
+
+/// Two equal-height cards side by side.
+class _Row extends StatelessWidget {
+  const _Row({required this.first, required this.second});
+
+  final Widget first;
+  final Widget second;
+
+  @override
+  Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: OverviewCard(
-              icon: Icons.inbox_outlined,
-              tint: AppColors.primaryBright,
-              tintSoft: AppColors.primarySoft,
-              count: overview.inQueue,
-              label: 'searches in your queue',
-            ),
-          ),
+          Expanded(child: first),
           const SizedBox(width: AppSizing.space12),
-          Expanded(
-            child: OverviewCard(
-              icon: Icons.task_alt,
-              tint: AppColors.success,
-              tintSoft: AppColors.successSoft,
-              count: overview.doneThisWeek,
-              label: 'done this week',
-            ),
-          ),
+          Expanded(child: second),
         ],
       ),
     );

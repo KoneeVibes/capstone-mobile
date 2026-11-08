@@ -19,15 +19,10 @@ class TrackedCase extends Equatable {
   /// Oldest first, as the API sends it.
   final List<TrackingEvent> history;
 
-  /// Not on the tracking response; joined from the case list.
+  /// The free-text `propertyAddress`.
   final String? address;
 
   final DateTime? updatedAt;
-
-  Set<String> get assigneeIds => {
-    for (final event in history)
-      if (event.assigneeId != null) event.assigneeId!,
-  };
 
   /// True when the event at [index] hands the case on rather than out.
   bool isReassignment(int index) =>
@@ -35,22 +30,6 @@ class TrackedCase extends Equatable {
       history
           .take(index)
           .any((event) => event.status == TrackingStatus.assigned);
-
-  TrackedCase withDetails({
-    String? address,
-    Map<String, String> assigneeNames = const {},
-  }) => TrackedCase(
-    trackingId: trackingId,
-    status: status,
-    updatedAt: updatedAt,
-    address: address,
-    history: [
-      for (final event in history)
-        event.assigneeId == null
-            ? event
-            : event.withAssigneeName(assigneeNames[event.assigneeId]),
-    ],
-  );
 
   @override
   List<Object?> get props => [trackingId, status, history, address, updatedAt];

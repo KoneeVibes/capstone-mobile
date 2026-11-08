@@ -4,6 +4,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/datasources/dashboard_datasource.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/case_overview.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/queue_overview.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/recent_search.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracked_case.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracking_status.dart';
 
@@ -52,4 +55,51 @@ void main() {
       expect(result.failureOrNull?.message, 'Case not found.');
     },
   );
+
+  test('returns Ok with the recent searches', () async {
+    const searches = [RecentSearch(id: 'h-1', trackingId: 'PI-8APCC9W3')];
+    when(
+      () => source.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => searches);
+
+    final result = await repository.fetchRecentSearches(limit: 5);
+
+    expect(result.valueOrNull, searches);
+    verify(() => source.fetchRecentSearches(limit: 5)).called(1);
+  });
+
+  test('turns a failed history read into a failure', () async {
+    when(
+      () => source.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenThrow(const FormatException('bad history'));
+
+    final result = await repository.fetchRecentSearches(limit: 5);
+
+    expect(result.failureOrNull, isNotNull);
+  });
+
+  test('returns Ok with either overview', () async {
+    const client = CaseOverview(
+      total: 7,
+      reportsReady: 6,
+      inProgress: 1,
+      needsInput: 0,
+    );
+    const staff = QueueOverview(inQueue: 3, assignedThisWeek: 8);
+    when(() => source.fetchClientOverview()).thenAnswer((_) async => client);
+    when(() => source.fetchStaffOverview()).thenAnswer((_) async => staff);
+
+    expect((await repository.fetchClientOverview()).valueOrNull, client);
+    expect((await repository.fetchStaffOverview()).valueOrNull, staff);
+  });
+
+  test('turns a malformed overview into a failure', () async {
+    when(
+      () => source.fetchStaffOverview(),
+    ).thenThrow(const FormatException('Expected staff metrics in "data".'));
+
+    final result = await repository.fetchStaffOverview();
+
+    expect(result.failureOrNull, isNotNull);
+  });
 }

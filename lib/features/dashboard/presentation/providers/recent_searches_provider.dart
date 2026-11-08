@@ -2,26 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/navigation/app_session.dart';
 import '../../domain/entities/recent_search.dart';
+import 'dashboard_providers.dart';
 
-/// Successful lookups this session, newest first.
-///
-/// TODO(backend): in memory until recent searches have an endpoint.
-class RecentSearchesNotifier extends Notifier<List<RecentSearch>> {
-  static const int maxEntries = 5;
+/// How many recent searches the dashboard shows.
+const int recentSearchesLimit = 5;
 
-  @override
-  List<RecentSearch> build() {
-    ref.watch(sessionProvider);
-    return const [];
-  }
-
-  void record(RecentSearch search) => state = [
-    search,
-    ...state.where((entry) => entry.trackingId != search.trackingId),
-  ].take(maxEntries).toList(growable: false);
-}
-
-final recentSearchesProvider =
-    NotifierProvider<RecentSearchesNotifier, List<RecentSearch>>(
-      RecentSearchesNotifier.new,
-    );
+/// The user's newest tracking lookups, from their server-side search history.
+/// Re-read after each lookup, since a signed-in lookup is what records one.
+final recentSearchesProvider = FutureProvider<List<RecentSearch>>((ref) async {
+  if (ref.watch(sessionProvider) == null) return untilSignedIn();
+  final result = await ref
+      .read(dashboardRepositoryProvider)
+      .fetchRecentSearches(limit: recentSearchesLimit);
+  return result.unwrapOrThrow();
+});

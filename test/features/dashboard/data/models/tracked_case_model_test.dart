@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:propertyintelmobileapp/features/dashboard/data/models/case_address_model.dart';
-import 'package:propertyintelmobileapp/features/dashboard/data/models/staff_name_model.dart';
+import 'package:propertyintelmobileapp/features/dashboard/data/models/recent_search_model.dart';
 import 'package:propertyintelmobileapp/features/dashboard/data/models/tracked_case_model.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracking_status.dart';
 
@@ -14,7 +13,7 @@ void main() {
       expect(tracked.trackingId, 'PI-URF8T7C2');
       expect(tracked.status, TrackingStatus.assigned);
       expect(tracked.updatedAt, DateTime.utc(2026, 8, 31, 19, 17, 38, 580));
-      expect(tracked.address, isNull);
+      expect(tracked.address, '5 Kayode Abraham, Off Ligali Ayorinde');
       expect(tracked.history.map((e) => e.status), [
         TrackingStatus.submitted,
         TrackingStatus.paymentValidated,
@@ -32,6 +31,14 @@ void main() {
       expect(history[2].note, isNull);
     });
 
+    test('reads the assignee names the server sends', () {
+      final history = TrackedCaseModel.fromData(trackingJson).history;
+
+      expect(history[1].assigneeName, isNull);
+      expect(history[2].assigneeName, 'Ada Okafor Regular');
+      expect(history[3].assigneeName, isNull);
+    });
+
     test('tolerates a missing history and an unknown status', () {
       final tracked = TrackedCaseModel.fromData(const {
         'trackingId': 'PI-X',
@@ -39,6 +46,7 @@ void main() {
       });
 
       expect(tracked.status, TrackingStatus.unknown);
+      expect(tracked.address, isNull);
       expect(tracked.history, isEmpty);
     });
 
@@ -47,25 +55,39 @@ void main() {
     });
   });
 
-  group('CaseAddressModel', () {
-    test('prefers the street address', () {
-      final row = CaseAddressModel.fromJson(caseRowJson());
-
-      expect(row.trackingId, 'PI-URF8T7C2');
-      expect(row.address, '5 Kayode Abraham, Off Ligali Ayorinde');
+  group('RecentSearchModel.listFromJson', () {
+    test('decodes the live record', () {
+      expect(RecentSearchModel.listFromJson([historyJson()]), [
+        RecentSearchModel(
+          id: '174160f3-a7fa-49d5-b97c-673ec3acba90',
+          trackingId: 'PI-8APCC9W3',
+          searchedAt: DateTime.utc(2026, 11, 8, 7, 2, 57, 19),
+        ),
+      ]);
     });
 
-    test('falls back to city and state', () {
-      final row = CaseAddressModel.fromJson(caseRowJson(address: ''));
+    test('keeps tracking IDs only, normalised', () {
+      final searches = RecentSearchModel.listFromJson([
+        historyJson(id: 'a', query: 'Lagos'),
+        historyJson(id: 'b', query: 'pi-urf8t7c2'),
+        historyJson(id: 'c', query: 'PI-SHORT'),
+      ]);
 
-      expect(row.address, 'Victoria Island, Lagos');
+      expect(searches.map((s) => (s.id, s.trackingId)), [('b', 'PI-URF8T7C2')]);
     });
-  });
 
-  test('StaffNameModel joins first and last name', () {
-    final person = StaffNameModel.fromJson(staffRowJson());
+    test('lists a tracking ID once, at its newest', () {
+      final searches = RecentSearchModel.listFromJson([
+        historyJson(id: 'new', query: 'PI-URF8T7C2'),
+        historyJson(id: 'other'),
+        historyJson(id: 'old', query: 'urf8t7c2'),
+      ]);
 
-    expect(person.id, 'staff-1');
-    expect(person.name, 'Ada Okafor');
+      expect(searches.map((s) => s.id), ['new', 'other']);
+    });
+
+    test('tolerates a body that is not a list', () {
+      expect(RecentSearchModel.listFromJson(null), isEmpty);
+    });
   });
 }

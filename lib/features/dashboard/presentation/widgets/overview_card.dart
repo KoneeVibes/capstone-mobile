@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/app_shimmer.dart';
 
-/// One count on the client Home: a tinted icon, the number, what it counts.
+/// One count on a home screen: a tinted icon, the number, what it counts.
 class OverviewCard extends StatelessWidget {
   const OverviewCard({
     required this.icon,

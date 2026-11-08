@@ -12,6 +12,7 @@ import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../core/utils/search_query.dart';
 import '../../../../shared/widgets/app_search_field.dart';
 import '../../../../shared/widgets/app_state_view.dart';
+import '../../../../shared/widgets/on_tab_return.dart';
 import '../../domain/entities/case.dart';
 import '../../domain/entities/case_filter.dart';
 import '../case_action_runner.dart';
@@ -54,7 +55,7 @@ class CasesListScreen extends ConsumerStatefulWidget {
 }
 
 class _CasesListScreenState extends ConsumerState<CasesListScreen>
-    with RevisitCasesList {
+    with OnTabReturn, RevisitCasesList {
   // Seeded from the provider, so the bar survives a rebuild of the tab.
   late final _search = TextEditingController(
     text: ref.read(caseSearchQueryProvider),

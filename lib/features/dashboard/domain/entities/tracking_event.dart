@@ -16,18 +16,10 @@ class TrackingEvent extends Equatable {
   final DateTime? changedAt;
   final String? assigneeId;
 
-  /// Resolved from the staff list; null when unassigned or not found.
+  /// As the server names the assignee; null when unassigned.
   final String? assigneeName;
 
   final String? note;
-
-  TrackingEvent withAssigneeName(String? name) => TrackingEvent(
-    status: status,
-    changedAt: changedAt,
-    assigneeId: assigneeId,
-    assigneeName: name,
-    note: note,
-  );
 
   @override
   List<Object?> get props => [

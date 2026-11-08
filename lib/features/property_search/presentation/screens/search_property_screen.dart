@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/app_session.dart';
+import '../../../../core/session/signed_in_name.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -46,13 +47,43 @@ class _SearchPropertyScreenState extends ConsumerState<SearchPropertyScreen> {
   /// by; staff file for someone else.
   late final bool _emailLocked;
 
+  /// A client's name comes from their profile, so it locks once that loads.
+  var _nameLocked = false;
+
   @override
   void initState() {
     super.initState();
     final session = ref.read(sessionProvider);
-    final email = session?.isClient ?? false ? session?.email : null;
+    final isClient = session?.isClient ?? false;
+    final email = isClient ? session?.email : null;
     _emailLocked = email != null;
     _email = TextEditingController(text: email);
+    if (isClient) {
+      ref.listenManual(
+        signedInFullNameProvider,
+        (_, name) => _lockName(name),
+        fireImmediately: true,
+      );
+      ref.listenManual(
+        signedInPhoneProvider,
+        (_, phone) => _prefillPhone(phone),
+        fireImmediately: true,
+      );
+    }
+  }
+
+  /// Editable, and never over something already typed.
+  void _prefillPhone(String? phone) {
+    if (phone == null || phone.isEmpty || _phone.text.isNotEmpty) return;
+    _phone.text = phone;
+  }
+
+  void _lockName(String? name) {
+    if (name == null || name.isEmpty) return;
+    setState(() {
+      _name.text = name;
+      _nameLocked = true;
+    });
   }
 
   @override
@@ -130,12 +161,20 @@ class _SearchPropertyScreenState extends ConsumerState<SearchPropertyScreen> {
                   label: 'Applicant name',
                   hint: 'Enter applicant name',
                   controller: _name,
+                  readOnly: _nameLocked,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.name],
                   validator: (value) =>
                       Validators.name(value, label: 'Applicant name'),
                 ),
+                if (_nameLocked) ...[
+                  const SizedBox(height: AppSizing.space6),
+                  const Text(
+                    'Your profile name. Change it from Profile.',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: AppSizing.space16),
                 AppTextField(
                   label: 'Email address',

@@ -53,12 +53,16 @@ void main() {
     verifyNever(() => repository.fetchProfile());
   });
 
-  test('loads the profile and fills the first-name seam', () async {
+  test('loads the profile and fills the profile seams', () async {
     final container = makeContainer()
-      ..listen(signedInFirstNameProvider, (_, _) {});
+      ..listen(signedInFirstNameProvider, (_, _) {})
+      ..listen(signedInFullNameProvider, (_, _) {})
+      ..listen(signedInPhoneProvider, (_, _) {});
 
     expect(await container.read(profileProvider.future), profile);
     expect(container.read(signedInFirstNameProvider), 'Ada');
+    expect(container.read(signedInFullNameProvider), 'Ada Grace Okafor');
+    expect(container.read(signedInPhoneProvider), '+2348012345678');
   });
 
   test('puts the saved record into state without a re-read', () async {

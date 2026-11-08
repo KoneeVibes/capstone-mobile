@@ -36,7 +36,9 @@ class CaseAssignmentNotifier extends AsyncNotifier<void> {
         if (ref.exists(caseDetailProvider(caseId))) {
           ref.read(caseDetailProvider(caseId).notifier).replaceWith(updated);
         }
-        ref.read(casesListProvider.notifier).replaceCase(updated);
+        if (ref.exists(casesListProvider)) {
+          ref.read(casesListProvider.notifier).replaceCase(updated);
+        }
         return true;
       },
       onErr: (failure) {

@@ -159,6 +159,44 @@ void main() {
       }
     });
 
+    test('gives each role its own account and notification screens', () {
+      for (final (own, role, foreignHome) in [
+        (
+          [
+            AppRoutes.clientEditProfilePath,
+            AppRoutes.clientChangePasswordPath,
+            AppRoutes.clientChangePasswordResetPath,
+            AppRoutes.clientPasswordChangedPath,
+            AppRoutes.clientNotificationsPath,
+          ],
+          AppRole.client,
+          AppRoutes.dashboardPath,
+        ),
+        (
+          [
+            AppRoutes.staffEditProfilePath,
+            AppRoutes.staffChangePasswordPath,
+            AppRoutes.staffChangePasswordResetPath,
+            AppRoutes.staffPasswordChangedPath,
+            AppRoutes.staffNotificationsPath,
+          ],
+          AppRole.staff,
+          AppRoutes.clientHomePath,
+        ),
+      ]) {
+        final other = role.isStaff ? AppRole.client : AppRole.staff;
+        for (final location in own) {
+          expect(_redirect(location, role: role), isNull, reason: location);
+          expect(
+            _redirect(location, role: other),
+            foreignHome,
+            reason: location,
+          );
+          expect(_redirect(location), AppRoutes.loginPath, reason: location);
+        }
+      }
+    });
+
     test('keeps staff who cannot list staff off the Staff tab', () {
       expect(
         _redirect(

@@ -36,7 +36,9 @@ final disputesRepositoryProvider = Provider<DisputesRepository>(
 );
 
 /// The team members a case may be given to. Active staff only.
-final caseAssigneesProvider = FutureProvider<List<CaseAssignee>>((ref) async {
+final caseAssigneesProvider = FutureProvider.autoDispose<List<CaseAssignee>>((
+  ref,
+) async {
   final result = await ref.watch(casesRepositoryProvider).fetchAssignees();
   return result.unwrapOrThrow();
 });

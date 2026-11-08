@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/screens/check_mail_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/onboarding_screen.dart';
@@ -10,8 +11,7 @@ import '../../features/auth/presentation/screens/password_changed_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_code_screen.dart';
-import '../../features/auth/presentation/widgets/auth_link_row.dart';
-import '../../features/auth/presentation/widgets/sign_out_button.dart';
+import '../../features/auth/presentation/widgets/sign_out_tile.dart';
 import '../../features/cases/presentation/screens/case_detail_screen.dart';
 import '../../features/cases/presentation/screens/cases_list_screen.dart';
 import '../../features/cases/presentation/screens/dispute_detail_screen.dart';
@@ -24,13 +24,16 @@ import '../../features/dashboard/presentation/screens/staff_home_screen.dart';
 import '../../features/dashboard/presentation/screens/tracking_progress_screen.dart';
 import '../../features/legal/domain/legal_document.dart';
 import '../../features/legal/presentation/screens/legal_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
+import '../../features/notifications/presentation/widgets/notification_bell.dart';
 import '../../features/payment/presentation/screens/invoice_screen.dart';
+import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/property_search/presentation/screens/search_property_screen.dart';
 import '../../features/staff/presentation/screens/staff_list_screen.dart';
 import '../../shared/screens/placeholder_screen.dart';
 import '../../shared/screens/splash_screen.dart';
 import '../../shared/widgets/app_state_view.dart';
-import '../sizing/app_sizing.dart';
 import '../utils/error/app_failures.dart';
 import 'app_redirect.dart';
 import 'app_routes.dart';
@@ -190,6 +193,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             const LegalScreen(document: LegalDocument.privacyPolicy),
       ),
+      // Each role's account screens and notifications open full screen, like
+      // the chat; `redirectFor` keeps each role to its own (ADR 0030).
+      ..._accountRoutes(
+        edit: (
+          AppRoutes.clientEditProfilePath,
+          AppRoutes.clientEditProfileName,
+        ),
+        password: (
+          AppRoutes.clientChangePasswordPath,
+          AppRoutes.clientChangePasswordName,
+        ),
+        reset: (
+          AppRoutes.clientChangePasswordResetPath,
+          AppRoutes.clientChangePasswordResetName,
+        ),
+        done: (
+          AppRoutes.clientPasswordChangedPath,
+          AppRoutes.clientPasswordChangedName,
+        ),
+        notifications: (
+          AppRoutes.clientNotificationsPath,
+          AppRoutes.clientNotificationsName,
+        ),
+        profileRouteName: AppRoutes.clientProfileName,
+      ),
+      ..._accountRoutes(
+        edit: (AppRoutes.staffEditProfilePath, AppRoutes.staffEditProfileName),
+        password: (
+          AppRoutes.staffChangePasswordPath,
+          AppRoutes.staffChangePasswordName,
+        ),
+        reset: (
+          AppRoutes.staffChangePasswordResetPath,
+          AppRoutes.staffChangePasswordResetName,
+        ),
+        done: (
+          AppRoutes.staffPasswordChangedPath,
+          AppRoutes.staffPasswordChangedName,
+        ),
+        notifications: (
+          AppRoutes.staffNotificationsPath,
+          AppRoutes.staffNotificationsName,
+        ),
+        profileRouteName: AppRoutes.staffProfileName,
+      ),
       // Branch order must match AppShell.clientTabs.
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(
@@ -205,6 +253,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ClientHomeScreen(
                   searchPropertyRouteName: AppRoutes.clientSearchPropertyName,
                   progressRouteName: AppRoutes.clientTrackingProgressName,
+                  notificationBell: NotificationBell(
+                    routeName: AppRoutes.clientNotificationsName,
+                  ),
                 ),
               ),
             ],
@@ -303,7 +354,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.clientProfilePath,
                 name: AppRoutes.clientProfileName,
-                builder: (context, state) => const _ProfilePlaceholder(),
+                builder: (context, state) => const ProfileScreen(
+                  notificationBell: NotificationBell(
+                    routeName: AppRoutes.clientNotificationsName,
+                  ),
+                  signOutTile: SignOutTile(),
+                  editRouteName: AppRoutes.clientEditProfileName,
+                  changePasswordRouteName: AppRoutes.clientChangePasswordName,
+                ),
               ),
             ],
           ),
@@ -339,6 +397,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     viewAllRouteName: AppRoutes.casesName,
                   ),
                   trackingLookupRouteName: AppRoutes.staffTrackingLookupName,
+                  notificationBell: NotificationBell(
+                    routeName: AppRoutes.staffNotificationsName,
+                  ),
                 ),
                 routes: [
                   // The tracking lookup moved off the tab root; it is now
@@ -420,7 +481,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.staffProfilePath,
                 name: AppRoutes.staffProfileName,
-                builder: (context, state) => const _ProfilePlaceholder(),
+                builder: (context, state) => const ProfileScreen(
+                  notificationBell: NotificationBell(
+                    routeName: AppRoutes.staffNotificationsName,
+                  ),
+                  signOutTile: SignOutTile(),
+                  editRouteName: AppRoutes.staffEditProfileName,
+                  changePasswordRouteName: AppRoutes.staffChangePasswordName,
+                ),
               ),
             ],
           ),
@@ -444,39 +512,48 @@ Widget _dispute(GoRouterState state) => DisputeDetailScreen(
   disputeId: state.pathParameters['disputeId'] ?? '',
 );
 
-/// Both roles' Profile tab until the profile screen is designed. Carries the
-/// legal links and the only way to sign out meanwhile.
-class _ProfilePlaceholder extends StatelessWidget {
-  const _ProfilePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return PlaceholderScreen(
-      title: 'Profile',
-      message: 'Your account details will appear here.',
-      action: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AuthLink(
-                label: 'Terms & Conditions',
-                onPressed: () => context.pushNamed(AppRoutes.termsName),
-              ),
-              const SizedBox(width: AppSizing.space16),
-              AuthLink(
-                label: 'Privacy Policy',
-                onPressed: () => context.pushNamed(AppRoutes.privacyPolicyName),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizing.space16),
-          const SignOutButton(),
-        ],
-      ),
-    );
-  }
-}
+/// One role's account screens: edit profile, the signed-in password reset
+/// (code, new password, done) and notifications. Each is a (path, name) pair.
+List<GoRoute> _accountRoutes({
+  required (String, String) edit,
+  required (String, String) password,
+  required (String, String) reset,
+  required (String, String) done,
+  required (String, String) notifications,
+  required String profileRouteName,
+}) => [
+  GoRoute(
+    path: edit.$1,
+    name: edit.$2,
+    builder: (context, state) => const EditProfileScreen(),
+  ),
+  GoRoute(
+    path: password.$1,
+    name: password.$2,
+    builder: (context, state) => CheckMailScreen(resetRouteName: reset.$2),
+  ),
+  GoRoute(
+    path: reset.$1,
+    name: reset.$2,
+    builder: (context, state) => ResetPasswordScreen(
+      restartRouteName: profileRouteName,
+      doneRouteName: done.$2,
+    ),
+  ),
+  GoRoute(
+    path: done.$1,
+    name: done.$2,
+    builder: (context, state) => PasswordChangedScreen(
+      exitRouteName: profileRouteName,
+      exitLabel: 'Back to profile',
+    ),
+  ),
+  GoRoute(
+    path: notifications.$1,
+    name: notifications.$2,
+    builder: (context, state) => const NotificationsScreen(),
+  ),
+];
 
 class _RouteNotFoundScreen extends StatelessWidget {
   const _RouteNotFoundScreen();

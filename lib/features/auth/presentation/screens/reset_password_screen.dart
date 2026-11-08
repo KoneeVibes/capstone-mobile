@@ -15,8 +15,20 @@ import '../widgets/auth_page.dart';
 import '../widgets/password_field.dart';
 
 /// The new password — sent together with the code collected one screen back.
+///
+/// The route names default to the signed-out flow; the in-session reset from
+/// Profile passes its own.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
-  const ResetPasswordScreen({super.key});
+  const ResetPasswordScreen({
+    super.key,
+    this.restartRouteName = AppRoutes.forgotPasswordName,
+    this.doneRouteName = AppRoutes.passwordChangedName,
+  });
+
+  /// Where to go when there is no code to send — a restart lost the flow.
+  final String restartRouteName;
+
+  final String doneRouteName;
 
   @override
   ConsumerState<ResetPasswordScreen> createState() =>
@@ -34,7 +46,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     super.initState();
     if (ref.read(passwordResetFlowProvider)?.otp.isNotEmpty != true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.goNamed(AppRoutes.forgotPasswordName);
+        if (mounted) context.goNamed(widget.restartRouteName);
       });
     }
   }
@@ -58,7 +70,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     switch (result) {
       case Ok():
-        context.goNamed(AppRoutes.passwordChangedName);
+        context.goNamed(widget.doneRouteName);
         flow.clear();
       // The code screen is underneath and shows "Wrong code" itself.
       case Err(:final failure) when failure == AppFailures.invalidOtp:

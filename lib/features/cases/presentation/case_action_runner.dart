@@ -180,6 +180,7 @@ Case? _stored(WidgetRef ref, String id) {
   if (ref.exists(caseDetailProvider(id))) {
     return ref.read(caseDetailProvider(id)).value;
   }
+  if (!ref.exists(casesListProvider)) return null;
   final items = ref.read(casesListProvider).value?.items ?? const <Case>[];
   for (final item in items) {
     if (item.id == id) return item;

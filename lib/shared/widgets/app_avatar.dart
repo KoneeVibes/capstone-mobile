@@ -17,6 +17,7 @@ class AppAvatar extends StatelessWidget {
     this.size = AppSizing.avatarMd,
     this.backgroundColor = AppColors.primary,
     this.foregroundColor = AppColors.textOnPrimary,
+    this.circular = false,
   });
 
   /// One or two letters, shown when there is no image or it fails to load.
@@ -34,9 +35,14 @@ class AppAvatar extends StatelessWidget {
   /// Colour of the initials.
   final Color foregroundColor;
 
+  /// Round rather than a rounded square, as on the profile.
+  final bool circular;
+
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppSizing.radiusMd);
+    final radius = BorderRadius.circular(
+      circular ? size / 2 : AppSizing.radiusMd,
+    );
 
     return ClipRRect(
       borderRadius: radius,

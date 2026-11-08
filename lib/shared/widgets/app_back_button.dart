@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/sizing/app_sizing.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../core/sizing/app_sizing.dart';
+import '../../core/theme/app_colors.dart';
 
-/// The outlined square chevron at the top of the auth screens. Pops by
-/// default.
-class AuthBackButton extends StatelessWidget {
-  const AuthBackButton({super.key, this.onPressed});
+/// The outlined square chevron the designs put top-left. Pops by default.
+class AppBackButton extends StatelessWidget {
+  /// Creates the button; it pops unless [onPressed] says otherwise.
+  const AppBackButton({super.key, this.onPressed});
 
+  /// Replaces the default pop.
   final VoidCallback? onPressed;
 
   @override

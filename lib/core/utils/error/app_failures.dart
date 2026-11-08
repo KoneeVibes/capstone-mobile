@@ -101,4 +101,12 @@ abstract final class AppFailures {
     type: FailureType.validation,
     message: "This file can't be shown here.",
   );
+
+  /// The API has no way to delete an account yet (ADR 0032).
+  static const AppFailure accountDeletionUnavailable = AppFailure(
+    type: FailureType.unknown,
+    message:
+        "Account deletion isn't available in the app yet. Contact support "
+        'to close your account.',
+  );
 }

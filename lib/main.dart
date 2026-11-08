@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'features/auth/presentation/providers/auth_overrides.dart';
+import 'features/profile/presentation/providers/profile_overrides.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,9 +16,12 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Auth supplies the session, token and 401 handling to core here, so
-  // nothing else has to import it.
+  // Auth supplies the session, token and 401 handling to core here, and
+  // profile the signed-in first name, so nothing else has to import them.
   runApp(
-    ProviderScope(overrides: authOverrides, child: const PropertyIntelApp()),
+    ProviderScope(
+      overrides: [...authOverrides, ...profileOverrides],
+      child: const PropertyIntelApp(),
+    ),
   );
 }

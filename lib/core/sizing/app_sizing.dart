@@ -47,6 +47,16 @@ abstract final class AppSizing {
   static const double avatarSm = 32;
   static const double avatarMd = 48;
   static const double avatarLg = 64;
+  static const double avatarXl = 96;
+
+  /// The round edit badge on a large avatar's corner.
+  static const double avatarBadge = 28;
+
+  /// The dot on the notifications bell.
+  static const double unreadDot = 8;
+
+  /// The home top bar's brand mark.
+  static const double topBarLogo = 28;
 
   static const double bottomNavHeight = 64;
 

@@ -58,6 +58,9 @@ abstract final class ApiEndpoints {
   // The signed-in user's saved searches; tracking a case while signed in adds one.
   static const String searchHistory = '$search/history';
 
+  // The signed-in user's own name, phone and avatar; no id in the path.
+  static const String profile = '/profile';
+
   // Payment: the invoice a new case creates, and the Paystack transaction that
   // settles it.
 

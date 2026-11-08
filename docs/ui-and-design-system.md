@@ -52,7 +52,9 @@ reference. In summary:
 | `AppSearchField` | pill search input |
 | `AppOtpField` | one-time codes: boxes over one hidden field, so paste and autofill work |
 | `AppChip`, `AppChoiceChip` | status pills; selectable filter or role chips |
-| `AppAvatar` | initials or a photo, falling back to initials on error |
+| `AppAvatar` | initials or a photo, falling back to initials on error; `circular` for the profile |
+| `AppMenuTile` | a settings row: icon, label, chevron; `destructive` and `busy` variants |
+| `AppBackButton` | the outlined square back chevron the designs put top-left |
 | `AppBottomNav` | the tab bar (driven by `AppShell`) |
 | `showAppBottomSheet` / `AppBottomSheet` | forms in a sheet, keyboard-aware |
 | `showAppConfirmDialog` | yes/no confirmation, with or without an icon; `stackActions` for Confirm over Cancel |

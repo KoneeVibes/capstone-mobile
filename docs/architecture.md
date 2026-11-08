@@ -88,9 +88,11 @@ the owning feature supplies the real value at the composition root:
 | `sessionRestoreProvider` | completes at once | `authOverrides` |
 | `authTokenProvider` | no token | `authOverrides` |
 | `unauthorizedHandlerProvider` | no-op | `authOverrides` |
+| `signedInFirstNameProvider` | null | `profileOverrides` |
 
-`main.dart` passes `authOverrides` to the `ProviderScope`. Cases, staff and the
-router read these seams and never import auth. See
+`main.dart` passes `authOverrides` and `profileOverrides` to the
+`ProviderScope`. Cases, staff, the dashboard and the router read these seams
+and never import auth or profile ([ADR 0030](adr/0030-profile-from-the-profile-endpoint.md)). See
 [ADR 0007](adr/0007-auth-through-core-seams.md).
 
 ## Usecases

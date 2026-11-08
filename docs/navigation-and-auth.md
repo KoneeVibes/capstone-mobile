@@ -38,6 +38,10 @@ Full screen, above the shells (no bottom bar):
   /client/chat/:caseId                   case conversation (client side)
   /client/disputes/:caseId/new           raise a dispute
   /client/disputes/:caseId/:disputeId    follow a dispute
+  /{staff|client}/account/edit           update profile
+  /{staff|client}/account/password       "Check your mail": the reset code
+    .../password/reset, .../password/done  new password; password changed
+  /{staff|client}/notifications          notifications (mock, ADR 0031)
 
 /legal/privacy-policy, /legal/terms   the legal pages, full screen; linked
                                       from Register and Profile
@@ -146,10 +150,15 @@ Staff accounts are created by a super-admin or admin (`POST /staff`) and never
 register. No
 password is issued: a new staff member sets one through "Forgot password".
 
+Signed in, Profile → Reset password runs the same code-and-password flow on
+full-screen routes of its own: the code goes to the sign-in email, is typed on
+"Check your mail", and "Back to profile" ends it
+([ADR 0032](adr/0032-signed-in-password-reset-and-account-deletion.md)).
+
 ## Not yet built
 
-- A real Profile screen — clients need a `/me` endpoint or equivalent; staff
-  could use `GET /staff/{id}`, which sign-in already calls.
+- Deleting an account — the Profile row ends in "not available yet" until the
+  API has an endpoint ([ADR 0032](adr/0032-signed-in-password-reset-and-account-deletion.md)).
 - Deep links. None are configured, so the app always starts at `/splash`. If
   they are added, `redirectFor` must hold a cold-start link until the session
   restore finishes. Otherwise the link is judged while the session still reads

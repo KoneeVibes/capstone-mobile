@@ -2,6 +2,7 @@ import '../../../../core/utils/error/error_handler.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/case_overview.dart';
 import '../../domain/entities/queue_overview.dart';
+import '../../domain/entities/recent_search.dart';
 import '../../domain/entities/tracked_case.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 import '../datasources/dashboard_datasource.dart';
@@ -14,6 +15,11 @@ class DashboardRepositoryImpl implements DashboardRepository {
   @override
   Future<Result<TrackedCase>> trackCase(String trackingId) =>
       _guard(() => _source.trackCase(trackingId));
+
+  @override
+  Future<Result<List<RecentSearch>>> fetchRecentSearches({
+    required int limit,
+  }) => _guard(() => _source.fetchRecentSearches(limit: limit));
 
   @override
   Future<Result<CaseOverview>> fetchClientOverview() =>

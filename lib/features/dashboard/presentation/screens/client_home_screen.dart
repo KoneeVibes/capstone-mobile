@@ -9,6 +9,7 @@ import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/on_tab_return.dart';
 import '../../domain/entities/case_overview.dart';
 import '../providers/case_overview_provider.dart';
+import '../providers/recent_searches_provider.dart';
 import '../widgets/overview_card.dart';
 import '../widgets/overview_failure.dart';
 import '../widgets/recent_searches_section.dart';
@@ -36,7 +37,10 @@ class ClientHomeScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => ref.refresh(caseOverviewProvider.future),
+          onRefresh: () => Future.wait([
+            ref.refresh(caseOverviewProvider.future),
+            ref.refresh(recentSearchesProvider.future),
+          ]),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(AppSizing.screenPadding),
@@ -84,6 +88,7 @@ class _OverviewState extends ConsumerState<_Overview> with OnTabReturn {
     final failure = overview.failure;
     if (failure != null && !overview.isLoading) {
       return OverviewFailure(
+        title: "Couldn't load your cases.",
         failure: failure,
         onRetry: () => ref.invalidate(caseOverviewProvider),
       );

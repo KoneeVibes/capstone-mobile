@@ -7,13 +7,14 @@ import 'package:propertyintelmobileapp/core/utils/error/app_failure.dart';
 import 'package:propertyintelmobileapp/core/utils/error/async_value_x.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
-import 'package:propertyintelmobileapp/features/dashboard/domain/entities/recent_search.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracked_case.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracking_status.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:propertyintelmobileapp/features/dashboard/presentation/providers/dashboard_providers.dart';
 import 'package:propertyintelmobileapp/features/dashboard/presentation/providers/recent_searches_provider.dart';
 import 'package:propertyintelmobileapp/features/dashboard/presentation/providers/tracking_provider.dart';
+
+import '../../../../core/navigation/session_fixtures.dart';
 
 class MockDashboardRepository extends Mock implements DashboardRepository {}
 
@@ -32,11 +33,19 @@ const _notFound = AppFailure(
 void main() {
   late MockDashboardRepository repository;
 
-  setUp(() => repository = MockDashboardRepository());
+  setUp(() {
+    repository = MockDashboardRepository();
+    when(
+      () => repository.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => const Ok([]));
+  });
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
-      overrides: [dashboardRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        dashboardRepositoryProvider.overrideWithValue(repository),
+        signedIn,
+      ],
     );
     addTearDown(container.dispose);
     return container;
@@ -67,37 +76,44 @@ void main() {
     expect(container.read(trackingProvider).value, isNull);
   });
 
-  test('records a successful lookup in recent searches', () async {
+  /// A container with the recent searches on screen and read once.
+  Future<ProviderContainer> showingRecentSearches() async {
+    final container = makeContainer()
+      ..listen(recentSearchesProvider, (_, _) {});
+    await container.read(recentSearchesProvider.future);
+    return container;
+  }
+
+  void expectHistoryReads(int count) => verify(
+    () => repository.fetchRecentSearches(limit: any(named: 'limit')),
+  ).called(count);
+
+  test('re-reads recent searches after a successful lookup', () async {
     stubLookup(const Ok(_tracked));
 
-    final container = makeContainer();
+    final container = await showingRecentSearches();
     await container.read(trackingProvider.notifier).track('PI-URF8T7C2');
+    await container.read(recentSearchesProvider.future);
 
-    expect(container.read(recentSearchesProvider), [
-      const RecentSearch(
-        trackingId: 'PI-URF8T7C2',
-        status: TrackingStatus.assigned,
-        address: '5 Kayode Abraham',
-      ),
-    ]);
+    expectHistoryReads(2);
   });
 
-  test('surfaces a failure without recording it', () async {
+  test('surfaces a failure without re-reading recent searches', () async {
     stubLookup(const Err(_notFound));
 
-    final container = makeContainer();
+    final container = await showingRecentSearches();
     await container.read(trackingProvider.notifier).track('PI-URF8T7C2');
 
     final state = container.read(trackingProvider);
     expect(state.failure?.message, 'Case not found.');
-    expect(container.read(recentSearchesProvider), isEmpty);
+    expectHistoryReads(1);
   });
 
   test('clear drops a lookup that is still in flight', () async {
     final pending = Completer<Result<TrackedCase>>();
     when(() => repository.trackCase(any())).thenAnswer((_) => pending.future);
 
-    final container = makeContainer();
+    final container = await showingRecentSearches();
     final notifier = container.read(trackingProvider.notifier);
     final lookup = notifier.track('PI-URF8T7C2');
     notifier.clear();
@@ -105,6 +121,6 @@ void main() {
     await lookup;
 
     expect(container.read(trackingProvider).value, isNull);
-    expect(container.read(recentSearchesProvider), isEmpty);
+    expectHistoryReads(1);
   });
 }

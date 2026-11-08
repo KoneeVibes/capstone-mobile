@@ -85,6 +85,7 @@ class _OverviewState extends ConsumerState<_Overview> with OnTabReturn {
     final failure = overview.failure;
     if (failure != null && !overview.isLoading) {
       return OverviewFailure(
+        title: "Couldn't load your cases.",
         failure: failure,
         onRetry: () => ref.invalidate(queueOverviewProvider),
       );

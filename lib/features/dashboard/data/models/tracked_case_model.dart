@@ -10,6 +10,7 @@ class TrackedCaseModel extends TrackedCase {
     required super.trackingId,
     required super.status,
     super.history,
+    super.address,
     super.updatedAt,
   });
 
@@ -17,6 +18,7 @@ class TrackedCaseModel extends TrackedCase {
       TrackedCaseModel(
         trackingId: _string(json['trackingId']) ?? '',
         status: TrackingStatus.fromApi(_string(json['status'])),
+        address: _string(json['propertyAddress']),
         updatedAt: AppFormatters.parseIso(_string(json['updatedAt'])),
         history: _history(json['statusHistory']),
       );
@@ -37,6 +39,7 @@ class TrackedCaseModel extends TrackedCase {
             status: TrackingStatus.fromApi(_string(json['status'])),
             changedAt: AppFormatters.parseIso(_string(json['changedAt'])),
             assigneeId: _string(json['assigneeId']),
+            assigneeName: _string(json['assigneeName']),
             note: _string(json['note']),
           ),
         )

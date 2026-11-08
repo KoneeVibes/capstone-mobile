@@ -1,6 +1,6 @@
 # 0028 — Home counts come from the metrics endpoint
 
-- **Status:** Accepted
+- **Status:** Accepted; the search-history note superseded by [0029](0029-recent-searches-from-search-history.md)
 - **Recorded:** 2026-11-02
 
 ## Context

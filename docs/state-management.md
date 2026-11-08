@@ -10,10 +10,10 @@ Why: [ADR 0001](adr/0001-riverpod-without-codegen.md).
 | You need | Use | Example |
 | --- | --- | --- |
 | A dependency (client, repository) | `Provider` | `casesRepositoryProvider` |
-| A read with no later writes | `FutureProvider` | `caseAssigneesProvider` |
+| A read with no later writes | `FutureProvider` | `caseAssigneesProvider`, `recentSearchesProvider` |
 | Data that loads, then changes | `AsyncNotifierProvider` | `casesListProvider` |
 | The same, one per argument | `AsyncNotifierProvider.family` | `caseDetailProvider(id)` |
-| Synchronous in-memory state | `NotifierProvider` | `recentSearchesProvider`, `signUpFlowProvider` |
+| Synchronous in-memory state | `NotifierProvider` | `signUpFlowProvider` |
 | A one-shot write with a loading state | `AsyncNotifier<void>` | `staffMutationProvider` |
 
 ## Patterns
@@ -111,5 +111,6 @@ The codegen docs show `build(String id)`; that does not compile here.
 - **Not in `core/`** — except the session seams, which are declarations
   supplied by auth ([Architecture](architecture.md#where-cross-feature-state-lives)).
 - **Not on disk**, unless it must outlive a restart: the session token (secure
-  storage) and the onboarding flag (preferences). Recent searches and in-progress
-  sign-up or reset flows are memory-only by decision.
+  storage) and the onboarding flag (preferences). In-progress sign-up or reset
+  flows are memory-only by decision; recent searches live on the server
+  (ADR 0029).

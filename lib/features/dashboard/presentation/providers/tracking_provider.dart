@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/formatting/app_formatters.dart';
 import '../../../../core/navigation/app_session.dart';
 import '../../../../core/utils/validators.dart';
-import '../../domain/entities/recent_search.dart';
 import '../../domain/entities/tracked_case.dart';
 import 'dashboard_providers.dart';
 import 'recent_searches_provider.dart';
@@ -37,9 +36,8 @@ class TrackingNotifier extends AsyncNotifier<TrackedCase?> {
     result.fold(
       onOk: (value) {
         state = AsyncData<TrackedCase?>(value);
-        ref
-            .read(recentSearchesProvider.notifier)
-            .record(RecentSearch.fromTracked(value));
+        // The server recorded the lookup in the user's history.
+        ref.invalidate(recentSearchesProvider);
       },
       onErr: (failure) =>
           state = AsyncError<TrackedCase?>(failure, StackTrace.current),

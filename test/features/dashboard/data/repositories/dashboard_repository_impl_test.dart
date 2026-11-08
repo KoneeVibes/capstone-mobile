@@ -6,6 +6,7 @@ import 'package:propertyintelmobileapp/features/dashboard/data/datasources/dashb
 import 'package:propertyintelmobileapp/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/case_overview.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/queue_overview.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/entities/recent_search.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracked_case.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracking_status.dart';
 
@@ -54,6 +55,28 @@ void main() {
       expect(result.failureOrNull?.message, 'Case not found.');
     },
   );
+
+  test('returns Ok with the recent searches', () async {
+    const searches = [RecentSearch(id: 'h-1', trackingId: 'PI-8APCC9W3')];
+    when(
+      () => source.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => searches);
+
+    final result = await repository.fetchRecentSearches(limit: 5);
+
+    expect(result.valueOrNull, searches);
+    verify(() => source.fetchRecentSearches(limit: 5)).called(1);
+  });
+
+  test('turns a failed history read into a failure', () async {
+    when(
+      () => source.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenThrow(const FormatException('bad history'));
+
+    final result = await repository.fetchRecentSearches(limit: 5);
+
+    expect(result.failureOrNull, isNotNull);
+  });
 
   test('returns Ok with either overview', () async {
     const client = CaseOverview(

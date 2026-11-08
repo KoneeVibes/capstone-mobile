@@ -1,58 +1,56 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/recent_search.dart';
-import 'package:propertyintelmobileapp/features/dashboard/domain/entities/tracking_status.dart';
+import 'package:propertyintelmobileapp/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:propertyintelmobileapp/features/dashboard/presentation/providers/dashboard_providers.dart';
 import 'package:propertyintelmobileapp/features/dashboard/presentation/providers/recent_searches_provider.dart';
 
-RecentSearch _search(
-  String code, {
-  TrackingStatus status = TrackingStatus.assigned,
-}) => RecentSearch(trackingId: 'PI-$code', status: status);
+import '../../../../core/navigation/session_fixtures.dart';
+
+class MockDashboardRepository extends Mock implements DashboardRepository {}
+
+const _searches = [RecentSearch(id: 'h-1', trackingId: 'PI-8APCC9W3')];
 
 void main() {
-  late ProviderContainer container;
-  late RecentSearchesNotifier notifier;
+  late MockDashboardRepository repository;
 
   setUp(() {
-    container = ProviderContainer();
+    repository = MockDashboardRepository();
+    when(
+      () => repository.fetchRecentSearches(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => const Ok(_searches));
+  });
+
+  ProviderContainer makeContainer({bool isSignedIn = true}) {
+    final container = ProviderContainer(
+      overrides: [
+        dashboardRepositoryProvider.overrideWithValue(repository),
+        if (isSignedIn) signedIn,
+      ],
+    );
     addTearDown(container.dispose);
-    notifier = container.read(recentSearchesProvider.notifier);
-  });
+    return container;
+  }
 
-  List<String> ids() =>
-      container.read(recentSearchesProvider).map((s) => s.trackingId).toList();
+  test('fetches nothing while signed out', () async {
+    final container = makeContainer(isSignedIn: false)
+      ..listen(recentSearchesProvider, (_, _) {});
+    await Future<void>.delayed(Duration.zero);
 
-  test('starts empty', () {
-    expect(container.read(recentSearchesProvider), isEmpty);
-  });
-
-  test('puts the newest search first', () {
-    notifier
-      ..record(_search('AAAAAAAA'))
-      ..record(_search('BBBBBBBB'));
-
-    expect(ids(), ['PI-BBBBBBBB', 'PI-AAAAAAAA']);
-  });
-
-  test('moves a repeated search to the top with its latest status', () {
-    notifier
-      ..record(_search('AAAAAAAA'))
-      ..record(_search('BBBBBBBB'))
-      ..record(_search('AAAAAAAA', status: TrackingStatus.closed));
-
-    expect(ids(), ['PI-AAAAAAAA', 'PI-BBBBBBBB']);
-    expect(
-      container.read(recentSearchesProvider).first.status,
-      TrackingStatus.closed,
+    expect(container.read(recentSearchesProvider).isLoading, isTrue);
+    verifyNever(
+      () => repository.fetchRecentSearches(limit: any(named: 'limit')),
     );
   });
 
-  test('keeps only the most recent entries', () {
-    for (var i = 0; i < RecentSearchesNotifier.maxEntries + 2; i++) {
-      notifier.record(_search('$i' * 8));
-    }
+  test('reads the newest searches once signed in', () async {
+    final container = makeContainer();
 
-    expect(ids(), hasLength(RecentSearchesNotifier.maxEntries));
-    expect(ids().first, 'PI-66666666');
+    expect(await container.read(recentSearchesProvider.future), _searches);
+    verify(
+      () => repository.fetchRecentSearches(limit: recentSearchesLimit),
+    ).called(1);
   });
 }

@@ -32,7 +32,8 @@ They are kept so the reason survives the people who were in the room.
 | [0025](0025-disputes-write-for-real.md) | Disputes write for real, on a closed case | Accepted; greyed-out Raise superseded by 0026 |
 | [0026](0026-dispute-section-on-a-closed-case.md) | The dispute section appears on a closed case only | Accepted |
 | [0027](0027-case-data-re-read-on-every-visit.md) | Case data is re-read on every visit | Accepted |
-| [0028](0028-dashboard-counts-from-the-metrics-endpoint.md) | Home counts come from the metrics endpoint | Accepted |
+| [0028](0028-dashboard-counts-from-the-metrics-endpoint.md) | Home counts come from the metrics endpoint | Accepted; search-history note superseded by 0029 |
+| [0029](0029-recent-searches-from-search-history.md) | Recent searches come from the server's search history | Accepted |
 
 ## Writing one
 

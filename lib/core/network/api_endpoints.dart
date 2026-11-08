@@ -55,6 +55,9 @@ abstract final class ApiEndpoints {
   // Search across cases and users, narrowed with `flag` (`case`, `staff`).
   static const String search = '/search';
 
+  // The signed-in user's saved searches; tracking a case while signed in adds one.
+  static const String searchHistory = '$search/history';
+
   // Payment: the invoice a new case creates, and the Paystack transaction that
   // settles it.
 

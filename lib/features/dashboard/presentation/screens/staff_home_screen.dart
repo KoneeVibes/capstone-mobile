@@ -9,6 +9,7 @@ import '../../../../core/utils/error/async_value_x.dart';
 import '../../../../shared/widgets/on_tab_return.dart';
 import '../../domain/entities/queue_overview.dart';
 import '../providers/queue_overview_provider.dart';
+import '../widgets/home_top_bar.dart';
 import '../widgets/overview_card.dart';
 import '../widgets/overview_failure.dart';
 import '../widgets/staff_greeting_banner.dart';
@@ -23,6 +24,7 @@ class StaffHomeScreen extends ConsumerWidget {
   const StaffHomeScreen({
     required this.queue,
     required this.trackingLookupRouteName,
+    required this.notificationBell,
     super.key,
   });
 
@@ -31,32 +33,42 @@ class StaffHomeScreen extends ConsumerWidget {
 
   final String trackingLookupRouteName;
 
+  /// The notifications feature's bell, handed in by the router.
+  final Widget notificationBell;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(queueOverviewProvider.future),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSizing.screenPadding),
-            children: [
-              const StaffGreetingBanner(),
-              const SizedBox(height: AppSizing.space24),
-              const Text('Overview', style: AppTextStyles.titleMedium),
-              const SizedBox(height: AppSizing.space12),
-              const _Overview(),
-              const SizedBox(height: AppSizing.space24),
-              // The tracking lookup / property search, as a card between the
-              // overview and the queue.
-              TrackingBanner(
-                showIllustration: false,
-                onTap: () => context.pushNamed(trackingLookupRouteName),
+        child: Column(
+          children: [
+            HomeTopBar(bell: notificationBell),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => ref.refresh(queueOverviewProvider.future),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppSizing.screenPadding),
+                  children: [
+                    const StaffGreetingBanner(),
+                    const SizedBox(height: AppSizing.space24),
+                    const Text('Overview', style: AppTextStyles.titleMedium),
+                    const SizedBox(height: AppSizing.space12),
+                    const _Overview(),
+                    const SizedBox(height: AppSizing.space24),
+                    // The tracking lookup / property search, as a card between the
+                    // overview and the queue.
+                    TrackingBanner(
+                      showIllustration: false,
+                      onTap: () => context.pushNamed(trackingLookupRouteName),
+                    ),
+                    const SizedBox(height: AppSizing.space24),
+                    queue,
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSizing.space24),
-              queue,
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

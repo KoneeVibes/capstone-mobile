@@ -10,6 +10,7 @@ import '../../../../shared/widgets/on_tab_return.dart';
 import '../../domain/entities/case_overview.dart';
 import '../providers/case_overview_provider.dart';
 import '../providers/recent_searches_provider.dart';
+import '../widgets/home_top_bar.dart';
 import '../widgets/overview_card.dart';
 import '../widgets/overview_failure.dart';
 import '../widgets/recent_searches_section.dart';
@@ -24,6 +25,7 @@ class ClientHomeScreen extends ConsumerWidget {
   const ClientHomeScreen({
     required this.searchPropertyRouteName,
     required this.progressRouteName,
+    required this.notificationBell,
     super.key,
   });
 
@@ -32,35 +34,45 @@ class ClientHomeScreen extends ConsumerWidget {
   /// Takes a `trackingId` path parameter.
   final String progressRouteName;
 
+  /// The notifications feature's bell, handed in by the router.
+  final Widget notificationBell;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => Future.wait([
-            ref.refresh(caseOverviewProvider.future),
-            ref.refresh(recentSearchesProvider.future),
-          ]),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSizing.screenPadding),
-            children: [
-              TrackingBanner(
-                onTap: () => context.goNamed(searchPropertyRouteName),
-              ),
-              const SizedBox(height: AppSizing.space24),
-              const Text('Overview', style: AppTextStyles.titleMedium),
-              const SizedBox(height: AppSizing.space12),
-              const _Overview(),
-              const SizedBox(height: AppSizing.space24),
-              RecentSearchesSection(
-                onSelected: (search) => context.goNamed(
-                  progressRouteName,
-                  pathParameters: {'trackingId': search.trackingId},
+        child: Column(
+          children: [
+            HomeTopBar(bell: notificationBell),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => Future.wait([
+                  ref.refresh(caseOverviewProvider.future),
+                  ref.refresh(recentSearchesProvider.future),
+                ]),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppSizing.screenPadding),
+                  children: [
+                    TrackingBanner(
+                      onTap: () => context.goNamed(searchPropertyRouteName),
+                    ),
+                    const SizedBox(height: AppSizing.space24),
+                    const Text('Overview', style: AppTextStyles.titleMedium),
+                    const SizedBox(height: AppSizing.space12),
+                    const _Overview(),
+                    const SizedBox(height: AppSizing.space24),
+                    RecentSearchesSection(
+                      onSelected: (search) => context.goNamed(
+                        progressRouteName,
+                        pathParameters: {'trackingId': search.trackingId},
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

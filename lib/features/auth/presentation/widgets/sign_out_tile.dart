@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_confirm_dialog.dart';
+import '../../../../shared/widgets/app_menu_tile.dart';
 import '../providers/auth_session_provider.dart';
 
-/// "Log out", behind the designed confirmation. The router moves the user to
-/// login once the session clears.
-class SignOutButton extends ConsumerStatefulWidget {
-  const SignOutButton({super.key});
+/// The Profile tab's "Sign out" row, behind the designed confirmation. The
+/// router moves the user to login once the session clears.
+class SignOutTile extends ConsumerStatefulWidget {
+  const SignOutTile({super.key});
 
   @override
-  ConsumerState<SignOutButton> createState() => _SignOutButtonState();
+  ConsumerState<SignOutTile> createState() => _SignOutTileState();
 }
 
-class _SignOutButtonState extends ConsumerState<SignOutButton> {
+class _SignOutTileState extends ConsumerState<SignOutTile> {
   bool _busy = false;
 
   Future<void> _signOut() async {
@@ -38,12 +38,11 @@ class _SignOutButtonState extends ConsumerState<SignOutButton> {
 
   @override
   Widget build(BuildContext context) {
-    return AppButton(
-      label: 'Log out',
-      variant: AppButtonVariant.secondary,
+    return AppMenuTile(
       icon: Icons.logout,
-      isLoading: _busy,
-      onPressed: _signOut,
+      label: 'Sign out',
+      busy: _busy,
+      onTap: _signOut,
     );
   }
 }

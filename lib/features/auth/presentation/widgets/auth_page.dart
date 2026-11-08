@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import 'auth_back_button.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 
 /// The plain auth layout: back button, title, subtitle, then [children], with
 /// an optional [footer] pinned to the bottom while there is room for it.
@@ -44,7 +44,7 @@ class AuthPage extends StatelessWidget {
                     if (showBack) ...[
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: AuthBackButton(onPressed: onBack),
+                        child: AppBackButton(onPressed: onBack),
                       ),
                       const SizedBox(height: AppSizing.space24),
                     ],

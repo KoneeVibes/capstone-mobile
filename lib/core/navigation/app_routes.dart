@@ -97,6 +97,25 @@ abstract final class AppRoutes {
   static const String clientProfileName = 'clientProfile';
   static const String clientProfilePath = '/client/profile';
 
+  // The client's account screens: top-level, so they open full screen.
+  static const String clientEditProfileName = 'clientEditProfile';
+  static const String clientEditProfilePath = '/client/account/edit';
+
+  static const String clientChangePasswordName = 'clientChangePassword';
+  static const String clientChangePasswordPath = '/client/account/password';
+
+  static const String clientChangePasswordResetName =
+      'clientChangePasswordReset';
+  static const String clientChangePasswordResetPath =
+      '/client/account/password/reset';
+
+  static const String clientPasswordChangedName = 'clientPasswordChanged';
+  static const String clientPasswordChangedPath =
+      '/client/account/password/done';
+
+  static const String clientNotificationsName = 'clientNotifications';
+  static const String clientNotificationsPath = '/client/notifications';
+
   // Staff branch. `/staff` redirects to the dashboard tab.
   static const String staffHomeName = 'staffHome';
   static const String staffHomePath = '/staff';
@@ -145,6 +164,23 @@ abstract final class AppRoutes {
 
   static const String staffProfileName = 'staffProfile';
   static const String staffProfilePath = '/staff/profile';
+
+  // As the client's account screens.
+  static const String staffEditProfileName = 'staffEditProfile';
+  static const String staffEditProfilePath = '/staff/account/edit';
+
+  static const String staffChangePasswordName = 'staffChangePassword';
+  static const String staffChangePasswordPath = '/staff/account/password';
+
+  static const String staffChangePasswordResetName = 'staffChangePasswordReset';
+  static const String staffChangePasswordResetPath =
+      '/staff/account/password/reset';
+
+  static const String staffPasswordChangedName = 'staffPasswordChanged';
+  static const String staffPasswordChangedPath = '/staff/account/password/done';
+
+  static const String staffNotificationsName = 'staffNotifications';
+  static const String staffNotificationsPath = '/staff/notifications';
 
   // Legal pages, open to signed-out users.
   static const String privacyPolicyName = 'privacyPolicy';

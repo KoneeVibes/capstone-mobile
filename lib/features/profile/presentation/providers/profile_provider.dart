@@ -6,8 +6,8 @@ import '../../domain/entities/profile_draft.dart';
 import '../../domain/entities/user_profile.dart';
 import 'profile_providers.dart';
 
-/// The signed-in user's profile. One user's data, so a new session starts
-/// from nothing.
+/// The signed-in user's profile. Auto-disposed with the signed-in screens, so
+/// the next user never sees this one's while theirs loads.
 class ProfileNotifier extends AsyncNotifier<UserProfile> {
   @override
   Future<UserProfile> build() async {
@@ -21,7 +21,9 @@ class ProfileNotifier extends AsyncNotifier<UserProfile> {
     final result = await ref
         .read(profileRepositoryProvider)
         .updateProfile(draft);
-    if (result case Ok(:final value)) state = AsyncData(value);
+    if (result case Ok(:final value) when ref.mounted) {
+      state = AsyncData(value);
+    }
     return result;
   }
 
@@ -29,15 +31,7 @@ class ProfileNotifier extends AsyncNotifier<UserProfile> {
       ref.read(profileRepositoryProvider).deleteAccount();
 }
 
-final profileProvider = AsyncNotifierProvider<ProfileNotifier, UserProfile>(
-  ProfileNotifier.new,
-);
-
-extension SignedInProfileX on AsyncValue<UserProfile> {
-  /// The loaded profile, unless it is the last user's, kept as the previous
-  /// value while the next user's loads.
-  UserProfile? valueFor(SessionUser? user) {
-    final profile = value;
-    return profile != null && profile.id == user?.id ? profile : null;
-  }
-}
+final profileProvider =
+    AsyncNotifierProvider.autoDispose<ProfileNotifier, UserProfile>(
+      ProfileNotifier.new,
+    );

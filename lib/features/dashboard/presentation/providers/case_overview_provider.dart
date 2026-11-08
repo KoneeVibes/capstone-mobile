@@ -7,7 +7,9 @@ import 'dashboard_providers.dart';
 
 /// The client Home's counts. One user's data, so a new session starts empty;
 /// a newly filed case recounts.
-final caseOverviewProvider = FutureProvider<CaseOverview>((ref) async {
+final caseOverviewProvider = FutureProvider.autoDispose<CaseOverview>((
+  ref,
+) async {
   if (ref.watch(sessionProvider) == null) return untilSignedIn();
   ref.watch(casesChangedProvider);
   final result = await ref

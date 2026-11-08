@@ -37,6 +37,7 @@ They are kept so the reason survives the people who were in the room.
 | [0030](0030-profile-from-the-profile-endpoint.md) | The Profile tab reads and writes `/profile` | Accepted |
 | [0031](0031-notifications-built-as-a-mock.md) | Notifications, built as a mock | Accepted |
 | [0032](0032-signed-in-password-reset-and-account-deletion.md) | Signed-in password reset by code; account deletion stubbed | Accepted |
+| [0033](0033-per-user-state-is-auto-disposed.md) | Per-user state is auto-disposed | Accepted |
 
 ## Writing one
 

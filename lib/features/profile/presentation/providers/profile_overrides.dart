@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/misc.dart';
 
-import '../../../../core/navigation/app_session.dart';
 import '../../../../core/session/signed_in_name.dart';
 import 'profile_provider.dart';
 
@@ -8,9 +7,6 @@ import 'profile_provider.dart';
 /// dashboard greets by name without importing this feature.
 final List<Override> profileOverrides = [
   signedInFirstNameProvider.overrideWith(
-    (ref) => ref
-        .watch(profileProvider)
-        .valueFor(ref.watch(sessionProvider))
-        ?.firstName,
+    (ref) => ref.watch(profileProvider).value?.firstName,
   ),
 ];

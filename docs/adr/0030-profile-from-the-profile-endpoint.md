@@ -30,9 +30,8 @@ since ADR 0016.
 - **A `profile` feature owns the record.** `profileProvider` is an
   `AsyncNotifier` over `GET /profile`. Like every provider of one user's data,
   it waits while signed out. A save puts the server's record straight into
-  state, with no re-read. `valueFor(session)` hides the previous user's
-  profile, which Riverpod keeps as the previous value while the next user's
-  loads.
+  state, with no re-read. It is auto-disposed, so the next user never sees
+  this one's profile (ADR 0033).
 - **The email comes from the session**, as typed at sign-in. A session stored
   before the app kept the email shows no email line and no Reset password row.
 - **Update Profile sends only what changed.** If nothing changed, it closes

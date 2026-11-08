@@ -31,7 +31,7 @@ class TrackingNotifier extends AsyncNotifier<TrackedCase?> {
     final result = await ref
         .read(dashboardRepositoryProvider)
         .trackCase(AppFormatters.trackingId(input));
-    if (generation != _generation) return;
+    if (!ref.mounted || generation != _generation) return;
 
     result.fold(
       onOk: (value) {
@@ -50,6 +50,7 @@ class TrackingNotifier extends AsyncNotifier<TrackedCase?> {
   }
 }
 
-final trackingProvider = AsyncNotifierProvider<TrackingNotifier, TrackedCase?>(
-  TrackingNotifier.new,
-);
+final trackingProvider =
+    AsyncNotifierProvider.autoDispose<TrackingNotifier, TrackedCase?>(
+      TrackingNotifier.new,
+    );

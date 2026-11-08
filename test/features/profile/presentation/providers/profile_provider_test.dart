@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 import 'package:propertyintelmobileapp/core/session/signed_in_name.dart';
+import 'package:propertyintelmobileapp/core/utils/error/error_handler.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/profile/domain/entities/profile_draft.dart';
 import 'package:propertyintelmobileapp/features/profile/domain/entities/user_profile.dart';
@@ -79,15 +82,56 @@ void main() {
     verify(() => repository.fetchProfile()).called(1);
   });
 
-  test('ignores a profile that is not the signed-in user\'s', () {
-    const other = SessionUser(id: 'user-2', role: AppRole.client);
-
-    expect(const AsyncData(profile).valueFor(other), isNull);
-    expect(
-      const AsyncData(
-        profile,
-      ).valueFor(const SessionUser(id: 'user-1', role: AppRole.staff)),
-      profile,
+  test("the next user never sees the last one's profile", () async {
+    final user = NotifierProvider<_Session, SessionUser?>(_Session.new);
+    final container = ProviderContainer(
+      overrides: [
+        profileRepositoryProvider.overrideWithValue(repository),
+        ...profileOverrides,
+        sessionProvider.overrideWith((ref) => ref.watch(user)),
+      ],
     );
+    addTearDown(container.dispose);
+
+    // User A, with the Profile tab and the staff greeting on screen.
+    var screens = [
+      container.listen(profileProvider, (_, _) {}),
+      container.listen(signedInFirstNameProvider, (_, _) {}),
+    ];
+    expect(await container.read(profileProvider.future), profile);
+    expect(container.read(signedInFirstNameProvider), 'Ada');
+
+    // Sign-out: the session clears and the signed-in screens unmount.
+    container.read(user.notifier).set(null);
+    for (final screen in screens) {
+      screen.close();
+    }
+    await container.pump();
+
+    // User B signs in; their profile has not arrived yet, or fails.
+    final pending = Completer<Result<UserProfile>>();
+    when(() => repository.fetchProfile()).thenAnswer((_) => pending.future);
+    container
+        .read(user.notifier)
+        .set(const SessionUser(id: 'user-2', role: AppRole.staff));
+    screens = [
+      container.listen(profileProvider, (_, _) {}),
+      container.listen(signedInFirstNameProvider, (_, _) {}),
+    ];
+
+    expect(container.read(profileProvider).value, isNull);
+    expect(container.read(signedInFirstNameProvider), isNull);
+
+    pending.complete(Err(ErrorHandler.from(Exception('offline'))));
+    await container.pump();
+    expect(container.read(profileProvider).hasError, isTrue);
+    expect(container.read(profileProvider).value, isNull);
   });
+}
+
+class _Session extends Notifier<SessionUser?> {
+  @override
+  SessionUser? build() => const SessionUser(id: 'user-1', role: AppRole.staff);
+
+  void set(SessionUser? user) => state = user;
 }

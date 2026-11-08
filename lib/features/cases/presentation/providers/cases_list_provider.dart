@@ -99,9 +99,11 @@ class CasesListNotifier extends AsyncNotifier<CasesListState> {
 
   /// Reloads. Backs pull-to-refresh, the error-state retry and [revisit]; a
   /// reload already under way is joined, not repeated.
-  Future<void> refresh() => _reloading ??= AsyncValue.guard(
-    _load,
-  ).then((value) => state = value).whenComplete(() => _reloading = null);
+  Future<void> refresh() => _reloading ??= AsyncValue.guard(_load)
+      .then((value) {
+        if (ref.mounted) state = value;
+      })
+      .whenComplete(() => _reloading = null);
 
   /// Re-reads on coming back to the list, so the other role's changes show.
   /// The rows stay on screen meanwhile. Skipped until a first load has landed:
@@ -113,6 +115,6 @@ class CasesListNotifier extends AsyncNotifier<CasesListState> {
 }
 
 final casesListProvider =
-    AsyncNotifierProvider<CasesListNotifier, CasesListState>(
+    AsyncNotifierProvider.autoDispose<CasesListNotifier, CasesListState>(
       CasesListNotifier.new,
     );

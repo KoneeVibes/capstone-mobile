@@ -185,7 +185,7 @@ class _SummaryState extends ConsumerState<_Summary> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final profile = ref.watch(profileProvider);
-    final value = profile.valueFor(session);
+    final value = profile.value;
 
     if (value != null) {
       return _Details(

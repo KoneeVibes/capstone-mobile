@@ -58,19 +58,29 @@ detail notifiers (`replaceCase`, `replaceWith`). Re-fetching leaves the screen
 contradicting its own confirmation for a round trip — about 23 seconds on a cold
 start of the hosting. Invalidate only when there is no record to put back.
 
-### One user's data watches the session
+### One user's data watches the session and is auto-disposed
 
 Providers are app-wide singletons, so a list loaded for one user would still be
-there for the next. Every provider holding one user's data watches the session
-in `build`:
+there for the next. Every provider holding one user's data does two things:
 
 ```dart
-ref.watch(sessionProvider); // a new user starts from nothing
+final casesListProvider = AsyncNotifierProvider.autoDispose<...>(...);
+
+// in build:
+if (ref.watch(sessionProvider) == null) return untilSignedIn();
 ```
 
-A sign-out or a different sign-in rebuilds it. Today that covers the cases
-list and detail, the staff list, tracking and recent searches. New
-user-scoped providers must do the same.
+Watching the session stops it fetching while signed out. **That alone is not
+enough**: a rebuild caused by a watched dependency keeps the previous value, in
+loading *and* in error, so the next user would see the last one's data until
+theirs arrived, or for good if their first load failed. `autoDispose` is what
+clears it. Sign-out unmounts the signed-in screens, nothing listens, and the
+state is thrown away ([ADR 0033](adr/0033-per-user-state-is-auto-disposed.md)).
+
+So: no app-level widget or non-auto-dispose provider may watch per-user state
+(a seam over it, like `signedInFirstNameProvider`, is auto-dispose too). Any
+write that touches another screen's per-user provider checks `ref.exists`
+first, and a notifier checks `ref.mounted` after every `await`.
 
 ### Family notifiers take their argument through the constructor
 

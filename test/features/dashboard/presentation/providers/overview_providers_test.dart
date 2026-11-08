@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 import 'package:propertyintelmobileapp/core/session/cases_changed.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
 import 'package:propertyintelmobileapp/features/dashboard/domain/entities/case_overview.dart';
@@ -73,4 +76,47 @@ void main() {
 
     verify(() => repository.fetchStaffOverview()).called(2);
   });
+
+  test("the next user never sees the last one's counts", () async {
+    final user = NotifierProvider<_Session, SessionUser?>(_Session.new);
+    final container = ProviderContainer(
+      overrides: [
+        dashboardRepositoryProvider.overrideWithValue(repository),
+        sessionProvider.overrideWith((ref) => ref.watch(user)),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    var home = container.listen(caseOverviewProvider, (_, _) {});
+    expect(await container.read(caseOverviewProvider.future), _client);
+
+    container.read(user.notifier).set(null);
+    home.close();
+    await container.pump();
+
+    final pending = Completer<Result<CaseOverview>>();
+    when(
+      () => repository.fetchClientOverview(),
+    ).thenAnswer((_) => pending.future);
+    container
+        .read(user.notifier)
+        .set(const SessionUser(id: 'user-2', role: AppRole.client));
+    home = container.listen(caseOverviewProvider, (_, _) {});
+
+    expect(container.read(caseOverviewProvider).value, isNull);
+    pending.complete(
+      const Ok(
+        CaseOverview(total: 0, reportsReady: 0, inProgress: 0, needsInput: 0),
+      ),
+    );
+    expect((await container.read(caseOverviewProvider.future)).total, 0);
+    home.close();
+  });
+}
+
+class _Session extends Notifier<SessionUser?> {
+  @override
+  SessionUser? build() => const SessionUser(id: 'user-1', role: AppRole.client);
+
+  void set(SessionUser? user) => state = user;
 }

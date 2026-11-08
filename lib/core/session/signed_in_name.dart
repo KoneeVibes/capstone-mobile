@@ -5,4 +5,4 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// A seam like `sessionProvider`: core declares it empty, and the profile
 /// feature fills it at the composition root (`profileOverrides`), so the
 /// dashboard can greet by name without importing profile (ADR 0030).
-final signedInFirstNameProvider = Provider<String?>((ref) => null);
+final signedInFirstNameProvider = Provider.autoDispose<String?>((ref) => null);

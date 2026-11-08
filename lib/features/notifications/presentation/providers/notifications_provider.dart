@@ -6,11 +6,12 @@ import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
 
 /// A fresh mock per sign-in, seeded for the role (ADR 0031).
-final notificationsRepositoryProvider = Provider<NotificationsRepository>(
-  (ref) => MockNotificationsRepository(
-    ref.watch(sessionProvider)?.role ?? AppRole.client,
-  ),
-);
+final notificationsRepositoryProvider =
+    Provider.autoDispose<NotificationsRepository>(
+      (ref) => MockNotificationsRepository(
+        ref.watch(sessionProvider)?.role ?? AppRole.client,
+      ),
+    );
 
 class NotificationsNotifier extends AsyncNotifier<List<AppNotification>> {
   @override
@@ -30,23 +31,24 @@ class NotificationsNotifier extends AsyncNotifier<List<AppNotification>> {
     } on Object {
       return; // The screen shows the load failure; nothing to mark.
     }
-    if (current.every((item) => item.isRead)) return;
+    if (!ref.mounted || current.every((item) => item.isRead)) return;
     final result = await ref
         .read(notificationsRepositoryProvider)
         .markAllRead();
-    if (result.isOk) {
+    if (result.isOk && ref.mounted) {
       state = AsyncData([for (final item in current) item.markRead()]);
     }
   }
 }
 
 final notificationsProvider =
-    AsyncNotifierProvider<NotificationsNotifier, List<AppNotification>>(
-      NotificationsNotifier.new,
-    );
+    AsyncNotifierProvider.autoDispose<
+      NotificationsNotifier,
+      List<AppNotification>
+    >(NotificationsNotifier.new);
 
 /// Whether the bell shows its dot.
-final hasUnreadNotificationsProvider = Provider<bool>(
+final hasUnreadNotificationsProvider = Provider.autoDispose<bool>(
   (ref) =>
       ref.watch(notificationsProvider).value?.any((item) => !item.isRead) ??
       false,

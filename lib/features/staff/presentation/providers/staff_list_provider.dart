@@ -91,6 +91,7 @@ class StaffListNotifier extends AsyncNotifier<StaffListState> {
           page: current.meta!.nextPage,
           perPage: AppConstants.defaultPageSize,
         );
+    if (!ref.mounted) return;
 
     state = AsyncData(
       result.fold(
@@ -106,11 +107,12 @@ class StaffListNotifier extends AsyncNotifier<StaffListState> {
 
   /// Reloads from page one. Backs pull-to-refresh and the error-state retry.
   Future<void> refresh() async {
-    state = await AsyncValue.guard(_loadFirstPage);
+    final next = await AsyncValue.guard(_loadFirstPage);
+    if (ref.mounted) state = next;
   }
 }
 
 final staffListProvider =
-    AsyncNotifierProvider<StaffListNotifier, StaffListState>(
+    AsyncNotifierProvider.autoDispose<StaffListNotifier, StaffListState>(
       StaffListNotifier.new,
     );

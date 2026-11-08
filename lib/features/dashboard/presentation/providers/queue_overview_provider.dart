@@ -7,7 +7,9 @@ import 'dashboard_providers.dart';
 
 /// The two counts above the staff queue. One user's data, so a new session
 /// starts empty.
-final queueOverviewProvider = FutureProvider<QueueOverview>((ref) async {
+final queueOverviewProvider = FutureProvider.autoDispose<QueueOverview>((
+  ref,
+) async {
   if (ref.watch(sessionProvider) == null) return untilSignedIn();
   ref.watch(casesChangedProvider);
   final result = await ref

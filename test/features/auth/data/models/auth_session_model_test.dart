@@ -27,6 +27,16 @@ void main() {
       expect(roleOf('guest-client'), AppRole.client);
     });
 
+    test('only a guest token makes a guest', () {
+      bool isGuest(String type) => AuthSessionModel.fromToken(
+        tokenWith({'id': 'u', 'type': type, 'exp': 1}),
+      ).user.isGuest;
+
+      expect(isGuest('guest-client'), isTrue);
+      expect(isGuest('registered-client'), isFalse);
+      expect(isGuest('staff'), isFalse);
+    });
+
     test('refuses a type this build does not know', () {
       expect(
         () => AuthSessionModel.fromToken(
@@ -38,13 +48,13 @@ void main() {
 
     test('rejects a token without an id or expiry', () {
       expect(
-        () => AuthSessionModel.fromToken(
-          tokenWith({'type': 'staff', 'exp': 1}),
-        ),
+        () =>
+            AuthSessionModel.fromToken(tokenWith({'type': 'staff', 'exp': 1})),
         throwsFormatException,
       );
       expect(
-        () => AuthSessionModel.fromToken(tokenWith({'id': 'u', 'type': 'staff'})),
+        () =>
+            AuthSessionModel.fromToken(tokenWith({'id': 'u', 'type': 'staff'})),
         throwsFormatException,
       );
     });

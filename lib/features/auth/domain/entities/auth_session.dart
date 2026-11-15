@@ -36,6 +36,7 @@ class AuthSession extends Equatable {
     role: accountType.role,
     staffRole: staffRole,
     email: email,
+    isGuest: accountType == AccountType.guestClient,
   );
 
   AuthSession withStaffRole(StaffRole? role) => _copy(staffRole: role);

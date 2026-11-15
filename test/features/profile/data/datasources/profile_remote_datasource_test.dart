@@ -68,4 +68,18 @@ void main() {
     final form = captured[1] as FormData;
     expect(form.fields.single.key, 'phone');
   });
+
+  test('DELETEs /profile, which answers with no record', () async {
+    when(() => client.delete<Object?>(any())).thenAnswer(
+      (_) async => const ApiResponse<Object?>(
+        status: 'success',
+        message: 'Profile deleted successfully.',
+        data: null,
+      ),
+    );
+
+    await source.deleteAccount();
+
+    verify(() => client.delete<Object?>('/profile')).called(1);
+  });
 }

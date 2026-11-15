@@ -26,6 +26,7 @@ class SessionUser extends Equatable {
     required this.role,
     this.staffRole,
     this.email,
+    this.isGuest = false,
   });
 
   final String id;
@@ -39,6 +40,9 @@ class SessionUser extends Equatable {
   /// session restored from a build that did not store it yet.
   final StaffRole? staffRole;
 
+  /// A `guest-client` token: the client shell, but no account of its own.
+  final bool isGuest;
+
   bool get isStaff => role.isStaff;
 
   bool get isClient => role.isClient;
@@ -49,8 +53,12 @@ class SessionUser extends Equatable {
   /// Paying is the applicant's step; staff never pay for a case.
   bool get canPayForCases => isClient;
 
+  /// `DELETE /profile` serves registered clients only; a super-admin removes
+  /// staff (ADR 0035).
+  bool get canDeleteOwnAccount => isClient && !isGuest;
+
   @override
-  List<Object?> get props => [id, role, staffRole, email];
+  List<Object?> get props => [id, role, staffRole, email, isGuest];
 }
 
 // The providers below are the seam between core and the auth feature. Core

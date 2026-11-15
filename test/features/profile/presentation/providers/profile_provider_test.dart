@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
+import 'package:propertyintelmobileapp/core/session/account_closed.dart';
 import 'package:propertyintelmobileapp/core/session/signed_in_name.dart';
 import 'package:propertyintelmobileapp/core/utils/error/error_handler.dart';
 import 'package:propertyintelmobileapp/core/utils/result.dart';
@@ -84,6 +85,52 @@ void main() {
     expect(result.valueOrNull, saved);
     expect(container.read(profileProvider).value, saved);
     verify(() => repository.fetchProfile()).called(1);
+  });
+
+  group('deleting the account', () {
+    ProviderContainer withHandler(void Function() onClosed) {
+      final container = ProviderContainer(
+        overrides: [
+          profileRepositoryProvider.overrideWithValue(repository),
+          signedIn,
+          accountClosedHandlerProvider.overrideWithValue(
+            () async => onClosed(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container..listen(profileProvider, (_, _) {});
+    }
+
+    test('ends the session once the server has deleted it', () async {
+      when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Ok(null));
+      var ended = 0;
+      final container = withHandler(() => ended++);
+
+      final result = await container
+          .read(profileProvider.notifier)
+          .deleteAccount();
+
+      expect(result.isOk, isTrue);
+      expect(ended, 1);
+    });
+
+    test('a refusal leaves the session alone', () async {
+      when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => Err(ErrorHandler.from(Exception('offline'))));
+      var ended = 0;
+      final container = withHandler(() => ended++);
+
+      final result = await container
+          .read(profileProvider.notifier)
+          .deleteAccount();
+
+      expect(result.isErr, isTrue);
+      expect(ended, 0);
+    });
   });
 
   test("the next user never sees the last one's profile", () async {

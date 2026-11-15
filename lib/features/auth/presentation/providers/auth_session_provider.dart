@@ -72,6 +72,17 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSession?> {
     ref.read(sessionEndNoticeProvider.notifier).raise(SessionEndNotice.expired);
     await ref.read(authRepositoryProvider).clearSession();
   }
+
+  /// The account behind the token is gone, so there is nothing to sign out
+  /// of on the server: only the stored session is cleared.
+  Future<void> endAfterAccountDeletion() async {
+    if (state.value == null) return;
+    state = const AsyncData(null);
+    ref
+        .read(sessionEndNoticeProvider.notifier)
+        .raise(SessionEndNotice.accountDeleted);
+    await ref.read(authRepositoryProvider).clearSession();
+  }
 }
 
 final authSessionProvider =
@@ -79,8 +90,9 @@ final authSessionProvider =
       AuthSessionNotifier.new,
     );
 
-/// Why the last session ended: a 401, or the user logging out.
-enum SessionEndNotice { expired, signedOut }
+/// Why the last session ended: a 401, the user logging out, or the user
+/// deleting their account.
+enum SessionEndNotice { expired, signedOut, accountDeleted }
 
 /// Raised when a session ends, so the login screen can say why the user is
 /// there. Consumed once.

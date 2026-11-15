@@ -43,6 +43,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.showFailure(AppFailures.sessionExpired);
         case SessionEndNotice.signedOut:
           context.showMessage("You've been logged out.");
+        case SessionEndNotice.accountDeleted:
+          context.showMessage('Your account has been deleted.');
         case null:
           break;
       }

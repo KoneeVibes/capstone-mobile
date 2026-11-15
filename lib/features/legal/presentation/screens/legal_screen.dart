@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/error/async_value_x.dart';
+import '../../../../core/utils/link_opener.dart';
+import '../../../../core/utils/result.dart';
+import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_shimmer.dart';
 import '../../../../shared/widgets/app_state_view.dart';
 import '../../domain/legal_document.dart';
@@ -37,10 +40,16 @@ class LegalScreen extends ConsumerWidget {
             h2: AppTextStyles.titleSmall,
             p: AppTextStyles.bodyMedium,
             listBullet: AppTextStyles.bodyMedium,
-            // The contact details autolink but open nothing; keep them plain.
-            a: AppTextStyles.bodyMedium,
+            a: AppTextStyles.link,
             blockSpacing: AppSizing.space12,
           ),
+          // The contact details: an email address and the website.
+          onTapLink: (_, href, _) async {
+            if (href == null) return;
+            final result = await ref.read(linkOpenerProvider).open(href);
+            if (!context.mounted) return;
+            if (result case Err(:final failure)) context.showFailure(failure);
+          },
         ),
         loading: () => const _LegalSkeleton(),
         error: (failure) => AppStateView.failure(

@@ -31,7 +31,7 @@ class LinkOpener {
   /// document link the API sent broken is not something a retry will fix.
   Future<Result<void>> open(String url) async {
     final uri = Uri.tryParse(url.trim());
-    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+    if (uri == null || !_isOpenable(uri)) {
       return const Err<void>(AppFailures.linkNotOpenable);
     }
 
@@ -48,14 +48,23 @@ class LinkOpener {
   }
 }
 
+/// Schemes that address something without a host: `mailto:a@b.c`, `tel:123`.
+const Set<String> _hostlessSchemes = {'mailto', 'tel'};
+
+bool _isOpenable(Uri uri) {
+  if (!uri.hasScheme) return false;
+  if (uri.hasAuthority) return true;
+  return _hostlessSchemes.contains(uri.scheme) && uri.path.isNotEmpty;
+}
+
 /// Opens through url_launcher, in whatever app the device uses for the link.
 class UrlLauncherBackend implements LinkLauncherBackend {
   const UrlLauncherBackend();
 
   @override
   Future<bool> launch(Uri uri) =>
-      // externalApplication rather than an in-app web view: these are PDFs, and
-      // a device's own viewer handles them far better than a WebView does.
+      // externalApplication rather than an in-app web view: a PDF, an email
+      // address or a phone number belongs in the device's own app for it.
       launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 

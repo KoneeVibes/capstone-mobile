@@ -57,8 +57,32 @@ void main() {
     expect(result.failureOrNull, AppFailures.linkNotOpenable);
   });
 
+  group('opens a link that has no host', () {
+    for (final url in const [
+      'mailto:info@capstoneglobalhq.com',
+      'tel:+2348000000000',
+    ]) {
+      test(url, () async {
+        when(() => backend.launch(any())).thenAnswer((_) async => true);
+
+        final result = await opener.open(url);
+
+        expect(result.isOk, isTrue);
+        verify(() => backend.launch(Uri.parse(url))).called(1);
+      });
+    }
+  });
+
   group('rejects a URL it cannot use, without calling the plugin', () {
-    for (final url in const ['', '   ', 'not a url', '/relative/path.pdf']) {
+    for (final url in const [
+      '',
+      '   ',
+      'not a url',
+      '/relative/path.pdf',
+      'mailto:',
+      'tel:',
+      'javascript:alert(1)',
+    ]) {
       test('"$url"', () async {
         final result = await opener.open(url);
 

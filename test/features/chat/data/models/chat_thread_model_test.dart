@@ -42,7 +42,7 @@ void main() {
     expect(fresh.messages, isEmpty);
   });
 
-  test('reads the message a send returns', () {
+  test('reads the message a send returns, which has no sender name', () {
     final sent = ChatThreadModel.sentFromData(const <String, dynamic>{
       'caseId': 'case-1',
       'message': {
@@ -54,7 +54,10 @@ void main() {
       },
     });
 
-    expect(sent, officerMessage);
+    expect(sent.id, officerMessage.id);
+    expect(sent.senderId, officerId);
+    expect(sent.sentAt, officerMessage.sentAt);
+    expect(sent.senderName, isNull);
   });
 
   test('refuses a payload that is not a case or a message', () {

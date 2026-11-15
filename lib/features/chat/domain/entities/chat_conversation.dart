@@ -53,9 +53,9 @@ class ChatConversation extends Equatable {
   bool get canClose =>
       isAssignee && thread.stage == ChatCaseStage.pendingInformation;
 
-  /// Messages carry no name. A client sees everyone else as Property Intel;
-  /// staff see the holder as the case officer and anyone else as the
-  /// applicant.
+  /// A client sees everyone else as Property Intel; staff see the holder as
+  /// the case officer and anyone else as the applicant, each by the name the
+  /// message carries when it has one.
   ChatAuthor authorOf(ChatMessage message) {
     if (message.senderId == viewerId) return ChatAuthor.me;
     if (!viewerIsStaff) return ChatAuthor.propertyIntel;

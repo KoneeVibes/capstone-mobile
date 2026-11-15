@@ -66,10 +66,6 @@ class ChatMessageBubble extends StatelessWidget {
                       )
                     : AppTextStyles.bodyLarge,
               ),
-              if (!isMine) ...[
-                const SizedBox(height: AppSizing.space8),
-                const _MessageGlyphs(),
-              ],
             ],
           ),
         ),
@@ -89,30 +85,5 @@ class ChatMessageBubble extends StatelessWidget {
     return isToday
         ? AppFormatters.time(sentAt)
         : AppFormatters.dateTime(sentAt);
-  }
-}
-
-/// The read-aloud and copy affordances the design shows under a reply. Drawn
-/// from the design, not yet wired.
-class _MessageGlyphs extends StatelessWidget {
-  const _MessageGlyphs();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Icon(
-          Icons.volume_up_outlined,
-          size: AppSizing.iconSm,
-          color: AppColors.textTertiary,
-        ),
-        SizedBox(width: AppSizing.space16),
-        Icon(
-          Icons.content_copy_outlined,
-          size: AppSizing.iconSm,
-          color: AppColors.textTertiary,
-        ),
-      ],
-    );
   }
 }

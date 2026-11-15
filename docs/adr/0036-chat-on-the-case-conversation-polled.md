@@ -13,8 +13,9 @@ Chat was an in-memory mock shared by both roles (ADRs 0016, 0017). The API now
 carries a conversation, on the case itself (spec read 15 Nov 2026):
 
 - `GET /case/{id}` returns `conversation: {status: open|closed, chat: [...]}`.
-  Each message is `{id, senderId, text, sentAt, updatedAt}`: no author name.
-  There is no messages endpoint, no "since" parameter and no ETag.
+  Each message is `{id, senderId, text, sentAt, updatedAt}`, plus a
+  `senderName` the spec does not list (seen live). There is no messages
+  endpoint, no "since" parameter and no ETag.
 - `POST /case/{id}/message` with `{text}` adds a message; a closed
   conversation answers 409.
 - `PATCH /case/{id}` with `status: pending-information` toggles: an accepted
@@ -52,9 +53,9 @@ no `conversation` key at all (checked live, 15 Nov 2026).
   composer. A 409 re-reads immediately, since the conversation was closed
   meanwhile. A read already in flight when a send or toggle starts is dropped,
   so it cannot undo the newer state.
-- **Names are derived.** The reader's own messages are "You". A client sees
-  every other sender as "Property Intel". Staff see the holder as "Case
-  officer" and anyone else as the applicant's name.
+- **Names.** The reader's own messages are "You". A client sees every other
+  sender as "Property Intel". Staff see each sender's `senderName`; without
+  one, the holder is "Case officer" and anyone else the applicant's name.
 - **`chatProvider` joins the per-user rule.** It watches the session and is
   auto-disposed, like every other provider of one user's data.
 
@@ -65,11 +66,13 @@ no `conversation` key at all (checked live, 15 Nov 2026).
   make polls cheap, and push for delivery while the app is closed.
 - Each poll re-reads the whole case (about 2 KB without messages); it grows
   with the transcript.
-- To staff, a message from a manager who is not the holder is labelled with
-  the applicant's name: the wire cannot tell the two apart.
+- Checked live on 15 Nov 2026, through the app as the holder and as the
+  client: open, send both ways, close, the 409 on a closed send, a reply
+  arriving by poll within about 8 s, and no requests while the app was hidden.
+  `PATCH` takes JSON.
 - A disputed case's chat can be read, but not opened: the API opens a
   conversation from `accepted` only.
-- Attachments are not offered; the API takes text only. The read-aloud and
-  copy glyphs under a reply are still unwired.
+- Attachments are not offered; the API takes text only. The mock's read-aloud
+  and copy glyphs are gone.
 - A request in flight when the screen closes is left to finish and its answer
   is ignored; it is one small read.

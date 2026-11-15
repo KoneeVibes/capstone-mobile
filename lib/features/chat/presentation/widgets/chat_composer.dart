@@ -6,12 +6,12 @@ import '../../../../core/theme/app_text_styles.dart';
 
 /// The message input: the field and send. Text only, as the API is.
 ///
-/// Inert until [enabled] — the conversation must be open, and the last
-/// message sent.
+/// Inert until [enabled] — the conversation must be open.
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
     required this.controller,
     required this.enabled,
+    required this.canSend,
     required this.hint,
     required this.onSend,
     super.key,
@@ -19,6 +19,10 @@ class ChatComposer extends StatelessWidget {
 
   final TextEditingController controller;
   final bool enabled;
+
+  /// False while a message is on its way. The field stays live, so the
+  /// keyboard does not drop between messages.
+  final bool canSend;
   final String hint;
   final VoidCallback onSend;
 
@@ -47,7 +51,7 @@ class ChatComposer extends StatelessWidget {
               minLines: 1,
               maxLines: 4,
               textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSend(),
+              onSubmitted: canSend ? (_) => onSend() : null,
               style: AppTextStyles.bodyLarge,
               decoration: InputDecoration(
                 isDense: true,
@@ -58,7 +62,7 @@ class ChatComposer extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSizing.space8),
-          _SendButton(enabled: enabled, onPressed: onSend),
+          _SendButton(enabled: enabled && canSend, onPressed: onSend),
         ],
       ),
     );

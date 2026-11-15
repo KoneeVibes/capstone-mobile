@@ -48,6 +48,7 @@ abstract final class ChatThreadModel {
     id: _string(json['id']) ?? _string(json['_id']) ?? '',
     senderId: _string(json['senderId']) ?? '',
     text: _string(json['text']) ?? '',
+    senderName: _string(json['senderName']),
     sentAt: DateTime.tryParse(_string(json['sentAt']) ?? ''),
   );
 

@@ -80,7 +80,9 @@ class _CaseChatScreenState extends ConsumerState<CaseChatScreen> {
 
   Future<void> _send() async {
     final text = _controller.text;
-    if (text.trim().isEmpty) return;
+    final sending =
+        ref.read(chatProvider(widget.caseId)).value?.isSending ?? true;
+    if (text.trim().isEmpty || sending) return;
     _controller.clear();
     // The list is reversed, so its start is the newest message.
     if (_scrollController.hasClients) {
@@ -151,6 +153,7 @@ class _CaseChatScreenState extends ConsumerState<CaseChatScreen> {
                       message: message,
                       authorName: _authorName(
                         author,
+                        message.senderName,
                         conversation.thread.applicantName,
                       ),
                       isMine: author == ChatAuthor.me,
@@ -173,7 +176,8 @@ class _CaseChatScreenState extends ConsumerState<CaseChatScreen> {
               ],
               ChatComposer(
                 controller: _controller,
-                enabled: conversation.canType && !conversation.isSending,
+                enabled: conversation.canType,
+                canSend: !conversation.isSending,
                 hint: conversation.canType ? 'Message' : 'Chat is not open',
                 onSend: _send,
               ),
@@ -194,16 +198,17 @@ class _CaseChatScreenState extends ConsumerState<CaseChatScreen> {
     );
   }
 
-  static String _authorName(ChatAuthor author, String? applicantName) =>
-      switch (author) {
-        ChatAuthor.me => 'You',
-        ChatAuthor.propertyIntel => 'Property Intel',
-        ChatAuthor.caseOfficer => 'Case officer',
-        ChatAuthor.applicant =>
-          (applicantName?.trim().isNotEmpty ?? false)
-              ? applicantName!.trim()
-              : 'Applicant',
-      };
+  /// Staff see the name the message carries; a client sees the company.
+  static String _authorName(
+    ChatAuthor author,
+    String? senderName,
+    String? applicantName,
+  ) => switch (author) {
+    ChatAuthor.me => 'You',
+    ChatAuthor.propertyIntel => 'Property Intel',
+    ChatAuthor.caseOfficer => senderName ?? 'Case officer',
+    ChatAuthor.applicant => senderName ?? applicantName ?? 'Applicant',
+  };
 
   static String _emptyMessage(ChatConversation conversation) {
     if (conversation.canType) return 'Send the first message.';

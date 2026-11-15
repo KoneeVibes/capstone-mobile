@@ -36,10 +36,12 @@ They are kept so the reason survives the people who were in the room.
 | [0029](0029-recent-searches-from-search-history.md) | Recent searches come from the server's search history | Accepted |
 | [0030](0030-profile-from-the-profile-endpoint.md) | The Profile tab reads and writes `/profile` | Accepted |
 | [0031](0031-notifications-built-as-a-mock.md) | Notifications, built as a mock | Accepted |
-| [0032](0032-signed-in-password-reset-and-account-deletion.md) | Signed-in password reset by code; account deletion stubbed | Accepted |
-| [0033](0033-per-user-state-is-auto-disposed.md) | Per-user state is auto-disposed | Accepted; chat's exemption ended by 0036 |
+| [0032](0032-signed-in-password-reset-and-account-deletion.md) | Signed-in password reset by code; account deletion stubbed | Accepted; deletion superseded by 0035 |
+| [0033](0033-per-user-state-is-auto-disposed.md) | Per-user state is auto-disposed | Accepted |
 | [0034](0034-client-applicant-details-from-the-profile.md) | A client's applicant name and phone come from their profile | Accepted |
+| [0035](0035-account-deletion-through-the-profile-endpoint.md) | Account deletion through `DELETE /profile` | Accepted |
 | [0036](0036-chat-on-the-case-conversation-polled.md) | Chat reads the case's conversation, and polls for it | Accepted |
+
 
 ## Writing one
 

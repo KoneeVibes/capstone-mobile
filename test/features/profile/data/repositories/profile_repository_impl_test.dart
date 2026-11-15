@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:propertyintelmobileapp/core/utils/error/app_failures.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
 import 'package:propertyintelmobileapp/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:propertyintelmobileapp/features/profile/data/repositories/profile_repository_impl.dart';
@@ -67,11 +66,15 @@ void main() {
     );
   });
 
-  test('cannot delete an account yet', () async {
+  test('deletes the account, or converts the refusal', () async {
+    when(() => remote.deleteAccount()).thenAnswer((_) async {});
+    expect((await repository.deleteAccount()).isOk, isTrue);
+
+    // Staff and guests are refused.
+    when(() => remote.deleteAccount()).thenThrow(_httpFailure(403));
     expect(
-      (await repository.deleteAccount()).failureOrNull,
-      AppFailures.accountDeletionUnavailable,
+      (await repository.deleteAccount()).failureOrNull?.type,
+      FailureType.forbidden,
     );
-    verifyZeroInteractions(remote);
   });
 }

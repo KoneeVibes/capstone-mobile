@@ -42,7 +42,9 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // The reset code goes to the sign-in email; a session stored before the
     // app kept it has none to send to.
-    final hasEmail = ref.watch(sessionProvider)?.email != null;
+    final session = ref.watch(sessionProvider);
+    final hasEmail = session?.email != null;
+    final canDelete = session?.canDeleteOwnAccount ?? false;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -100,8 +102,10 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSizing.space32),
-                    const _Panel(child: _DeleteAccountTile()),
+                    if (canDelete) ...[
+                      const SizedBox(height: AppSizing.space32),
+                      const _Panel(child: _DeleteAccountTile()),
+                    ],
                   ],
                 ),
               ),
@@ -291,8 +295,8 @@ class _SummarySkeleton extends StatelessWidget {
   }
 }
 
-/// Lower down and in red, behind a confirmation. The API cannot delete an
-/// account yet, so it ends in a message saying so (ADR 0032).
+/// Lower down and in red, behind a confirmation. Success ends the session,
+/// and the login screen says why (ADR 0035).
 class _DeleteAccountTile extends ConsumerStatefulWidget {
   const _DeleteAccountTile();
 
@@ -308,8 +312,9 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
       context: context,
       title: 'Delete account',
       message:
-          'This permanently deletes your Property Intel account. It cannot '
-          'be undone.',
+          'This permanently deletes your Property Intel account and search '
+          'history. Your cases and invoices stay on record. It cannot be '
+          'undone.',
       confirmLabel: 'Delete',
       cancelLabel: 'Cancel',
     );
@@ -317,15 +322,10 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
 
     setState(() => _busy = true);
     final result = await ref.read(profileProvider.notifier).deleteAccount();
+    // On success the router has already left for login, which says so.
     if (!mounted) return;
     setState(() => _busy = false);
-
-    switch (result) {
-      case Ok():
-        context.showMessage('Your account has been deleted.');
-      case Err(:final failure):
-        context.showFailure(failure);
-    }
+    if (result case Err(:final failure)) context.showFailure(failure);
   }
 
   @override

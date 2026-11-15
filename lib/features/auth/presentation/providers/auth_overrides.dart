@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../../../../core/navigation/app_session.dart';
 import '../../../../core/network/api_provider.dart';
+import '../../../../core/session/account_closed.dart';
 import 'auth_session_provider.dart';
 import 'onboarding_provider.dart';
 
@@ -32,5 +33,9 @@ final List<Override> authOverrides = [
   unauthorizedHandlerProvider.overrideWith(
     (ref) =>
         () => ref.read(authSessionProvider.notifier).expire(),
+  ),
+  accountClosedHandlerProvider.overrideWith(
+    (ref) =>
+        () => ref.read(authSessionProvider.notifier).endAfterAccountDeletion(),
   ),
 ];

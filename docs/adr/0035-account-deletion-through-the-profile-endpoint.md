@@ -38,6 +38,10 @@ Profile may not import auth to end the session.
 
 ## Consequences
 
+- Checked live on 15 Nov 2026, through the app, on a throwaway registered
+  client: `DELETE /profile` answered 200 with no `data`, the app landed on
+  login with the notice and made no sign-out call, and signing in again gave
+  404 "User not found".
 - A refusal (403, 404, offline) leaves the session as it was and shows the
   failure's message.
 - The email can be registered again afterwards, as far as the spec says; the

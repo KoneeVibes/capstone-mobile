@@ -42,6 +42,7 @@ They are kept so the reason survives the people who were in the room.
 | [0035](0035-account-deletion-through-the-profile-endpoint.md) | Account deletion through `DELETE /profile` | Accepted |
 | [0036](0036-chat-on-the-case-conversation-polled.md) | Chat reads the case's conversation, and polls for it | Accepted |
 | [0037](0037-android-release-signing.md) | Android release builds are signed with an upload key kept out of git | Accepted |
+| [0038](0038-android-backup-and-deep-linking-off.md) | Android backup and Flutter deep linking are switched off | Accepted |
 
 
 ## Writing one

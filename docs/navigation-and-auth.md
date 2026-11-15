@@ -162,7 +162,9 @@ full-screen routes of its own: the code goes to the sign-in email, is typed on
 
 ## Not yet built
 
-- Deep links. None are configured, so the app always starts at `/splash`. If
-  they are added, `redirectFor` must hold a cold-start link until the session
+- Deep links. None are configured and Flutter's own handling is switched off
+  on both platforms
+  ([ADR 0038](adr/0038-android-backup-and-deep-linking-off.md)), so the app
+  always starts at `/splash`. If they are added, `redirectFor` must hold a cold-start link until the session
   restore finishes. Otherwise the link is judged while the session still reads
   as signed out, and lands on onboarding or login.

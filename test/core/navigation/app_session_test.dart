@@ -18,6 +18,29 @@ void main() {
     );
   });
 
+  test('only a registered client may delete their own account', () {
+    expect(
+      const SessionUser(id: 'c', role: AppRole.client).canDeleteOwnAccount,
+      isTrue,
+    );
+    expect(
+      const SessionUser(
+        id: 'g',
+        role: AppRole.client,
+        isGuest: true,
+      ).canDeleteOwnAccount,
+      isFalse,
+    );
+    expect(
+      const SessionUser(
+        id: 's',
+        role: AppRole.staff,
+        staffRole: StaffRole.superAdmin,
+      ).canDeleteOwnAccount,
+      isFalse,
+    );
+  });
+
   test('the email is part of who is signed in', () {
     expect(
       const SessionUser(id: 'c', role: AppRole.client, email: 'a@b.co'),

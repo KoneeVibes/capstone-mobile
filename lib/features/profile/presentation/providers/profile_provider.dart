@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/navigation/app_session.dart';
+import '../../../../core/session/account_closed.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/profile_draft.dart';
 import '../../domain/entities/user_profile.dart';
@@ -27,8 +28,14 @@ class ProfileNotifier extends AsyncNotifier<UserProfile> {
     return result;
   }
 
-  Future<Result<void>> deleteAccount() =>
-      ref.read(profileRepositoryProvider).deleteAccount();
+  /// Deletes the account, then ends the session: the token's user is gone.
+  Future<Result<void>> deleteAccount() async {
+    // Read first: ending the session disposes this notifier.
+    final endSession = ref.read(accountClosedHandlerProvider);
+    final result = await ref.read(profileRepositoryProvider).deleteAccount();
+    if (result.isOk) await endSession();
+    return result;
+  }
 }
 
 final profileProvider =

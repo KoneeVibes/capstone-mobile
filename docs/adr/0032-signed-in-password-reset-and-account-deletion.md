@@ -1,6 +1,7 @@
 # 0032 — Signed-in password reset by code; account deletion stubbed
 
-- **Status:** Accepted
+- **Status:** Accepted; account deletion superseded by
+  [0035](0035-account-deletion-through-the-profile-endpoint.md)
 - **Recorded:** 2026-11-08
 
 ## Context

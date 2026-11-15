@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:propertyintelmobileapp/core/navigation/app_session.dart';
 import 'package:propertyintelmobileapp/core/network/api_provider.dart';
+import 'package:propertyintelmobileapp/core/session/account_closed.dart';
 import 'package:propertyintelmobileapp/core/session/staff_role.dart';
 import 'package:propertyintelmobileapp/core/utils/error/app_failure.dart';
 import 'package:propertyintelmobileapp/core/utils/error/failure_type.dart';
@@ -128,6 +129,22 @@ void main() {
       container.read(sessionEndNoticeProvider),
       SessionEndNotice.signedOut,
     );
+  });
+
+  test('a deleted account ends the session without a sign-out call', () async {
+    when(() => repository.restoreSession()).thenAnswer((_) async => stored);
+    final container = makeContainer();
+    await container.read(sessionRestoreProvider.future);
+
+    await container.read(accountClosedHandlerProvider)();
+
+    expect(container.read(sessionProvider), isNull);
+    expect(
+      container.read(sessionEndNoticeProvider),
+      SessionEndNotice.accountDeleted,
+    );
+    verify(() => repository.clearSession()).called(1);
+    verifyNever(() => repository.signOut());
   });
 
   group('a restored staff session', () {

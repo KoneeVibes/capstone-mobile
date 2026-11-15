@@ -1,4 +1,3 @@
-import '../../../../core/utils/error/app_failures.dart';
 import '../../../../core/utils/error/error_handler.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/profile_draft.dart';
@@ -18,10 +17,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<Result<UserProfile>> updateProfile(ProfileDraft draft) =>
       _guard(() => _remote.updateProfile(draft));
 
-  // TODO(backend): call the delete-account endpoint once it exists (ADR 0032).
   @override
-  Future<Result<void>> deleteAccount() async =>
-      const Err(AppFailures.accountDeletionUnavailable);
+  Future<Result<void>> deleteAccount() => _guard(_remote.deleteAccount);
 
   static Future<Result<T>> _guard<T>(Future<T> Function() action) async {
     try {

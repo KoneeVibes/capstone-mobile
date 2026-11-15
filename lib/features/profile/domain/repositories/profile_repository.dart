@@ -9,6 +9,6 @@ abstract class ProfileRepository {
   /// Returns the record as the server saved it.
   Future<Result<UserProfile>> updateProfile(ProfileDraft draft);
 
-  /// Always fails for now: the API has no delete-account endpoint (ADR 0032).
+  /// Permanent, and for registered clients only (ADR 0035).
   Future<Result<void>> deleteAccount();
 }

@@ -117,8 +117,13 @@ SecureStore ◀── AuthRepository ◀── AuthSessionNotifier ──▶ ses
   ("Your session has expired").
 - **Sign-out** tells the server (best effort), then forgets the token whatever
   the server says. The sign-out call's own 401 is not mistaken for an expiry;
-  the login screen confirms with "You've been logged out." Both notices are one
-  `sessionEndNoticeProvider` value, consumed once.
+  the login screen confirms with "You've been logged out."
+- **Deleting the account** (registered clients only, Profile → Delete account)
+  calls `DELETE /profile`, then ends the session through
+  `accountClosedHandlerProvider` without a sign-out call; the login screen
+  confirms with "Your account has been deleted."
+  ([ADR 0035](adr/0035-account-deletion-through-the-profile-endpoint.md)).
+  All three notices are one `sessionEndNoticeProvider` value, consumed once.
 - **Per-user data** resets on any session change; see
   [State management](state-management.md#one-users-data-watches-the-session).
 
@@ -157,8 +162,6 @@ full-screen routes of its own: the code goes to the sign-in email, is typed on
 
 ## Not yet built
 
-- Deleting an account — the Profile row ends in "not available yet" until the
-  API has an endpoint ([ADR 0032](adr/0032-signed-in-password-reset-and-account-deletion.md)).
 - Deep links. None are configured, so the app always starts at `/splash`. If
   they are added, `redirectFor` must hold a cold-start link until the session
   restore finishes. Otherwise the link is judged while the session still reads

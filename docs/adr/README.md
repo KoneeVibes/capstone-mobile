@@ -41,6 +41,7 @@ They are kept so the reason survives the people who were in the room.
 | [0034](0034-client-applicant-details-from-the-profile.md) | A client's applicant name and phone come from their profile | Accepted |
 | [0035](0035-account-deletion-through-the-profile-endpoint.md) | Account deletion through `DELETE /profile` | Accepted |
 | [0036](0036-chat-on-the-case-conversation-polled.md) | Chat reads the case's conversation, and polls for it | Accepted |
+| [0037](0037-android-release-signing.md) | Android release builds are signed with an upload key kept out of git | Accepted |
 
 
 ## Writing one

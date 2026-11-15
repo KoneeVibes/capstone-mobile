@@ -71,6 +71,26 @@ drawable, which is why the wordmark is drawn by Flutter. Do not add a
 `values-night` resource folder: night beats version in Android's qualifier
 precedence, and the template's black theme flashed on dark-mode devices.
 
+## Release signing
+
+Android release builds are signed with an upload key that is not in git
+([ADR 0037](adr/0037-android-release-signing.md)). To build one:
+
+1. Get the keystore (`propertyintel-upload.jks`) and its passwords from
+   whoever holds them, and put the keystore in `android/app/`.
+2. Copy `android/key.properties.example` to `android/key.properties` and fill
+   it in. Both files are gitignored; never force-add them.
+3. Build and check the signer before uploading:
+
+```sh
+flutter build appbundle --release
+keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab
+```
+
+The owner should read `CN=Capstone PropertyIntel`. `CN=Android Debug` means
+`key.properties` was missing and the debug key signed the build; Play will
+refuse it.
+
 ## Driving the Android emulator from a shell
 
 Useful for live verification and screenshots:

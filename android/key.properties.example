@@ -1,0 +1,7 @@
+# Copy to android/key.properties (gitignored) and fill in. See
+# docs/tooling.md, "Release signing".
+storePassword=
+keyPassword=
+keyAlias=upload
+# Relative to android/app, where the keystore sits (gitignored too).
+storeFile=propertyintel-upload.jks

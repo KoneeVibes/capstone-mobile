@@ -21,12 +21,19 @@ import 'cases_datasource.dart';
 ///
 /// [resolveAssignees] is off for clients, and for staff roles that cannot read
 /// `GET /staff` (regular): the request would only 403, and their rows show the
-/// case as assigned without a name.
+/// case as assigned without a name. [resolveAssigneesWhen] asks on each call
+/// instead, for a caller whose answer changes with who is signed in.
 class CasesRemoteDataSourceImpl implements CasesDataSource {
-  const CasesRemoteDataSourceImpl(this._client, {this.resolveAssignees = true});
+  CasesRemoteDataSourceImpl(
+    this._client, {
+    bool resolveAssignees = true,
+    bool Function()? resolveAssigneesWhen,
+  }) : _resolveAssignees = resolveAssigneesWhen ?? (() => resolveAssignees);
 
   final ApiClient _client;
-  final bool resolveAssignees;
+  final bool Function() _resolveAssignees;
+
+  bool get resolveAssignees => _resolveAssignees();
 
   /// Every case, across every page and every status.
   ///

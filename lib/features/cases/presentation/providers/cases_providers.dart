@@ -20,8 +20,10 @@ final casesDataSourceProvider = Provider<CasesDataSource>(
   (ref) => CasesRemoteDataSourceImpl(
     ref.watch(apiClientProvider),
     // Names come from `GET /staff`, which only some staff roles may read.
-    resolveAssignees:
-        ref.watch(sessionProvider)?.permissions.canViewStaff ?? false,
+    // Read per call, not watched: watching the session rebuilt this chain on
+    // the first read after a sign-in, which lands mid-build and asserts.
+    resolveAssigneesWhen: () =>
+        ref.read(sessionProvider)?.permissions.canViewStaff ?? false,
   ),
 );
 

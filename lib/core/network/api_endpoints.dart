@@ -36,6 +36,9 @@ abstract final class ApiEndpoints {
 
   static String caseById(String caseId) => '$cases/$caseId';
 
+  /// Send only; the conversation is read off the case itself.
+  static String caseMessages(String caseId) => '$cases/$caseId/message';
+
   static String trackCase(String trackingId) =>
       '$cases/track/${Uri.encodeComponent(trackingId)}';
 

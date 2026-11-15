@@ -1,6 +1,7 @@
 # 0033 — Per-user state is auto-disposed
 
-- **Status:** Accepted
+- **Status:** Accepted; chat's exemption ended by
+  [0036](0036-chat-on-the-case-conversation-polled.md)
 - **Recorded:** 2026-11-08
 
 ## Context

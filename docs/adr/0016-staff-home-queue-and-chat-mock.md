@@ -1,6 +1,6 @@
 # 0016 — Staff home "My queue" and case chat, built as mock UI
 
-- **Status:** Accepted; the mock queue superseded by [0019](0019-case-status-actions-and-reports.md) (the chat stays mock)
+- **Status:** Accepted; the mock queue superseded by [0019](0019-case-status-actions-and-reports.md) and the mock chat by [0036](0036-chat-on-the-case-conversation-polled.md)
 - **Recorded:** 2026-10-19
 
 ## Context

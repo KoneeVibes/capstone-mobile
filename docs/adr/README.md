@@ -20,8 +20,8 @@ They are kept so the reason survives the people who were in the room.
 | [0013](0013-case-assignment-rules.md) | Who can take a case, and what an assignment writes | Accepted; assignable statuses superseded by 0019 |
 | [0014](0014-paystack-checkout-in-a-webview.md) | Pay through Paystack's hosted checkout in a WebView; the invoice is the proof | Accepted |
 | [0015](0015-pay-an-unpaid-case-by-case-id.md) | Pay an unpaid case through the invoice screen, looked up by case id | Accepted |
-| [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted; queue superseded by 0019 |
-| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018, actions by 0019, disputes by 0025 |
+| [0016](0016-staff-home-queue-and-chat-mock.md) | Staff home "My queue" and case chat, built as mock UI | Accepted; queue superseded by 0019, chat by 0036 |
+| [0017](0017-case-actions-and-disputes.md) | Case actions menu, the client case view, and disputes (mock) | Accepted; Add Report superseded by 0018, actions by 0019, disputes by 0025, chat by 0036 |
 | [0018](0018-add-report-sheet.md) | Add Report sheet, three files per report (mock) | Accepted; cap and upload superseded by 0019 |
 | [0019](0019-case-status-actions-and-reports.md) | Case status actions and reports write for real | Accepted; suspend and lifting it superseded by 0021, file tiles by 0022 |
 | [0020](0020-search-through-the-search-endpoint.md) | Search cases and staff through `GET /search`, one tab at a time | Accepted |
@@ -40,6 +40,8 @@ They are kept so the reason survives the people who were in the room.
 | [0033](0033-per-user-state-is-auto-disposed.md) | Per-user state is auto-disposed | Accepted |
 | [0034](0034-client-applicant-details-from-the-profile.md) | A client's applicant name and phone come from their profile | Accepted |
 | [0035](0035-account-deletion-through-the-profile-endpoint.md) | Account deletion through `DELETE /profile` | Accepted |
+| [0036](0036-chat-on-the-case-conversation-polled.md) | Chat reads the case's conversation, and polls for it | Accepted |
+
 
 ## Writing one
 

@@ -68,6 +68,14 @@ are filled in by the auth feature; see
 free tier that sleeps when idle; the first request afterwards can take around
 23 seconds. Do not "fix" a slow first call by lowering timeouts.
 
+## Polling
+
+The API has no socket or push, so one screen polls: an open chat re-reads its
+case, 4 s apart while messages move and up to 30 s apart when they do not, one
+request at a time, and only while the screen is up and the app is in view
+([ADR 0036](adr/0036-chat-on-the-case-conversation-polled.md)). Everything
+else re-reads on a visit. Do not add a background or list-wide poll.
+
 ## Logging
 
 `_LoggingInterceptor` is added only in debug builds and every branch checks

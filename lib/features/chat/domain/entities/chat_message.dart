@@ -1,26 +1,37 @@
 import 'package:equatable/equatable.dart';
 
-/// One line in a case conversation.
+/// One line in a case conversation, as `conversation.chat` carries it.
 ///
-/// Mock for now; the real transport fills the same shape.
+/// Who the sender is to the reader is `ChatConversation.authorOf`.
 class ChatMessage extends Equatable {
   const ChatMessage({
     required this.id,
-    required this.authorName,
+    required this.senderId,
     required this.text,
-    required this.isMine,
+    this.senderName,
+    this.sentAt,
+    this.isPending = false,
   });
 
   final String id;
-
-  /// Shown above the text; also the source of the avatar initial.
-  final String authorName;
-
+  final String senderId;
   final String text;
 
-  /// Whether the signed-in member sent it, which sides and colours the row.
-  final bool isMine;
+  /// Sent on a read of the case, not in the answer to a send (live, 15 Nov
+  /// 2026), so a just-sent message has none until the next read.
+  final String? senderName;
+  final DateTime? sentAt;
+
+  /// Shown at once while the send is in flight; the server's copy replaces it.
+  final bool isPending;
 
   @override
-  List<Object?> get props => [id, authorName, text, isMine];
+  List<Object?> get props => [
+    id,
+    senderId,
+    text,
+    senderName,
+    sentAt,
+    isPending,
+  ];
 }

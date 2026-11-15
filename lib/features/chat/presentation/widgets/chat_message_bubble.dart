@@ -1,22 +1,33 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/formatting/app_formatters.dart';
 import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../domain/entities/chat_message.dart';
 
-/// One line in the transcript: avatar, author, and the message beneath.
+/// One line in the transcript: avatar, author and time, and the message
+/// beneath. Greyed while its send is in flight.
 class ChatMessageBubble extends StatelessWidget {
-  const ChatMessageBubble({required this.message, super.key});
+  const ChatMessageBubble({
+    required this.message,
+    required this.authorName,
+    required this.isMine,
+    super.key,
+  });
 
   final ChatMessage message;
+  final String authorName;
+  final bool isMine;
 
   @override
   Widget build(BuildContext context) {
-    final initial = message.authorName.trim().isEmpty
+    final initial = authorName.trim().isEmpty
         ? '?'
-        : message.authorName.trim()[0].toUpperCase();
+        : authorName.trim()[0].toUpperCase();
+    final stamp = message.isPending ? 'Sending…' : _stamp(message.sentAt);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,51 +35,55 @@ class ChatMessageBubble extends StatelessWidget {
         AppAvatar(
           initials: initial,
           size: AppSizing.avatarSm,
-          backgroundColor: message.isMine
-              ? AppColors.success
-              : AppColors.primary,
+          backgroundColor: isMine ? AppColors.success : AppColors.primary,
         ),
         const SizedBox(width: AppSizing.space12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(message.authorName, style: AppTextStyles.titleSmall),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      authorName,
+                      style: AppTextStyles.titleSmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (stamp.isNotEmpty) ...[
+                    const SizedBox(width: AppSizing.space8),
+                    Text(stamp, style: AppTextStyles.bodySmall),
+                  ],
+                ],
+              ),
               const SizedBox(height: AppSizing.space4),
-              Text(message.text, style: AppTextStyles.bodyLarge),
-              if (!message.isMine) ...[
-                const SizedBox(height: AppSizing.space8),
-                const _MessageGlyphs(),
-              ],
+              Text(
+                message.text,
+                style: message.isPending
+                    ? AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.textTertiary,
+                      )
+                    : AppTextStyles.bodyLarge,
+              ),
             ],
           ),
         ),
       ],
     );
   }
-}
 
-/// The read-aloud and copy affordances the design shows under a reply. Drawn as
-/// part of the mock, not yet wired.
-class _MessageGlyphs extends StatelessWidget {
-  const _MessageGlyphs();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Icon(
-          Icons.volume_up_outlined,
-          size: AppSizing.iconSm,
-          color: AppColors.textTertiary,
-        ),
-        SizedBox(width: AppSizing.space16),
-        Icon(
-          Icons.content_copy_outlined,
-          size: AppSizing.iconSm,
-          color: AppColors.textTertiary,
-        ),
-      ],
-    );
+  /// The time for a message sent today, the date as well for an older one.
+  static String _stamp(DateTime? sentAt) {
+    if (sentAt == null) return '';
+    final local = sentAt.toLocal();
+    final now = clock.now();
+    final isToday =
+        local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
+    return isToday
+        ? AppFormatters.time(sentAt)
+        : AppFormatters.dateTime(sentAt);
   }
 }

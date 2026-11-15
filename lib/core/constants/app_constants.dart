@@ -41,6 +41,22 @@ abstract final class AppConstants {
   static const int paymentConfirmAttempts = 5;
   static const Duration paymentConfirmInterval = Duration(seconds: 2);
 
+  // Chat. No socket, so an open chat screen re-reads its case (ADR 0036):
+  // each step is held for a few unchanged reads before slowing to the next.
+  static const List<Duration> chatPollSteps = [
+    Duration(seconds: 4),
+    Duration(seconds: 8),
+    Duration(seconds: 15),
+    Duration(seconds: 30),
+  ];
+  static const int chatPollsPerStep = 3;
+
+  /// A closed conversation is only watched for being opened.
+  static const Duration chatPollClosedInterval = Duration(seconds: 30);
+
+  /// The longest wait between reads while they keep failing.
+  static const Duration chatPollMaxBackoff = Duration(seconds: 60);
+
   // Auth.
 
   /// Digits in a sign-up or password-reset code.

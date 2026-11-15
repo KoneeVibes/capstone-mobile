@@ -1,40 +1,88 @@
 import 'package:equatable/equatable.dart';
 
 import 'chat_message.dart';
+import 'chat_thread.dart';
 
-/// Whether a case conversation is accepting messages.
-///
-/// The flow is deliberate: a conversation must be *opened* before anyone can
-/// type, and *closed* once it has run its course.
+/// Whether a case conversation is accepting messages. The server only knows
+/// open and closed; a closed one nobody has written in was never opened.
 enum ChatStatus { notOpened, open, closed }
 
-/// A case conversation: its state and the lines sent so far.
-class ChatConversation extends Equatable {
-  const ChatConversation({required this.status, required this.messages});
+/// Who a message is from, to the person reading it. The screen words it.
+enum ChatAuthor { me, propertyIntel, caseOfficer, applicant }
 
-  final ChatStatus status;
-  final List<ChatMessage> messages;
+/// A case conversation as one signed-in user sees it: the server's thread,
+/// who is reading, and a message still on its way.
+class ChatConversation extends Equatable {
+  const ChatConversation({
+    required this.thread,
+    required this.viewerId,
+    required this.viewerIsStaff,
+    this.pending,
+  });
+
+  final ChatThread thread;
+  final String viewerId;
+  final bool viewerIsStaff;
+
+  /// The viewer's own message while its send is in flight.
+  final ChatMessage? pending;
+
+  ChatStatus get status {
+    if (thread.isOpen) return ChatStatus.open;
+    return thread.messages.isEmpty ? ChatStatus.notOpened : ChatStatus.closed;
+  }
+
+  /// Oldest first, the pending one last.
+  List<ChatMessage> get messages => [...thread.messages, ?pending];
+
+  bool get isSending => pending != null;
 
   /// Typing and sending are only allowed while open.
-  bool get canType => status == ChatStatus.open;
+  bool get canType => thread.isOpen;
 
-  /// "Open conversation" is live unless it is already open.
-  bool get canOpen => status != ChatStatus.open;
-
-  /// "Close conversation" is live only while open.
-  bool get canClose => status == ChatStatus.open;
-
-  /// Whether to show the "chat closed" marker.
   bool get isClosed => status == ChatStatus.closed;
 
-  ChatConversation copyWith({
-    ChatStatus? status,
-    List<ChatMessage>? messages,
-  }) => ChatConversation(
-    status: status ?? this.status,
-    messages: messages ?? this.messages,
-  );
+  /// Only the staff member holding the case opens and closes (ADR 0036).
+  bool get isAssignee => viewerId == thread.assigneeId;
+
+  /// Opening moves an accepted case to pending-information.
+  bool get canOpen =>
+      isAssignee && !thread.isOpen && thread.stage == ChatCaseStage.accepted;
+
+  /// Closing puts a pending-information case back where it was.
+  bool get canClose =>
+      isAssignee && thread.stage == ChatCaseStage.pendingInformation;
+
+  /// Messages carry no name. A client sees everyone else as Property Intel;
+  /// staff see the holder as the case officer and anyone else as the
+  /// applicant.
+  ChatAuthor authorOf(ChatMessage message) {
+    if (message.senderId == viewerId) return ChatAuthor.me;
+    if (!viewerIsStaff) return ChatAuthor.propertyIntel;
+    return message.senderId == thread.assigneeId
+        ? ChatAuthor.caseOfficer
+        : ChatAuthor.applicant;
+  }
+
+  /// A fresh read of the thread; a pending message stays.
+  ChatConversation withThread(ChatThread thread) => _copy(thread, pending);
+
+  ChatConversation withPending(ChatMessage message) => _copy(thread, message);
+
+  /// The server's copy of the message takes the pending one's place.
+  ChatConversation withSent(ChatMessage message) =>
+      _copy(thread.withMessage(message), null);
+
+  ChatConversation withoutPending() => _copy(thread, null);
+
+  ChatConversation _copy(ChatThread thread, ChatMessage? pending) =>
+      ChatConversation(
+        thread: thread,
+        viewerId: viewerId,
+        viewerIsStaff: viewerIsStaff,
+        pending: pending,
+      );
 
   @override
-  List<Object?> get props => [status, messages];
+  List<Object?> get props => [thread, viewerId, viewerIsStaff, pending];
 }

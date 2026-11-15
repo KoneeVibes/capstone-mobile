@@ -4,9 +4,10 @@ import '../../../../core/sizing/app_sizing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// The message input: an attach affordance, the field, and send.
+/// The message input: the field and send. Text only, as the API is.
 ///
-/// Inert until [enabled] — the conversation must be opened first.
+/// Inert until [enabled] — the conversation must be open, and the last
+/// message sent.
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
     required this.controller,
@@ -23,10 +24,6 @@ class ChatComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = enabled
-        ? AppColors.textSecondary
-        : AppColors.disabledText;
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizing.space12,
@@ -43,9 +40,6 @@ class ChatComposer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Attaching is part of the design; not wired in the mock.
-          Icon(Icons.attach_file, size: AppSizing.iconMd, color: iconColor),
-          const SizedBox(width: AppSizing.space8),
           Expanded(
             child: TextField(
               controller: controller,
